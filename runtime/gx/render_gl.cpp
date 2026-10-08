@@ -640,6 +640,17 @@ static void upload_texture(const TexData& t) {
     g.levels = (uint32_t)t.levels.size();
     g.last_used = g_render_frame;
     g_textures[t.id] = g;
+    // MP_TEXDUMP=<dir> writes every texture's top level as <dir>/tex_<id>.png, alpha
+    // forced opaque, so a decoded texture can be looked at apart from the draw using it.
+    static const char* dump = getenv("MP_TEXDUMP");
+    if (dump) {
+        std::vector<uint8_t> px((size_t)t.width * t.height * 4);
+        memcpy(px.data(), t.levels[0].data(), px.size());
+        for (size_t i = 3; i < px.size(); i += 4) px[i] = 255;
+        char path[512];
+        snprintf(path, sizeof(path), "%s/tex_%u.png", dump, t.id);
+        write_png(path, px.data(), (int)t.width, (int)t.height);
+    }
 }
 
 static GLuint get_sampler(uint32_t mode0, uint32_t mode1, uint32_t levels) {

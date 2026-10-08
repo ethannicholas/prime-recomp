@@ -45,6 +45,23 @@ skews every other emulated timing, so it is a diagnostic only.
 presents and how much of it the GX front end took, the batch's shape, and the renderer's time
 to issue it.
 
+## Textures
+
+`MP_TEXLOG=1` prints a line per decoded texture: frame, id, guest address, format, size and how
+many top-level texels are not black. That is how a texture the game never wrote (all zero) is
+told from one the shader mishandles. `MP_TEXDUMP=<dir>` writes each texture's top level as
+`<dir>/tex_<id>.png`, alpha forced opaque. Retro stores textures bottom-up, so the PNGs look
+upside down; the models' UVs compensate.
+
+## Reference captures with Dolphin
+
+Dolphin is installed at `/Applications/Dolphin.app` (5.0-15260) and plays the same CISO. Its
+controller profile maps the GameCube pad to a gamepad, not the keyboard. Launching it with a
+scratch user directory (`-u <dir>` with a keyboard `GCPadNew.ini`) and `-e <image>` opened the
+main window but never booted the game, with nothing in its log; the cause was not found.
+Killing Dolphin with a signal makes macOS put up a "reopen windows?" dialog on the next launch
+that swallows the first key presses, so quit it through AppleScript instead.
+
 ## Finding a draw or a function
 
 - `MP_DRAWLOG=<frame>` lists every draw in one frame with its index; `MP_DRAW_SKIP=a-b` then

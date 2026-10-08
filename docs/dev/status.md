@@ -7,7 +7,10 @@ observation was made; re-check anything old before building on it.
 
 Built and run on an Apple Silicon Mac from the Rev 2 (v1.02) USA disc as a CISO:
 
-- Boot through the SDK's OS init, the Retro Studios logo, the title screen and the main menu.
+- Boot through the SDK's OS init, the Retro Studios logo, the title screen and the main menu,
+  including the THP videos behind them (fixed 2026-10-07: the HID2 read dropped the LCE bit,
+  so the THP decoder refused every frame and the YUV planes stayed zero, which the YUV
+  combiner shows as solid green).
 - *New Game* → the intro text → the opening cutscene (Tallon IV from orbit, the approach to
   the Frigate Orpheon) → first-person gameplay on the frigate, with the combat visor HUD,
   world geometry, lighting and the planet outside all drawn correctly.
@@ -21,14 +24,16 @@ MP_INPUT="1300:START:10,1700:A:10,2100:A:10,2500:A:10,2900:A:10" ./build/prime
 
 ## Known broken
 
-- **Title screen and main menu backgrounds are solid green, and menu text is garbled.** The
-  backgrounds are THP videos (`Video/00_first_start.thp`, `01_startloop.thp`, …, read off the
-  disc's FST). Solid green `(0,135,0)` is exactly what the SDK's YUV→RGB TEV produces from
-  all-zero Y/U/V planes, so the decoded frames are never written, or written with zeros. One
-  dumped frame (frames2/frame_01600 in the first session) had its lower half full of random
-  noise, which looks like a partly-written frame buffer. Leading hypothesis: the game's movie
-  player paces video on audio playback, and the audio never plays (below), so decoding never
-  advances. Test that before suspecting the CPU translation of the decoder.
+- **Main menu text is doubled and striped.** Each menu entry is drawn as a sharp white copy
+  plus a dimmer copy offset a few pixels right and down, and "MAIN MENU" has horizontal
+  banding; the "A Select / B Back" prompts are clean. The font texture itself decodes
+  correctly (`MP_TEXDUMP`, texture 1610, CI4 256x128), and the "[ PRESS START ]" texture
+  (CMPR 256x32) does too, so the fault is in the draw, not the decode. The menu frame has
+  about thirty single-draw states all on the one font texture. It may partly be the game's
+  own drop-shadow and slide-in animation; a Dolphin reference capture was attempted and
+  did not get as far as booting (see `diagnostics.md`), so this is unconfirmed.
+- **Retro's textures are stored bottom-up.** A dumped texture appears vertically flipped;
+  the models' UVs undo it, so this is not a bug. Do not "fix" it in the decoder.
 - **No audio.** Metroid Prime runs the MusyX DSP microcode, not AX. The DSP HLE inherited from
   Blue Storm boots whatever ucode it is given and then parses mails as AX, which happens to
   keep the game running but produces nothing. See `audio.md`.
