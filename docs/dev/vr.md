@@ -143,6 +143,22 @@ the inline store helps). Moving the front end to its own thread, with the guest 
 frame protocol (see "Threads" in `gcn-recomp/docs/graphics.md`), halved the guest thread's
 work; the four threads now share a frame about evenly.
 
+With the CPU side clear, rendering is what is left, measured with `prime_egl` on the same
+route:
+
+- **Theater** (`--scale=3`, the `theater_scale` the app uses for the intro cinematic) holds 60
+  fps paced through the whole intro; the render thread's time per frame is 1.4 ms at the
+  median, 11 ms at the 99th percentile.
+- **Stereo** (`--eye --eyes=2 --eye-size=2352x2464 --msaa=4`, the app's eye targets on a
+  Quest 3, with `GCN_EYE_GPU=1`) costs about 13 ms of GPU and 10 ms of render-thread time
+  per game frame in first-person play on the frigate, and runs there at about 67 fps
+  unpaced. The heaviest stretch of the intro would take 18-20 ms, but the intro is a
+  cinematic and is shown in theater. Profiled, 72% of the render thread in stereo is inside
+  the Adreno driver: each frame is replayed three times (a flat pass that makes the EFB
+  copies the game samples, then each eye), so draw calls and state changes dominate.
+  Multiview (`GL_OVR_multiview2`, both eyes from one set of calls) is the lever there if
+  heavier rooms turn out not to hold 60; `eye_scale` 1.2 is the cheap one.
+
 ## Still to look at
 
 - **A short stretch of stereo before the intro cinematic.** On the `new-game` route the hook
