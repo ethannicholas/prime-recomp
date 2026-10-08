@@ -152,7 +152,12 @@ extern "C" uint32_t hle_mfspr(CPU* c, uint32_t spr) {
     case SPR_TBL_R: return (uint32_t)(now_ticks() + g_tb_offset);
     case SPR_TBU_R: return (uint32_t)((now_ticks() + g_tb_offset) >> 32);
     case SPR_DEC: return dec_read(c);
-    case SPR_HID2: return c->spr[spr] & ~0xF0000000u;  // DMA queue always empty
+    // HID2 reads back as written, except DMAQL (bits 24..27): the locked-cache DMA queue
+    // is always empty here, since hle_mtspr runs each transfer at once. The top four bits
+    // are LSQE, WPE, PSE and LCE, and the game reads them: the THP video decoder checks
+    // LCE (0x10000000) before it will decode a frame, and returns an error if it is clear,
+    // which is what blanked the title and menu videos.
+    case SPR_HID2: return c->spr[spr] & ~0x0F000000u;
     default: return c->spr[spr & 1023];
     }
 }

@@ -318,6 +318,16 @@ TexLookup texture_lookup(const TexParams& p, std::vector<std::shared_ptr<TexData
     e.tex = td;
     e.hash = hsh;
     new_textures.push_back(td);
+    // MP_TEXLOG=1 reports every texture decoded: where it came from, its shape, and how
+    // much of its top level is anything but black -- which tells a texture the game never
+    // wrote (all zero) from one the shader is mishandling.
+    static const bool texlog = getenv("MP_TEXLOG") != nullptr;
+    if (texlog) {
+        uint32_t nonzero = 0;
+        for (uint32_t v : td->levels[0]) nonzero += (v & 0x00FFFFFF) != 0;
+        fprintf(stderr, "[tex] f%u id=%u addr=%08X fmt=%u %ux%u levels=%u nonblack=%u/%zu\n",
+                g_frame_counter, td->id, addr, p.fmt, p.width, p.height, p.levels, nonzero, td->levels[0].size());
+    }
     return {td->id, false};
 }
 
