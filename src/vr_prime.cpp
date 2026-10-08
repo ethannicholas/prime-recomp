@@ -108,6 +108,11 @@ void config_defaults(VrConfig& c) {
     // that are a few hundred metres across.
     c.near_m = 0.05f;
     c.far_m = 1000.0f;
+    // The arm cannon and the visor are modelled about three units out (the cannon is a
+    // unit long, three ahead and one to the right, in the first frame of play on the
+    // frigate), and in stereo read as twice their size. Prime confines them to the front of
+    // the depth buffer, which is what the renderer's foreground scaling keys on.
+    c.foreground_scale = 0.5f;
 }
 
 const bool installed = [] {

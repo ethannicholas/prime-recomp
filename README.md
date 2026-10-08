@@ -201,6 +201,7 @@ changes view.
 | Z | Right grip |
 | L / R | Left / right trigger |
 | Start | Menu (left) |
+| D-pad (visors) | Hold left grip + left thumbstick |
 | *(flat screen / stereo, by hand)* | Left thumbstick click |
 
 `adb logcat -s prime` shows the app's log.
@@ -217,6 +218,7 @@ near_m 0.05              # near and far planes in metres
 far_m 1000
 hud_distance_m 4         # where the game's 2D elements hang, and how much of the view
 hud_scale 0.5            #   they fill
+foreground_scale 0.5     # how much nearer and smaller the arm cannon and visor are drawn
 eye_scale 1.4            # eye resolution, times what the headset recommends
 msaa 4                   # antialiasing samples per pixel in stereo
 theater_scale 3          # supersampling of the flat screen

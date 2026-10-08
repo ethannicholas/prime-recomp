@@ -71,7 +71,62 @@ written out):
   The search reads all of RAM, at most every two seconds while there is no manager; on this
   VM's software renderer the route reaches gameplay in about 12 minutes.
 
+## First session in the headset (2026-10-08)
+
+Played to the first room. Three faults, all addressed the same day:
+
+- **The arm cannon read as about twice its size.** Not the eye separation: the cannon is
+  modelled a unit long three units in front of the camera and a unit to the right (draws 4-7
+  of the first frame of play on the frigate, `GCN_DRAWLOG`), and the visor frame hangs 2.6-4.6
+  units out. A flat picture shows only their angular size; two eyes see the distance. The
+  world was not reported as wrong, so `units_per_metre` stays 1 and those layers are scaled
+  towards the eye instead: same angular size, half the distance and half the size
+  (`foreground_scale 0.5`). They are recognised by the depth band Prime confines them to,
+  below.
+- **The planet stood in front of nearer things.** Prime gives each layer its own slice of
+  the depth buffer through the viewport's z range (`CGraphics::SetDepthRange`); the bands seen
+  in one frame of play are sky 0.999-1 (10 draws), world 0.125-1 (740), layers at 1/32-1/8
+  (10) and 1/512-1/64 (54) not yet identified, and 0-1/512 (181), which holds the visor
+  frame, the arm cannon and the HUD. In the intro cinematic a 1/64-1/32 band appears as well.
+  The eye path
+  ignored the viewport's z, so the sky, modelled about 58 units out, was depth-tested there
+  and hid everything further away. The eye now honours the bands, and draws the sky at
+  infinity so its disparity agrees. See "Depth bands in an eye" in
+  `gcn-recomp/docs/graphics.md`.
+- **No D-pad**, which the visors need: holding the left grip turns the left thumbstick into
+  one.
+
+## Performance (2026-10-08)
+
+The intro cinematic was choppy, with the sound breaking up. Measured with `prime_bench`
+replaying `routes/new-game` on the headset (`GCN_REPLAY`), unpaced: the heaviest stretch of
+the cinematic ran at 38-50 fps on the CPU alone -- some 115,000 vertices and 21,000 draws a
+frame -- so the guest fell behind real time, and under the virtual clock that is slow motion
+and starved audio rather than dropped frames.
+
+`simpleperf` cannot record on a Quest (the shell is refused perf events), so
+`gcn-recomp/runtime/host_profile.cpp` samples with a profiling timer instead (`GCN_PROFILE`).
+Over the cinematic, all of it on the guest thread: the GX front end's transform and lighting
+about 35%, the recompiled game's code with its loads and stores most of the rest, and the
+paired-single quantised loads and stores about 10%. Two changes, both with byte-identical
+frames against the build before them (13 frames from 4000 to 10000 compared with `cmp`):
+
+- The vertex transform moved off the guest thread: draws are decoded as they arrive and
+  transformed after the frame is submitted, on two worker threads, from snapshots of the XF
+  state each draw saw.
+- The float paired-single formats are handled inline in the generated code, and the
+  integer ones look their scale up instead of calling `ldexpf`.
+
+The heaviest stretch now runs at 57-68 fps unpaced and first-person play on the frigate at
+about 95-100. That is only just enough for the cinematic: what is left on the guest thread
+there is vertex decoding (about 30%) and the game's own code. Specialised vertex decoders
+are the next step if it still stutters in the headset.
+
 ## Still to look at
+
+- **A short stretch of stereo before the intro cinematic.** On the `new-game` route the hook
+  answers stereo from frame 2280 (the camera manager appearing, first-person camera current)
+  to 2721 (the first cinematic camera). What is on screen then has not been looked at.
 
 - **The pause and map screens** keep the first-person camera current; whether they want
   theater, and what marks them, is open.
