@@ -7,7 +7,7 @@ The game's PowerPC executable is translated ahead of time into C, then compiled 
 against a runtime that stands in for the GameCube hardware (graphics, audio, DVD, controllers,
 memory card). The result is a native program that runs the original game logic without an
 emulator's CPU core. The recompiler and runtime come from
-[bluestorm-recomp](https://github.com/dragonnyxx/bluestorm-recomp), the same treatment of
+[bluestorm-recomp](https://github.com/ethannicholas/bluestorm-recomp), the same treatment of
 *Wave Race: Blue Storm*.
 
 > **This repository contains no game code or data.** You must supply your own disc image,

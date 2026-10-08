@@ -5,7 +5,7 @@
 // are left out of this target entirely (see CMakeLists), so it builds and runs
 // anywhere the recompiled code builds -- including an Android/arm64 device over adb,
 // which is how we judge whether a standalone headset build could sustain the game's
-// 30 fps before committing to an OpenGL ES port.
+// 60 fps before committing to an OpenGL ES port.
 //
 // Usage: prime_bench [--seconds=N] [--warmup=N] [path/to/game.iso]
 //
@@ -138,8 +138,8 @@ int main(int argc, char** argv) {
     if (warmed && elapsed > t_warmed) {
         const double sd = elapsed - t_warmed;
         const double fps = (frames - frames_warmed) / sd;
-        printf("steady state: %u frames in %.1f s = %.2f fps = %.0f%% of the game's 30 fps\n",
-               frames - frames_warmed, sd, fps, 100.0 * fps / 30.0);
+        printf("steady state: %u frames in %.1f s = %.2f fps = %.0f%% of the game's 60 fps\n",
+               frames - frames_warmed, sd, fps, 100.0 * fps / 60.0);
         printf("              %.0fk vertices/s\n", (verts - verts_warmed) / sd / 1000.0);
     } else {
         printf("steady state: not measured (warmup %ds was not shorter than the %ds run)\n",

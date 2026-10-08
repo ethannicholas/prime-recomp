@@ -274,7 +274,10 @@ void ax_process_cmdlist(uint32_t addr, uint16_t size) {
         case 0x0F: return;
         case 0x10: case 0x11: case 0x12: case 0x13: p += 4; break;
         default:
-            LOG(LOG_DSP, "AX: unknown command %04X", cmd);
+            // Metroid Prime does not run AX at all: its ucode is MusyX, whose mails this
+            // parser misreads as AX command lists (see docs/dev/audio.md). Say so once.
+            static int reported;
+            if (reported++ < 4) LOG(LOG_DSP, "AX: unknown command %04X (not an AX ucode?)", cmd);
             return;
         }
     }
