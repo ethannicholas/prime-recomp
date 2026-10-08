@@ -6,4 +6,5 @@ snapshots are deliberately not kept, since a card holds the game's save data, so
 assume the card the run starts with has no Metroid Prime save on it.
 
 - `new-game/` — title, *Start*, *New Game*, through the intro text into the opening cutscene.
-  Gameplay on the frigate begins on its own around frame 9000.
+  Gameplay on the frigate begins on its own around frame 9000. Recorded 2026-10-08 under the
+  virtual clock (a version 2 log), so it replays exactly.

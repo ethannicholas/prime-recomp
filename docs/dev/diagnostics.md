@@ -18,8 +18,18 @@ GCN_INPUT="1300:START:10,1700:A:10,2100:A:10,2500:A:10,2900:A:10"
 ```
 
 Title (press Start), *Start*, *New Game*, confirm, and through the intro text; the cutscene
-runs on its own and gameplay begins around frame 9000. The counts are loose because the menus
-fade on wall-clock time; a press that lands during a transition is lost.
+runs on its own and gameplay begins around frame 9000. Scripted presses count presented
+frames, which under the virtual clock are as repeatable as anything else, but a recorded log
+(keyed by pad poll) is the exact form; record one by replaying a script and keep that.
+
+## Idle loops
+
+`recomp/idle.txt` names the backward branches where this game only waits for an interrupt:
+the SDK scheduler's spin in `SelectThread` and the frame wait in `CGraphics::EndScene`
+(a loop around `OSYieldThread`). The runtime jumps guest time to the next event there.
+If a new wait loop turns up -- the symptom is the host at 100% of a core and `--sample`
+showing the main thread in the same function frame after frame -- find its back-edge in the
+generated C and add it.
 
 ## Naming guest code
 

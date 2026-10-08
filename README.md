@@ -153,5 +153,5 @@ Escape quits.
   specific to this game.
 - `analysis/`: function and data layout of `main.dol`, in decomp-toolkit's format.
 - `recomp/`: the tables that steer the recompiler for this game (`hle.txt`,
-  `special_calls.txt`, `names.txt`, `patches.txt`).
+  `special_calls.txt`, `idle.txt`, `names.txt`, `patches.txt`).
 - `docs/dev/`: working notes.

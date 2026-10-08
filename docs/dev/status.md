@@ -25,9 +25,11 @@ Generic 1.1, and its VMware SVGA adapter has no D3D12 either), so it renders thr
 llvmpipe: MSYS2's `mingw-w64-clang-aarch64-mesa` 26.2.4 with its DLL dependencies copied
 beside `prime.exe`, and `GALLIUM_DRIVER=llvmpipe`. mesa-dist-win's MSVC release ships no
 ARM64 build. That software path runs at about 22 fps (5,400 frames in 240 s), against 60 on
-real hardware; it is for checking the port, not for playing.
+real hardware; it is for checking the port, not for playing. (Since the virtual clock, a
+host that slow runs the game in slow motion rather than dropping frames.)
 
-Reached without a controller by replaying a recorded route:
+Reached without a controller by replaying a recorded route (exactly, since 2026-10-08:
+see "Replay is deterministic" below):
 
 ```
 ./build/prime --replay=routes/new-game
@@ -38,6 +40,22 @@ Every run records its input to `saves/inputs/<timestamp>/`; see `routes/README.m
 
 The recompiler and runtime moved to the `gcn-recomp` submodule on 2026-10-07; this repository
 now holds only the symbol file, the HLE tables, routes and notes.
+
+## Replay is deterministic (2026-10-08)
+
+Replays drifted by hundreds of frames over a few minutes. Two things in this game made that
+inevitable under a wall-clock time base: the simulation step is the measured interval
+between frames (`UpdateTicks` reads `OSGetTime`), and the frame wait is a loop in
+`CGraphics::EndScene` calling `OSYieldThread` until the retrace callback flips a flag, so
+any host hitch changed both the step and the number of ticks before the next frame. The
+shared runtime now runs the guest on a virtual clock that advances with the guest's own
+execution (`gcn-recomp/docs/diagnostics.md`, "The clock"), and the input log is keyed by
+pad poll rather than presented frame, so a replay follows the recording instruction for
+instruction. Prime's two wait loops are listed in `recomp/idle.txt` (the SDK scheduler's
+spin and the `EndScene` yield loop); the runtime skips guest time to the next event there
+instead of iterating, which is also what keeps the host from burning a core per frame.
+Logs recorded before this (version 1 in their header, `routes/new-game` among them) still
+play, approximately.
 
 ## Known broken
 
@@ -63,6 +81,23 @@ now holds only the symbol file, the HLE tables, routes and notes.
   (`GCN_SLIVER_RATIO=0.03 GCN_DRAWLOG=<frame>`) lists them. Draining the write-gather
   buffer at more points (sync, pointer reads, idle) was tried as a cause and broke the
   frame protocol instead; see the note in `gcn-recomp/runtime/gx/fifo.cpp`.
+- **Crash in `CGameAllocator::Alloc` about twelve minutes into the frigate (2026-10-08).**
+  Seen once, in live play: a guest load from a wild address while `FindFreeBlock` walked
+  the allocator's free-list bins during `CResFactory::SLoadingData::PumpDecompression`,
+  i.e. a free-block link had been overwritten with a value whose low bits were around
+  `9A7EC80` (the fault was at that plus 16, the block's first field read). So it is heap
+  corruption, found by the allocator, not caused by it. Four replays of that run's input
+  log did not reproduce it, because the log was recorded under the host clock and the
+  game's timestep comes from the time base (`CGameArchitectureSupport::UpdateTicks` reads
+  `OSGetTime`), so no replay followed the same route; that is what led to the virtual
+  clock below. Next time it happens the log will replay exactly: run it on a diagnostic
+  build (`cmake -B build-watch -DGCN_TRACE_CALLS=ON -DCMAKE_C_FLAGS=-DGCN_WATCH
+  -DCMAKE_CXX_FLAGS=-DGCN_WATCH`, same toolchain flags as `build.sh`) to get the guest
+  call stack and registers, read the corrupted link's address off the dump, and replay
+  again with `GCN_WATCH_ADDR=<that>` to catch the writer. Audited and cleared on the
+  runtime side meanwhile: DVD reads (all 32-byte aligned and clamped), the locked-cache
+  DMA field decode (matches the SDK's `LCLoadBlocks`), ARAM DMA, and the write-gather
+  line writes.
 - **Grey letterbox bars on the gunship close-up.** The cinematic's bars should be black; in
   the close-up of the ship's underside they come out mid-grey. Not investigated.
 - **Retro's textures are stored bottom-up.** A dumped texture appears vertically flipped;

@@ -1,0 +1,4 @@
+# Backward branches where the guest is only waiting for an interrupt, so the runtime may
+# skip guest time to the next event instead of iterating. See gcn-recomp recomp/recomp.py.
+80385A30 SelectThread
+8030C54C CGraphics::EndScene  # the frame wait: OSYieldThread until the retrace callback flips the flag
