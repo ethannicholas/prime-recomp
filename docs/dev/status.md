@@ -102,9 +102,11 @@ play, approximately.
   the close-up of the ship's underside they come out mid-grey. Not investigated.
 - **Retro's textures are stored bottom-up.** A dumped texture appears vertically flipped;
   the models' UVs undo it, so this is not a bug. Do not "fix" it in the decoder.
-- **No audio.** Metroid Prime runs the MusyX DSP microcode, not AX. The DSP HLE inherited from
-  Blue Storm boots whatever ucode it is given and then parses mails as AX, which happens to
-  keep the game running but produces nothing. See `audio.md`.
+- ~~No audio~~ Fixed 2026-10-08. The belief that Prime runs a MusyX ucode the runtime does
+  not emulate was wrong: the ucode is Nintendo's AX (hash 4E8A8B21, the one Dolphin's HLE
+  handles), and MusyX is the CPU-side driver. The AX HLE had the length of one command
+  wrong and skipped the others MusyX uses, so every command list was abandoned at its
+  second command. See `audio.md`.
 - **NES Metroid (the Fusion-link bonus) cannot run.** It is a REL module (`NESemuP.rel`)
   loaded at runtime; the recompiler only translates `main.dol`, so entering it will end in
   `call_indirect: no function at …`.
@@ -122,7 +124,6 @@ play, approximately.
 
 ## Next milestones
 
-1. MusyX DSP HLE, enough to drive the movie player and produce sound.
-2. Title and menu videos.
-3. A play-through of the frigate to the crash on Tallon IV, watching for faults.
-4. VR.
+1. A play-through of the frigate to the crash on Tallon IV, watching for faults; listen for
+   what the AX HLE still gets wrong (ITD, the polyphase resampler).
+2. VR.
