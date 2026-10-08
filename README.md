@@ -1,7 +1,7 @@
 # prime-recomp
 
 A static recompilation of *Metroid Prime* (Nintendo GameCube, 2002) to native code, for
-macOS, with a VR port as the goal.
+macOS and Windows, with a VR port as the goal.
 
 The game's PowerPC executable is translated ahead of time into C, then compiled and linked
 against a runtime that stands in for the GameCube hardware (graphics, audio, DVD, controllers,
@@ -60,6 +60,21 @@ With Homebrew:
 brew install cmake ninja sdl2 python
 ```
 
+**Windows (x64 or ARM64)**
+
+- Clang, CMake 3.20+, Ninja, Python 3
+- The Windows SDK and MSVC headers/libraries (the "Desktop development with C++" workload of
+  Visual Studio or the standalone Build Tools): clang targets the MSVC ABI and uses them
+- An OpenGL 3.3 driver (see [Graphics drivers](#graphics-drivers))
+
+With [winget](https://learn.microsoft.com/windows/package-manager/):
+
+```powershell
+winget install Kitware.CMake Ninja-build.Ninja Python.Python.3.13 LLVM.LLVM Microsoft.VisualStudio.2022.BuildTools
+```
+
+SDL2 is built from source as part of the build, since there are no prebuilt ARM64 binaries.
+
 ### 1. Provide your game image
 
 Dump your disc, then place the image in `rom/` as an uncompressed **`.iso`** or a **`.ciso`**:
@@ -83,7 +98,11 @@ pass `-DGAME_ISO=/path/to/game.iso` when configuring.
 ### 2. Build
 
 ```sh
-./build.sh
+./build.sh          # macOS
+```
+
+```powershell
+.\build.ps1         # Windows
 ```
 
 The first build fetches the `gcn-recomp` submodule if a plain `git clone` left it empty
@@ -96,10 +115,22 @@ The first build fetches the `gcn-recomp` submodule if a plain `git clone` left i
 ./build/prime path/to/game.iso
 ```
 
+On Windows the executable is `build\prime.exe`.
+
 Run it from the repository root: the memory card is created in `saves/` relative to the
 current directory. Every run also records the controller input to `saves/inputs/<timestamp>/`
 so that a route can be played back with `--replay=<that directory>`; `--no-input-log` turns
 that off.
+
+### Graphics drivers
+
+The renderer needs an OpenGL 3.3 core profile. Any current GPU driver provides it. A Windows
+virtual machine or a GPU with no OpenGL driver offers only Windows' built-in OpenGL 1.1, and
+the game stops with `OpenGL 1.1 is too old`. In that case, put Mesa's software renderer
+beside `prime.exe`: `opengl32.dll`, `libgallium_wgl.dll` and the DLLs they load, from
+[mesa-dist-win](https://github.com/pal1000/mesa-dist-win/releases) on x64 or MSYS2's
+`mingw-w64-clang-aarch64-mesa` package on ARM64. Set `GALLIUM_DRIVER=llvmpipe` to skip its
+attempt to find a Vulkan device first. It is slow, but it renders correctly.
 
 ## Controls
 

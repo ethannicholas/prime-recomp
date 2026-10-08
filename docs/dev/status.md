@@ -17,6 +17,16 @@ Built and run on an Apple Silicon Mac from the Rev 2 (v1.02) USA disc as a CISO:
   renders in full: the gunship, Samus's model and arm cannon, the frigate, the landing.
 - `prime_bench` reports the guest running at the game's full 60 fps with room to spare.
 
+Also built and run on Windows 11 ARM64 (2026-10-08), in a VMware VM, with the same clang, CMake
+and Ninja setup as Blue Storm and no source changes: `.\build.ps1`, then
+`build\prime.exe --replay=routes/new-game` plays through the menus and the intro into the
+frigate, rendering as on the Mac, hairlines included. The VM has no OpenGL driver (only GDI
+Generic 1.1, and its VMware SVGA adapter has no D3D12 either), so it renders through Mesa's
+llvmpipe: MSYS2's `mingw-w64-clang-aarch64-mesa` 26.2.4 with its DLL dependencies copied
+beside `prime.exe`, and `GALLIUM_DRIVER=llvmpipe`. mesa-dist-win's MSVC release ships no
+ARM64 build. That software path runs at about 22 fps (5,400 frames in 240 s), against 60 on
+real hardware; it is for checking the port, not for playing.
+
 Reached without a controller by replaying a recorded route:
 
 ```
@@ -72,8 +82,8 @@ now holds only the symbol file, the HLE tables, routes and notes.
 - VR. See `vr.md` for the plan. Unlike Wave Race, Prime is first person: the game's camera
   is the player's head, so stereo is a per-eye projection and view on the existing GX
   transform, not a reconstruction of where the viewer should be.
-- Windows and Quest builds. The CMake file still carries the Windows SDL path from Blue
-  Storm but nothing here has been built there.
+- Quest build. Blue Storm's Android frontend (OpenXR NativeActivity, AAudio, APK packaging
+  without Gradle) is the starting point.
 
 ## Next milestones
 
