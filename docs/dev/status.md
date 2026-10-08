@@ -81,24 +81,23 @@ play, approximately.
   (`GCN_SLIVER_RATIO=0.03 GCN_DRAWLOG=<frame>`) lists them. Draining the write-gather
   buffer at more points (sync, pointer reads, idle) was tried as a cause and broke the
   frame protocol instead; see the note in `gcn-recomp/runtime/gx/fifo.cpp`.
-- **Crash in `CGameAllocator::Alloc` about twelve minutes into the frigate (2026-10-08).**
-  Seen once, in live play: a guest load from a wild address while `FindFreeBlock` walked
-  the allocator's free-list bins during `CResFactory::SLoadingData::PumpDecompression`,
-  i.e. a free-block link had been overwritten with a value whose low bits were around
-  `9A7EC80` (the fault was at that plus 16, the block's first field read). So it is heap
-  corruption, found by the allocator, not caused by it. Four replays of that run's input
-  log did not reproduce it, because the log was recorded under the host clock and the
-  game's timestep comes from the time base (`CGameArchitectureSupport::UpdateTicks` reads
-  `OSGetTime`), so no replay followed the same route; that is what led to the virtual
-  clock below. Next time it happens the log will replay exactly: replay it on a build with
-  `-DGCN_GUEST_CHECKS=ON` (`src/heap_check.cpp` walks the whole heap at every poll, DMA
-  and frame, see `diagnostics.md`), which reports the corrupted word within a fraction of
-  a frame of the write; then replay once more on a `-DGCN_WATCH` build (`-DCMAKE_C_FLAGS=
-  -DGCN_WATCH -DCMAKE_CXX_FLAGS=-DGCN_WATCH -DGCN_TRACE_CALLS=ON`, same toolchain flags
-  as `build.sh`) with `GCN_WATCH_ADDR=<that word>` to name the store. Audited and cleared on the
-  runtime side meanwhile: DVD reads (all 32-byte aligned and clamped), the locked-cache
-  DMA field decode (matches the SDK's `LCLoadBlocks`), ARAM DMA, and the write-gather
-  line writes.
+- ~~Crash in `CGameAllocator::Alloc` about twelve minutes into the frigate~~ Fixed
+  2026-10-08, the same day it was seen. Heap corruption, found by the allocator: a free
+  block's header had been zeroed. Four replays of the run's log could not reproduce it
+  (the game's timestep comes from the time base, so no replay followed the same route
+  under the host clock), which led to the virtual clock below; the second occurrence,
+  on a checked build (`src/heap_check.cpp`, see `diagnostics.md`), was reported within a
+  frame of the write and its log replayed to the same instruction. The watch replay named
+  the writer: the SDK's `GXRestoreWriteGatherPipe`, as emulated. Prime streams each
+  CPU-skinned model's vertices through the write-gather pipe redirected into a heap block
+  sized exactly for them; the SDK then pads the pipe with 31 zero bytes, waits for it to
+  report empty and rewrites WPAR before repointing the PI FIFO. The runtime wrote those
+  pending bytes out as a partial line at the PI register write, straight over the next
+  block's header. On the hardware the WPAR write empties the buffer, and now it does
+  here too (`gp_reset` in `gcn-recomp/runtime/gx/fifo.cpp`). The previous belief, from
+  the missing-models fix, was that the pending line should be written out before the
+  pointers move; it should be discarded, and the models render identically either way
+  (bit-identical frame dumps over 200 seconds).
 - **Grey letterbox bars on the gunship close-up.** The cinematic's bars should be black; in
   the close-up of the ship's underside they come out mid-grey. Not investigated.
 - **Retro's textures are stored bottom-up.** A dumped texture appears vertically flipped;
