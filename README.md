@@ -6,9 +6,10 @@ macOS, with a VR port as the goal.
 The game's PowerPC executable is translated ahead of time into C, then compiled and linked
 against a runtime that stands in for the GameCube hardware (graphics, audio, DVD, controllers,
 memory card). The result is a native program that runs the original game logic without an
-emulator's CPU core. The recompiler and runtime come from
-[bluestorm-recomp](https://github.com/ethannicholas/bluestorm-recomp), the same treatment of
-*Wave Race: Blue Storm*.
+emulator's CPU core. The recompiler and runtime are
+[gcn-recomp](https://github.com/ethannicholas/gcn-recomp), shared with
+[bluestorm-recomp](https://github.com/ethannicholas/bluestorm-recomp), where they were first
+written for *Wave Race: Blue Storm*.
 
 > **This repository contains no game code or data.** You must supply your own disc image,
 > dumped from a copy of the game that you own. The build process reads the executable out of
@@ -85,6 +86,9 @@ pass `-DGAME_ISO=/path/to/game.iso` when configuring.
 ./build.sh
 ```
 
+The first build fetches the `gcn-recomp` submodule if a plain `git clone` left it empty
+(`git clone --recursive` avoids that).
+
 ### 3. Run
 
 ```sh
@@ -93,7 +97,9 @@ pass `-DGAME_ISO=/path/to/game.iso` when configuring.
 ```
 
 Run it from the repository root: the memory card is created in `saves/` relative to the
-current directory.
+current directory. Every run also records the controller input to `saves/inputs/<timestamp>/`
+so that a route can be played back with `--replay=<that directory>`; `--no-input-log` turns
+that off.
 
 ## Controls
 
@@ -111,10 +117,10 @@ Escape quits.
 
 ## Repository layout
 
-- `recomp/`: the PowerPC → C recompiler (`recomp.py`, `ppc.py`) and the tables that steer
-  it (`hle.txt`, `special_calls.txt`, `patches.txt`).
-- `runtime/`: the GameCube in software — CPU helpers, OS context switching, hardware
-  registers (`hw/`), the GX graphics pipeline (`gx/`), audio, and the SDL frontend.
+- `gcn-recomp/`: the shared recompiler, GameCube runtime, renderer and frontends, as a
+  submodule of [gcn-recomp](https://github.com/ethannicholas/gcn-recomp). Nothing in it is
+  specific to this game.
 - `analysis/`: function and data layout of `main.dol`, in decomp-toolkit's format.
+- `recomp/`: the tables that steer the recompiler for this game (`hle.txt`,
+  `special_calls.txt`, `names.txt`, `patches.txt`).
 - `docs/dev/`: working notes.
-- `tools/fetch_dtk.sh`: downloads decomp-toolkit, used to regenerate `analysis/`.

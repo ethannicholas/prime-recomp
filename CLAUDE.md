@@ -1,8 +1,11 @@
 # Working notes for this repository
 
-This is a static recompilation of *Metroid Prime* (GameCube), with a VR port as the goal. It
-follows the structure and rules of `~/Source/bluestorm-recomp` (Wave Race: Blue Storm), from
-which the recompiler and the GameCube runtime were taken.
+This is a static recompilation of *Metroid Prime* (GameCube), with a VR port as the goal. The
+recompiler, runtime, renderer and frontends are the `gcn-recomp` submodule (canonical checkout
+at `~/Source/gcn-recomp`), shared with `~/Source/bluestorm-recomp`. Fix shared things there:
+commit in the submodule, push to the canonical repo, then commit the new pointer here. Only
+what is specific to this game -- `analysis/`, the `recomp/*.txt` tables, `docs/dev/` -- lives
+in this repository.
 
 **The repository must contain no game code or data.** Only original source (recompiler,
 runtime, renderer) and metadata about code layout (`analysis/`). The disc image lives in
@@ -19,9 +22,11 @@ file for its area:
 
 - `docs/dev/status.md` — how far the game gets, what is known to be broken, and what the next
   milestones are.
-- `docs/dev/diagnostics.md` — `MP_*` environment variables, scripted input, the benchmark, the
-  guest call stack, and how `OSPanic` is reported.
-- `docs/dev/graphics.md` — GL profile requirements and the shader cache.
+- `docs/dev/diagnostics.md` — routes through the game and other Prime-specific diagnostics;
+  the shared tooling (`GCN_*` variables, input logging and replay, the benchmark) is
+  documented in `gcn-recomp/docs/diagnostics.md`.
+- `docs/dev/graphics.md` — Prime-specific rendering observations; the renderer itself is
+  documented in `gcn-recomp/docs/graphics.md`.
 - `docs/dev/audio.md` — the DSP: Metroid Prime uses MusyX, not AX, so the AX HLE inherited
   from Blue Storm does not apply.
 - `docs/dev/vr.md` — the VR plan, once there is one.

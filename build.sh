@@ -2,6 +2,10 @@
 # Configure (first run) and build. Extra arguments are passed to ninja.
 set -e
 cd "$(dirname "$0")"
+# The shared recompiler and runtime are a submodule.
+if [ ! -f gcn-recomp/CMakeLists.txt ]; then
+  git submodule update --init
+fi
 # On macOS, prefer the full Xcode toolchain when installed: some Command Line Tools
 # installs ship an incomplete libc++ header set.
 if [ "$(uname -s)" = "Darwin" ] && [ -d /Applications/Xcode.app ]; then

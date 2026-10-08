@@ -1,0 +1,16 @@
+# gcn-recomp input log v1
+# game GM8E01  started 2026-10-07T23:48:42
+# frame chan connected buttons stick_x stick_y cstick_x cstick_y trig_l trig_r
+# (hex; each line is that channel's state from that presented frame on)
+0 0 1 0000 80 80 80 80 00 00
+0 1 0 0000 80 80 80 80 00 00
+0 2 0 0000 80 80 80 80 00 00
+0 3 0 0000 80 80 80 80 00 00
+1300 0 1 1000 80 80 80 80 00 00
+1310 0 1 0000 80 80 80 80 00 00
+1700 0 1 0100 80 80 80 80 00 00
+1710 0 1 0000 80 80 80 80 00 00
+2100 0 1 0100 80 80 80 80 00 00
+2110 0 1 0000 80 80 80 80 00 00
+2500 0 1 0100 80 80 80 80 00 00
+2510 0 1 0000 80 80 80 80 00 00

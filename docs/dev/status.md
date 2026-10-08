@@ -16,18 +16,24 @@ Built and run on an Apple Silicon Mac from the Rev 2 (v1.02) USA disc as a CISO:
   world geometry, lighting and the planet outside all drawn correctly.
 - `prime_bench` reports the guest running at the game's full 60 fps with room to spare.
 
-Reached without a controller by scripted input (see `diagnostics.md`):
+Reached without a controller by replaying a recorded route:
 
 ```
-MP_INPUT="1300:START:10,1700:A:10,2100:A:10,2500:A:10,2900:A:10" ./build/prime
+./build/prime --replay=routes/new-game
 ```
+
+Every run records its input to `saves/inputs/<timestamp>/`; see `routes/README.md` and
+`gcn-recomp/docs/diagnostics.md`.
+
+The recompiler and runtime moved to the `gcn-recomp` submodule on 2026-10-07; this repository
+now holds only the symbol file, the HLE tables, routes and notes.
 
 ## Known broken
 
 - **Main menu text is doubled and striped.** Each menu entry is drawn as a sharp white copy
   plus a dimmer copy offset a few pixels right and down, and "MAIN MENU" has horizontal
   banding; the "A Select / B Back" prompts are clean. The font texture itself decodes
-  correctly (`MP_TEXDUMP`, texture 1610, CI4 256x128), and the "[ PRESS START ]" texture
+  correctly (`GCN_TEXDUMP`, texture 1610, CI4 256x128), and the "[ PRESS START ]" texture
   (CMPR 256x32) does too, so the fault is in the draw, not the decode. The menu frame has
   about thirty single-draw states all on the one font texture. It may partly be the game's
   own drop-shadow and slide-in animation; a Dolphin reference capture was attempted and

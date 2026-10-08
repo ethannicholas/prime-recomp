@@ -15,4 +15,4 @@ title and menu THP videos most likely pace on audio too; see `status.md`.
 
 The host side -- the mix in `runtime/audio.cpp` resampling the AI DMA stream to 48 kHz and
 the SDL device in `audio_sdl.cpp` -- is unchanged from Blue Storm and will carry whatever the
-DSP HLE eventually produces. `MP_WAV=<path>` records what the device was handed.
+DSP HLE eventually produces. `GCN_WAV=<path>` records what the device was handed.
