@@ -13,7 +13,8 @@ Built and run on an Apple Silicon Mac from the Rev 2 (v1.02) USA disc as a CISO:
   combiner shows as solid green).
 - *New Game* → the intro text → the opening cutscene (Tallon IV from orbit, the approach to
   the Frigate Orpheon) → first-person gameplay on the frigate, with the combat visor HUD,
-  world geometry, lighting and the planet outside all drawn correctly.
+  world geometry, lighting and the planet outside all drawn correctly. The intro cinematic
+  renders in full: the gunship, Samus's model and arm cannon, the frigate, the landing.
 - `prime_bench` reports the guest running at the game's full 60 fps with room to spare.
 
 Reached without a controller by replaying a recorded route:
@@ -38,6 +39,22 @@ now holds only the symbol file, the HLE tables, routes and notes.
   about thirty single-draw states all on the one font texture. It may partly be the game's
   own drop-shadow and slide-in animation; a Dolphin reference capture was attempted and
   did not get as far as booting (see `diagnostics.md`), so this is unconfirmed.
+- ~~Missing gunship and Samus in the intro~~ Fixed 2026-10-08. Prime streams CPU-skinned
+  vertices through the write-gather pipe redirected into a vertex buffer; the PI FIFO end
+  register dropped the 64 MB bit the SDK sets for that, so the stream wrapped to address 0.
+  Also fixed on the way: ARAM addresses wrapped, so the SDK's size probe found expansion ARAM
+  that is not there; and a partial gather line prepended to the redirected stream.
+- **Thin orange lines across the frigate exterior and hangar.** Still open. They are hairline
+  triangles in the frigate's geometry whose two near vertices sit a few float ulps apart
+  (the game's own vertex data, as `GCN_VTXLOG` shows), plus particle quads with one corner
+  displaced. Snapping vertices to a sixteenth-pixel grid in the shader, as the hardware's
+  rasteriser does, did not remove them, so it is not sub-pixel precision; the displaced
+  corners point at a vertex-stream fault not yet found. The draw log's sliver finder
+  (`GCN_SLIVER_RATIO=0.03 GCN_DRAWLOG=<frame>`) lists them. Draining the write-gather
+  buffer at more points (sync, pointer reads, idle) was tried as a cause and broke the
+  frame protocol instead; see the note in `gcn-recomp/runtime/gx/fifo.cpp`.
+- **Grey letterbox bars on the gunship close-up.** The cinematic's bars should be black; in
+  the close-up of the ship's underside they come out mid-grey. Not investigated.
 - **Retro's textures are stored bottom-up.** A dumped texture appears vertically flipped;
   the models' UVs undo it, so this is not a bug. Do not "fix" it in the decoder.
 - **No audio.** Metroid Prime runs the MusyX DSP microcode, not AX. The DSP HLE inherited from
