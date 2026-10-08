@@ -117,10 +117,31 @@ frames against the build before them (13 frames from 4000 to 10000 compared with
 - The float paired-single formats are handled inline in the generated code, and the
   integer ones look their scale up instead of calling `ldexpf`.
 
-The heaviest stretch now runs at 57-68 fps unpaced and first-person play on the frigate at
-about 95-100. That is only just enough for the cinematic: what is left on the guest thread
-there is vertex decoding (about 30%) and the game's own code. Specialised vertex decoders
-are the next step if it still stutters in the headset.
+That left the heaviest stretch at 57-68 fps unpaced, only just enough. A second round the
+same day, measured the same way (`GCN_REPLAY` through the intro, the 28-46 s window of the
+benchmark, mean and minimum frames a second; the same build varies by about 3 fps between
+runs, so each was run at least twice):
+
+| Change | Mean | Minimum |
+|---|---|---|
+| after the first round | 61.8 | 55.9 |
+| vertex decoding by format-specialised readers; matrix bookkeeping cached | 62.1 | 55.9 |
+| XF snapshots copied a sixteen-word block at a time instead of a region | 62.7 | 55.9 |
+| `-march=armv8.2-a -mtune=cortex-a78c` | 63.1 | 57.9 |
+| stores to the write-gather pipe appended inline, not through the MMIO decode | 65.4 | 61.0 |
+| prefetching each draw's array elements a few vertices ahead | 61.4 | 57.8 |
+| (prefetching taken out again) | | |
+| **the GX front end on a thread of its own** | **102-104** | **68-70** |
+
+All with frames byte-identical to the build before them. The first three barely moved the
+number because the decode is bound by memory latency -- the hottest lines were the loads
+from the game's vertex arrays, scattered through RAM -- and the core already overlapped
+those misses: asking for them early only added work. What was left on the guest thread was
+about half GX front end and half the game's own code (Retro's CPU skinning,
+`PSMTXROMultS16VecArrayGathered`, stores every vertex through the gather pipe, which is what
+the inline store helps). Moving the front end to its own thread, with the guest keeping the
+frame protocol (see "Threads" in `gcn-recomp/docs/graphics.md`), halved the guest thread's
+work; the four threads now share a frame about evenly.
 
 ## Still to look at
 

@@ -52,7 +52,11 @@ if (-not (Test-Path "$buildDir/build.ninja")) {
         "-DANDROID_PLATFORM=android-$ApiLevel" `
         "-DANDROID_STL=c++_static" `
         "-DGCN_BENCH_ONLY=ON" `
-        "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+        "-DCMAKE_BUILD_TYPE=RelWithDebInfo" `
+        "-DCMAKE_C_FLAGS=-march=armv8.2-a -mtune=cortex-a78c" `
+        "-DCMAKE_CXX_FLAGS=-march=armv8.2-a -mtune=cortex-a78c"
+    # Tuned for the Quest 3's cores (all Cortex-A78C) without using anything past ARMv8.2,
+    # which a Quest 2 has too. Worth a few per cent in the intro; see docs/dev/vr.md.
     if ($LASTEXITCODE -ne 0) { throw "cmake configure failed" }
 }
 ninja -C $buildDir
