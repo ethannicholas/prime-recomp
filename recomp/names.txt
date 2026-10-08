@@ -1,0 +1,2 @@
+# addr name  -- functions named by hand, overriding analysis/symbols.txt (none needed:
+# the symbol file names every function)
