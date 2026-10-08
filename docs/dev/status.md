@@ -98,6 +98,20 @@ play, approximately.
   the missing-models fix, was that the pending line should be written out before the
   pointers move; it should be discarded, and the models render identically either way
   (bit-identical frame dumps over 200 seconds).
+- ~~Save stations replenish energy but never offer to save~~ Fixed 2026-10-08. The card
+  itself was fine: the directory held the save made at *New Game*, and the in-game
+  attempt never sent the card a single command. The gate is in the save station's script
+  message handler (`CScriptSpecialFunction::AcceptScriptMsg`, the `SaveStation` case):
+  it only defers the state transition to the save screen when the card serial the game
+  recorded at start (`CGameState`, the 64-bit value at +0x210) is nonzero; otherwise it
+  sends the script the no-save state, which plays the "energy replenished" message on its
+  own. The serial is `CARDGetSerialNo`, the XOR of the card header's 32 serial bytes, and
+  the runtime formatted its card with a format time of zero, which makes those bytes all
+  zero. The card is now formatted with a real serial (`write_serial` in
+  `gcn-recomp/runtime/hw/memcard.cpp`, scrambled the way the CARD library's `VerifyID`
+  checks) and a card found with a zero serial gets one when loaded, keeping its files.
+  The old `saves/memcard_a.raw` therefore still works. Not yet confirmed at a save station
+  in play; the mount and file read of the existing save were checked by replay.
 - **Grey letterbox bars on the gunship close-up.** The cinematic's bars should be black; in
   the close-up of the ship's underside they come out mid-grey. Not investigated.
 - **Retro's textures are stored bottom-up.** A dumped texture appears vertically flipped;
