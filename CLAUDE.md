@@ -4,8 +4,11 @@ This is a static recompilation of *Metroid Prime* (GameCube), with a VR port as 
 recompiler, runtime, renderer and frontends are the `gcn-recomp` submodule (canonical checkout
 at `~/Source/gcn-recomp`), shared with `~/Source/bluestorm-recomp`. Fix shared things there:
 commit in the submodule, push to the canonical repo, then commit the new pointer here. Only
-what is specific to this game -- `analysis/`, the `recomp/*.txt` tables, `docs/dev/` -- lives
-in this repository.
+what is specific to this game -- `analysis/`, the `recomp/*.txt` tables, `src/` (the game's
+hooks), `docs/dev/` -- lives in this repository. Anything Prime-specific a shared mechanism
+needs -- a threshold, a band, an address -- goes in a setting or hook that `src/` supplies,
+never in gcn-recomp; `gcn-recomp/tools/check_generic.py` enforces the names part of that
+after every edit (`.claude/settings.json`) and at commit in the submodule.
 
 **The repository must contain no game code or data.** Only original source (recompiler,
 runtime, renderer) and metadata about code layout (`analysis/`). The disc image lives in

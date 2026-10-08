@@ -108,10 +108,17 @@ void config_defaults(VrConfig& c) {
     // that are a few hundred metres across.
     c.near_m = 0.05f;
     c.far_m = 1000.0f;
-    // The arm cannon and the visor are modelled about three units out (the cannon is a
-    // unit long, three ahead and one to the right, in the first frame of play on the
-    // frigate), and in stereo read as twice their size. Prime confines them to the front of
-    // the depth buffer, which is what the renderer's foreground scaling keys on.
+    // Prime gives each layer its own band of the depth buffer through the viewport's z
+    // range (CGraphics::SetDepthRange). In one frame of play on the frigate: the sky in
+    // 0.999-1, the world in 0.125-1, and nearer layers below that, the visor frame, the arm
+    // cannon and the HUD in 0-1/512. The sky is modelled about 58 units out around the
+    // camera, so it is drawn at infinity instead. The arm cannon and the visor are modelled
+    // about three units out (the cannon is a unit long, three ahead and one to the right)
+    // and in stereo read as twice their size, so everything nearer than the world is drawn
+    // at half the distance and half the size, at the same angular size.
+    // See docs/dev/vr.md.
+    c.background_band = 0.99f;
+    c.foreground_band = 0.5f;
     c.foreground_scale = 0.5f;
 }
 
