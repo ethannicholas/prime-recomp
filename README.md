@@ -146,6 +146,84 @@ attempt to find a Vulkan device first. It is slow, but it renders correctly.
 
 Escape quits.
 
+## Running on a Quest 3
+
+Early: the app builds and installs, but has not yet been played in the headset.
+
+The Android build and packaging scripts are PowerShell, so these steps are written for a
+Windows PC.
+
+### Requirements
+
+On the PC, besides CMake, Ninja and Python as for the desktop build:
+
+- [Android NDK](https://developer.android.com/ndk/downloads), unpacked to
+  `%LOCALAPPDATA%\Android\Sdk\ndk\<version>\`
+- [platform-tools](https://developer.android.com/tools/releases/platform-tools) (for `adb`),
+  unpacked to `%LOCALAPPDATA%\Android\Sdk\platform-tools\`
+- The Android SDK's `build-tools;34.0.0` and `platforms;android-34`, installed with
+  `sdkmanager` from the
+  [command-line tools](https://developer.android.com/studio#command-line-tools-only)
+  (run `sdkmanager --licenses` first), so that they land under `%LOCALAPPDATA%\Android\Sdk\`
+- A JDK, for signing the APK: `winget install Microsoft.OpenJDK.21`
+
+On the headset, enable
+[developer mode](https://developer.oculus.com/documentation/native/android/mobile-device-setup/),
+connect it over USB, put it on, and accept the *Allow USB debugging* prompt. `adb devices`
+should list it as `device`.
+
+### Build and install
+
+With your disc image in `rom/`:
+
+```powershell
+.\build-android.ps1          # cross-compiles libprime.so for arm64
+.\package-apk.ps1 -Install   # packages the APK, installs it, and pushes the disc image
+```
+
+The disc image is not part of the APK. It is copied to the app's data directory on the
+headset, `/sdcard/Android/data/com.example.prime/files/`, which takes a few minutes the first
+time. The memory card and the shader cache live there too, and survive reinstalling.
+
+### Playing
+
+The app appears under **Library → Unknown Sources → Metroid Prime**. Menus, cinematics and
+the morph ball are shown on a flat screen in front of you; first-person play switches to
+stereo 3D by itself. Clicking the left thumbstick switches by hand, until the game next
+changes view.
+
+| GameCube | Touch controller |
+|---|---|
+| Control stick | Left thumbstick |
+| C stick | Right thumbstick |
+| A / B | A / B (right) |
+| X / Y | X / Y (left) |
+| Z | Right grip |
+| L / R | Left / right trigger |
+| Start | Menu (left) |
+| *(flat screen / stereo, by hand)* | Left thumbstick click |
+
+`adb logcat -s prime` shows the app's log.
+
+### Tuning the VR view
+
+Settings are read at startup from `/sdcard/Android/data/com.example.prime/files/vr.txt`, so
+they can be changed with `adb push` between runs. The file is optional; every key has a
+default. One `key value` per line, `#` starts a comment:
+
+```
+units_per_metre 1        # game units per real metre: sets the apparent size of the world
+near_m 0.05              # near and far planes in metres
+far_m 1000
+hud_distance_m 4         # where the game's 2D elements hang, and how much of the view
+hud_scale 0.5            #   they fill
+eye_scale 1.4            # eye resolution, times what the headset recommends
+msaa 4                   # antialiasing samples per pixel in stereo
+theater_scale 3          # supersampling of the flat screen
+transition_s 1           # seconds the switch between flat and stereo takes
+start_in_stereo 0        # 1 to start in stereo
+```
+
 ## Repository layout
 
 - `gcn-recomp/`: the shared recompiler, GameCube runtime, renderer and frontends, as a
@@ -154,4 +232,6 @@ Escape quits.
 - `analysis/`: function and data layout of `main.dol`, in decomp-toolkit's format.
 - `recomp/`: the tables that steer the recompiler for this game (`hle.txt`,
   `special_calls.txt`, `idle.txt`, `names.txt`, `patches.txt`).
+- `src/`: the little runtime code that is about this game: a heap checker for diagnostic
+  builds, and the headset app's settings for it (`vr_prime.cpp`).
 - `docs/dev/`: working notes.

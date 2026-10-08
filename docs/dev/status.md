@@ -128,16 +128,17 @@ play, approximately.
   `nitializing renerer`). Cosmetic; the game writes them through its own byte-at-a-time path
   and `OSReport` sees them split. Not investigated.
 
-## Not started
+## Started, not yet played
 
-- VR. See `vr.md` for the plan. Unlike Wave Race, Prime is first person: the game's camera
-  is the player's head, so stereo is a per-eye projection and view on the existing GX
-  transform, not a reconstruction of where the viewer should be.
-- Quest build. Blue Storm's Android frontend (OpenXR NativeActivity, AAudio, APK packaging
-  without Gradle) is the starting point.
+- Quest 3 (2026-10-08). The OpenXR app is installed on a Quest 3, on the headset frontend
+  now shared in `gcn-recomp/android/`, but has not been played in the headset yet. The
+  benchmark ran on it at 164% of the game's 60 fps over the menus. Stereo is chosen from
+  the game's camera manager (first-person camera current, no cinematic camera), with the
+  left thumbstick click as an override. See `vr.md`.
 
 ## Next milestones
 
 1. A play-through of the frigate to the crash on Tallon IV, watching for faults; listen for
    what the AX HLE still gets wrong (ITD, the polyphase resampler).
-2. VR.
+2. VR: run the benchmark, the harness and the app on a Quest 3 (`vr.md`, "First things to
+   do on a headset"), and finish the stereo hook from the active camera.
