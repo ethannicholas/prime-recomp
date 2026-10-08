@@ -98,6 +98,11 @@ play, approximately.
   the missing-models fix, was that the pending line should be written out before the
   pointers move; it should be discarded, and the models render identically either way
   (bit-identical frame dumps over 200 seconds).
+- ~~Crash in water rendering on the Quest, about eighteen minutes in~~ Fixed 2026-10-08,
+  not yet re-played to the same spot. SIGSEGV in `UpdatePatchWithNormals`
+  (`CFluidPlaneCPU`, under `CScriptWater::Render`) at guest `0xE0004020`. The patch's
+  45x45 height field sits in the 16KB locked cache, and the read was one row past it. The
+  runtime committed exactly 16KB at `0xE0000000`; it now commits 256KB, as Dolphin maps.
 - ~~Save stations replenish energy but never offer to save~~ Fixed 2026-10-08. The card
   itself was fine: the directory held the save made at *New Game*, and the in-game
   attempt never sent the card a single command. The gate is in the save station's script
