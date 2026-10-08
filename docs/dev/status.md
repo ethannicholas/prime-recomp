@@ -90,11 +90,12 @@ play, approximately.
   log did not reproduce it, because the log was recorded under the host clock and the
   game's timestep comes from the time base (`CGameArchitectureSupport::UpdateTicks` reads
   `OSGetTime`), so no replay followed the same route; that is what led to the virtual
-  clock below. Next time it happens the log will replay exactly: run it on a diagnostic
-  build (`cmake -B build-watch -DGCN_TRACE_CALLS=ON -DCMAKE_C_FLAGS=-DGCN_WATCH
-  -DCMAKE_CXX_FLAGS=-DGCN_WATCH`, same toolchain flags as `build.sh`) to get the guest
-  call stack and registers, read the corrupted link's address off the dump, and replay
-  again with `GCN_WATCH_ADDR=<that>` to catch the writer. Audited and cleared on the
+  clock below. Next time it happens the log will replay exactly: replay it on a build with
+  `-DGCN_GUEST_CHECKS=ON` (`src/heap_check.cpp` walks the whole heap at every poll, DMA
+  and frame, see `diagnostics.md`), which reports the corrupted word within a fraction of
+  a frame of the write; then replay once more on a `-DGCN_WATCH` build (`-DCMAKE_C_FLAGS=
+  -DGCN_WATCH -DCMAKE_CXX_FLAGS=-DGCN_WATCH -DGCN_TRACE_CALLS=ON`, same toolchain flags
+  as `build.sh`) with `GCN_WATCH_ADDR=<that word>` to name the store. Audited and cleared on the
   runtime side meanwhile: DVD reads (all 32-byte aligned and clamped), the locked-cache
   DMA field decode (matches the SDK's `LCLoadBlocks`), ARAM DMA, and the write-gather
   line writes.

@@ -15,4 +15,5 @@ gcn_add_game(
   DOL_SHA1 39a2f928159ad46491e9b1ef0a72613d91e0cc40
   SYMBOLS ${CMAKE_SOURCE_DIR}/analysis/symbols.txt
   TABLES ${CMAKE_SOURCE_DIR}/recomp
-  FPS 60)
+  FPS 60
+  SOURCES ${CMAKE_SOURCE_DIR}/src/heap_check.cpp)

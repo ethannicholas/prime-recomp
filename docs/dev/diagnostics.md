@@ -31,6 +31,16 @@ If a new wait loop turns up -- the symptom is the host at 100% of a core and `--
 showing the main thread in the same function frame after frame -- find its back-edge in the
 generated C and add it.
 
+## Heap checks
+
+`src/heap_check.cpp` knows the layout of `CGameAllocator` (the block headers' sentinels
+and links, the sixteen free-list bins) and walks the whole heap, verifying it. Built with
+`-DGCN_GUEST_CHECKS=ON` the runtime calls it at every interrupt poll, DMA and frame, so a
+corruption is reported within a fraction of a frame of the write, with the corrupted word's
+address; replaying with `GCN_WATCH_ADDR` on a `-DGCN_WATCH` build then names the writer.
+See `gcn-recomp/docs/diagnostics.md`. `GCN_HEAPLOG=1` prints what the walk found when it
+first ran, for checking the layout against a healthy run.
+
 ## Naming guest code
 
 `analysis/symbols.txt` names every function, so `--sample`, the crash dumps and
