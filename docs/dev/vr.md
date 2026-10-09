@@ -215,6 +215,82 @@ Expected rough edges, to judge in the headset:
 - The grapple arm is placed from `mXf` (`UpdateLeftArmTransform`), so it follows the right
   controller too; the left controller is published but nothing reads it yet.
 
+## The render thread in stereo (2026-10-09)
+
+Done on the Mac, where there is no headset but the stereo path runs the same way (`prime
+--replay=routes/new-game --eye --hidden --fast`, one eye at the window's size, with
+`GCN_FRAMETIME=1` for the `[rt]`/`[eye-rt]` lines and `GCN_APPLYSTATS=1` for what each pass
+sends to GL). Frames 10000-21000 of the route are first-person play on the frigate, about
+1,000 draws and 65,000 vertices a frame, and nearly every draw changes state: the pass that
+draws them makes about 1,000 state applications, 170 of them program switches.
+
+What a stereo frame cost the render thread before, on that window, mean per frame:
+
+| Pass | Before | Flat pass trimmed | + uniform shadows |
+|---|---|---|---|
+| flat pass (makes the EFB copies) | 2.93 ms | 0.76 ms | 0.78 ms |
+| one eye | 2.31 ms | 2.17 ms | 2.03 ms |
+
+- **The flat pass drew the whole frame to make three 32- and 128-pixel copies.** In stereo
+  the flat pass exists only for the EFB copies the eye passes sample (the full-screen ones
+  an eye re-grabs from itself, the spray's grabs and the game's own effect textures), and
+  in play on the frigate the last copy anything reads is the third of three small clearing
+  copies near the start of the frame. The renderer now stops the flat pass after that copy
+  (`flat_pass_trim` in `gcn-recomp/runtime/gx/render_gl.cpp`; `GCN_EYE_FULLFLAT=1` draws
+  it all again): about 1,000 of 1,010 draws a frame left out, 8 state applications instead
+  of 1,000. On the Quest the flat pass was one of the three replays of the frame that put
+  72% of the render thread in the driver, so this should take roughly a third of that
+  10 ms off; not yet measured there.
+- **A program switch re-uploaded every uniform group.** The eye pass's 165 program switches
+  each sent the projection, viewport, point size, TEV registers, alpha reference, indirect,
+  fog, screen and ripple uniforms whether or not they had changed, about 2,000 uniform
+  uploads a pass. Each program now keeps a shadow of what it last received, invalidated as
+  a whole when the internal scale changes and for the view-dependent groups when the view
+  does (a new eye, the morph, the flat view after an eye); the same pass now sends about
+  280. Texture and sampler binds are tracked separately, so a draw that changes texture but
+  not sampler rebinds one, not two: 1,016 texture binds and 739 sampler binds a pass where
+  there were 1,016 of each, and 600 texture-size uploads where there were 711.
+- **The depth buffer is dropped after each eye** on ES (`glInvalidateFramebuffer`, under
+  `GCN_GL_ES`; `GCN_EYE_KEEPDEPTH=1` keeps it). Each eye target is 2352x2464 at 4x MSAA
+  and nothing reads its depth back, so a tiled GPU need not write it out. Not testable
+  on the Mac, and not compile-checked here (no NDK): the first Android build should
+  confirm it.
+
+Eye frames from 10000 on are byte-identical across all of these. Two things to know
+before trusting a comparison of earlier ones:
+
+- **The boot video and the title screen vary run to run**, with or without the trim and
+  with or without `GCN_GX_SYNC=1`: the frames before about 2800 on this route differ
+  between any two runs of the same build (different video frames in the window, a
+  different blink of the title's text). The belief going in was that the threaded front
+  end explained it, since it reads textures when it reaches a draw, and that putting it
+  back inline would make the dumps exact; it did not, so the video's timing is somewhere
+  else. The intro cinematic and play are exact run to run.
+- **The trim is not quite exact through the cinematic** (frames 5250-8700 of the route): a
+  handful of pixels a frame, up to 17, off by up to 3 of 255, the same ones every run.
+  The eye only ever shows the cinematic on the Mac, since the headset shows it in
+  theater, but it means something the full flat pass leaves behind still reaches the eye
+  pass. What it is not: the uniform shadows (the apply path before them shows the same
+  pixels), the copies (never left out), the texture uploads (done before any draw). Not
+  found yet; `GCN_EYE_FULLFLAT=1` is the control.
+
+What is left is mostly the GPU. The 13 ms a frame of GPU time on the Quest is two eyes of
+2352x2464 at 4x MSAA, 1.3 times the pixels the panels show, and the render thread's 10 ms
+is now expected to be under 7. The levers, in order:
+
+- **`eye_scale`**: 1.4 to 1.2 or 1.1 keeps 4x MSAA and cuts the pixels by 27% or 38%.
+  The number to watch is `GCN_EYE_GPU=1` with `prime_egl --eye --eyes=2
+  --eye-size=WxH --msaa=4` on the device.
+- **Multiview** (`GL_OVR_multiview2`): both eyes from one set of GL calls would halve what
+  is left of the render thread, and it is the standard answer on this GPU. It needs the
+  per-eye projection and view as a uniform array indexed by `gl_ViewID_OVR` in every
+  vertex shader, and the eye targets as one array texture; the shader cache's 3,500
+  programs would all change. Cannot be validated on the Mac.
+- **CMPR textures as S3TC** instead of decoding to RGBA8, if the Adreno exposes
+  `GL_EXT_texture_compression_s3tc` (check `glGetString(GL_EXTENSIONS)` there): a
+  quarter of the upload and of the bandwidth per sample, if texture bandwidth turns out
+  to matter once the pixels are fewer.
+
 ## Still to look at
 
 - **A short stretch of stereo before the intro cinematic.** On the `new-game` route the hook

@@ -145,5 +145,7 @@ play, approximately.
 
 1. A play-through of the frigate to the crash on Tallon IV, watching for faults; listen for
    what the AX HLE still gets wrong (ITD, the polyphase resampler).
-2. VR: run the benchmark, the harness and the app on a Quest 3 (`vr.md`, "First things to
-   do on a headset"), and finish the stereo hook from the active camera.
+2. VR: a steady 60 fps in stereo on the Quest 3. The render thread's share was cut on the
+   Mac on 2026-10-09 (the flat pass trimmed, uniforms shadowed); the GPU's share, two eyes
+   at `eye_scale` 1.4 with 4x MSAA, is the part still to measure down (`vr.md`, "The render
+   thread in stereo").
