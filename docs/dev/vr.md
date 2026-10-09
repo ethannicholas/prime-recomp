@@ -525,6 +525,19 @@ What is left in the room is the game's own work, about 13 ms of the guest thread
 much of it CPU skinning (`fn_80355298`, `fn_803553B4`, paired-single loads), and the
 front end's 8 ms of decoding, now mostly in parallel with it.
 
+## The HUD map's shimmer (2026-10-09)
+
+The map at the top right of the HUD shimmered in the headset, parts of it dropping out as if
+on the edge of a depth test. They were. The map is a perspective model about 15-18 units out
+in view space (draws 418 on, frame 2400 of the Chozo run, `GCN_DRAWLOG` with
+`GCN_EYE_FULLFLAT=1`), in the 0-1/512 band with the visor frame and the rest of the HUD. An
+eye mapped its own depth into that band, and with the eye's near plane at 0.05 the 24-bit
+buffer could only tell surfaces apart about 0.18 units apart at that distance; the map's
+faces and the outlines drawn on them are far closer. Six consecutive frames showed it
+breaking into stripes in two. The renderer now writes the game's own depth inside a
+foreground layer (`docs/graphics.md`, "Depth bands in an eye"), and the same six frames
+are solid; the rest of the frame, visor and cannon included, does not change.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
