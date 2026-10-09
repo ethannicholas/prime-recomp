@@ -538,6 +538,32 @@ breaking into stripes in two. The renderer now writes the game's own depth insid
 foreground layer (`docs/graphics.md`, "Depth bands in an eye"), and the same six frames
 are solid; the rest of the frame, visor and cannon included, does not change.
 
+## The map screen (2026-10-09)
+
+The map screen (Z, the right grip) ran at 41 fps in the headset, the compositor's own rate
+included: `VrApi FPS=41/72`, `GPU%` 0.98, the app's GPU time 20-25 ms a frame. It is shown
+in theater, as a stereo pair, at `theater_scale` 3. Replayed on the headset
+(`inputs/20261009-121114`, map open from frame 7651 to 8170; `prime_egl --scale=3` with
+`GCN_THEATER_STEREO=0.064`): 10,000 GX draws and 7,046 state applications a pass against
+470 in play, and the render thread 75% inside the Adreno driver. `GCN_APPLYSTATS=1` showed
+what changed between draws: the cull mode 5,633 times, the TEV colours 2,734, the point size
+2,646, the program 16. The map draws each room's translucent box and its outlines in turn,
+and the renderer turned culling off for every line and back on for the next face. It no
+longer touches culling for lines or points, nor the point size for anything but points
+(`docs/graphics.md`); frames are byte-identical.
+
+| Map screen, pair | Render thread a frame |
+|---|---|
+| 3x, before | 21.2 ms |
+| 3x, now | 14.7 ms |
+| 2x, now | 11.7 ms |
+
+At 3x the GPU is still 99% busy over the map in the harness (top clock, unpaced), so in the
+headset it should be about 60 rather than 41, with little margin; `theater_scale 2` in
+`vr.txt` buys the margin at the cost of the panel's supersampling. What is left is the
+draw calls themselves -- 7,000 a pass, each with its own colours -- and the pair doubles
+them.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as

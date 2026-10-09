@@ -1,0 +1,999 @@
+[ft] f77 guest   0.28ms  fe   0.01ms (tex  0.01)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 8
+[ft] f78 guest   0.13ms  fe   0.02ms (tex  0.01)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 8
+[ft] f79 guest   0.43ms  fe   0.24ms (tex  0.23)  draws    2/   3  verts     12  idx     24  states    1  newtex   1 (256KB)  queue 8
+[rt] f77 render   0.09ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f77 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[rt] f78 render   0.05ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f78 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[rt] f79 render   0.05ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f79 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[rt] f770 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f770 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f770 guest   2.71ms  fe   1.46ms (tex  1.46)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f771 render   0.56ms (tex  0.46 vbo  0.01)  applies    1  programs 406
+[rt] f771 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f771 guest  10.06ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f772 render   0.08ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f772 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f772 guest   2.23ms  fe   1.29ms (tex  1.28)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f773 render   0.46ms (tex  0.37 vbo  0.01)  applies    1  programs 406
+[rt] f773 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f773 guest  10.52ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f774 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f774 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f774 guest   2.23ms  fe   1.26ms (tex  1.25)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f775 render   0.48ms (tex  0.38 vbo  0.01)  applies    1  programs 406
+[rt] f775 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f775 guest  10.20ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f776 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f776 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f776 guest   2.67ms  fe   1.47ms (tex  1.47)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f777 render   0.60ms (tex  0.50 vbo  0.01)  applies    1  programs 406
+[rt] f777 render   0.04ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f777 guest   9.95ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f778 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f778 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f778 guest   2.18ms  fe   1.26ms (tex  1.25)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f779 render   0.63ms (tex  0.53 vbo  0.01)  applies    1  programs 406
+[rt] f779 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f779 guest  10.57ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f780 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f780 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f780 guest   2.24ms  fe   1.29ms (tex  1.28)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f781 render   0.66ms (tex  0.56 vbo  0.01)  applies    1  programs 406
+[rt] f781 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f781 guest  10.23ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f782 render   0.08ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f782 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f782 guest   2.72ms  fe   1.44ms (tex  1.44)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f783 render   0.67ms (tex  0.57 vbo  0.01)  applies    1  programs 406
+[rt] f783 render   0.04ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f783 guest   9.86ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f784 render   0.06ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f784 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f784 guest   2.29ms  fe   1.36ms (tex  1.35)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f785 render   0.66ms (tex  0.56 vbo  0.01)  applies    1  programs 406
+[rt] f785 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f785 guest  10.26ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f786 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f786 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f786 guest   2.23ms  fe   1.28ms (tex  1.27)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f787 render   0.71ms (tex  0.60 vbo  0.01)  applies    1  programs 406
+[rt] f787 render   0.04ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f787 guest  10.01ms  fe   0.05ms (tex  0.04)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f788 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f788 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f788 guest   2.62ms  fe   1.41ms (tex  1.41)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f789 render   0.68ms (tex  0.57 vbo  0.01)  applies    1  programs 406
+[rt] f789 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f789 guest   9.81ms  fe   0.06ms (tex  0.05)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f790 render   0.07ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f790 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f790 guest   3.56ms  fe   2.62ms (tex  2.61)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f791 render   0.75ms (tex  0.63 vbo  0.01)  applies    1  programs 406
+[rt] f791 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f791 guest   9.18ms  fe   0.24ms (tex  0.22)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f792 render   0.08ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f792 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f792 guest   3.41ms  fe   2.63ms (tex  2.61)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f793 render   0.66ms (tex  0.55 vbo  0.01)  applies    1  programs 406
+[rt] f793 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f793 guest   8.92ms  fe   0.13ms (tex  0.11)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f794 render   0.08ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f794 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f794 guest   4.56ms  fe   3.42ms (tex  3.41)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f795 render   0.68ms (tex  0.57 vbo  0.01)  applies    1  programs 406
+[rt] f795 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f795 guest   8.08ms  fe   0.14ms (tex  0.11)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f796 render   0.06ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f796 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f796 guest   3.55ms  fe   2.67ms (tex  2.65)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f797 render   2.18ms (tex  1.95 vbo  0.01)  applies    1  programs 406
+[rt] f797 render   0.12ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f797 guest  11.76ms  fe   0.13ms (tex  0.11)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[rt] f798 render   0.08ms (tex  0.00 vbo  0.01)  applies    1  programs 406
+[rt] f798 render   0.03ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f798 guest   4.23ms  fe   3.39ms (tex  3.38)  draws    2/   3  verts     12  idx     24  states    1  newtex   3 (1800KB)  queue 0
+[rt] f799 render   0.72ms (tex  0.57 vbo  0.01)  applies    1  programs 406
+[rt] f799 render   0.04ms (tex  0.00 vbo  0.00)  applies    1  programs 406
+[ft] f799 guest   8.38ms  fe   0.14ms (tex  0.12)  draws    2/   3  verts     12  idx     24  states    1  newtex   0 (0KB)  queue 0
+[ft] f7700 guest  11.75ms  fe   4.43ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7701 guest  11.21ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7702 guest  11.30ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7703 guest  11.31ms  fe   4.41ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7704 guest  11.22ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7705 guest  11.41ms  fe   4.40ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7706 guest  11.46ms  fe   4.40ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7707 guest  11.71ms  fe   4.45ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7708 guest  11.44ms  fe   4.36ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7709 guest  11.30ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[ft] f7710 guest  11.26ms  fe   4.32ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7700 render   5.74ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7700 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7711 guest  11.18ms  fe   4.37ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7701 render   5.74ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7701 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7712 guest  11.16ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7702 render   5.76ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7702 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7713 guest  11.25ms  fe   4.32ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7703 render   5.82ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7703 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7714 guest  11.25ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7704 render   5.86ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7704 render   5.25ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7715 guest  11.24ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7705 render   5.77ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7705 render   5.39ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7716 guest  11.28ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7706 render   5.89ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7706 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7717 guest  11.42ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7707 render   6.04ms (tex  0.00 vbo  0.25)  applies 7046  programs 406
+[rt] f7707 render   5.22ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7718 guest  11.39ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7708 render   5.85ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7708 render   5.30ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7719 guest  11.30ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7709 render   5.98ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7709 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7720 guest  12.06ms  fe   4.76ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7710 render   5.79ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7710 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7711 render   5.81ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7721 guest  11.95ms  fe   5.40ms (tex  0.08)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7711 render   5.30ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7712 render   5.97ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7722 guest  10.89ms  fe   5.01ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7712 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7713 render   5.84ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[ft] f7723 guest  11.41ms  fe   5.08ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7713 render   5.38ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7724 guest  11.03ms  fe   4.91ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7714 render   5.92ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7714 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7715 render   5.91ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7725 guest  11.63ms  fe   4.98ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7715 render   5.40ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7716 render   5.94ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7726 guest  11.91ms  fe   5.34ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7716 render   5.46ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7717 render   5.76ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[ft] f7727 guest  11.49ms  fe   5.28ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7717 render   5.40ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7718 render   5.81ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7728 guest  10.79ms  fe   4.85ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7718 render   5.45ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7729 guest  10.71ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7719 render   5.85ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7719 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7730 guest  11.28ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7720 render   5.81ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7720 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7731 guest  11.28ms  fe   4.37ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7721 render   6.01ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7721 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7732 guest  11.47ms  fe   4.40ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7722 render   5.80ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7722 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7733 guest  11.31ms  fe   4.40ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7723 render   5.75ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7723 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7734 guest  11.45ms  fe   4.57ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7724 render   6.08ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7724 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7735 guest  12.03ms  fe   4.96ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7725 render   6.82ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7725 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7736 guest  11.64ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7726 render   5.74ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7726 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7737 guest  11.20ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7727 render   5.95ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[rt] f7727 render   5.25ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7738 guest  11.34ms  fe   4.33ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7728 render   6.01ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7728 render   5.40ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7739 guest  11.52ms  fe   4.35ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7729 render   5.79ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7729 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7740 guest  11.41ms  fe   4.45ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7730 render   5.92ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7730 render   5.43ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7741 guest  11.42ms  fe   4.42ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7731 render   5.91ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7731 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7742 guest  11.22ms  fe   4.30ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7732 render   6.01ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7732 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7743 guest  11.59ms  fe   4.36ms (tex  0.07)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7733 render   5.90ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7733 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7744 guest  11.35ms  fe   4.36ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7734 render   6.09ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7734 render   5.39ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7745 guest  11.60ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7735 render   5.93ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7735 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7746 guest  11.43ms  fe   4.37ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7736 render   5.90ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7736 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7747 guest  11.98ms  fe   4.84ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7737 render   6.72ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7737 render   5.98ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7748 guest  12.63ms  fe   4.53ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7738 render   6.56ms (tex  0.00 vbo  0.33)  applies 7046  programs 406
+[rt] f7738 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7739 render   6.05ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7749 guest  12.78ms  fe   5.02ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7739 render   5.38ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7740 render   5.77ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[ft] f7750 guest  11.67ms  fe   5.04ms (tex  0.12)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7740 render   5.40ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7741 render   5.80ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7751 guest  11.97ms  fe   5.60ms (tex  0.08)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7741 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7752 guest  10.40ms  fe   5.01ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7742 render   6.09ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7742 render   6.04ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7753 guest  11.60ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7743 render   5.98ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7743 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7754 guest  11.45ms  fe   4.34ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7744 render   5.90ms (tex  0.01 vbo  0.21)  applies 7046  programs 406
+[rt] f7744 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7755 guest  11.41ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7745 render   6.01ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7745 render   6.47ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7756 guest  12.68ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7746 render   5.95ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7746 render   6.26ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7757 guest  13.19ms  fe   4.96ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7747 render   6.94ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7747 render   5.77ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7748 render   5.85ms (tex  0.00 vbo  0.27)  applies 7046  programs 406
+[ft] f7758 guest  13.18ms  fe   5.16ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7748 render   5.49ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7749 render   6.09ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7759 guest  11.55ms  fe   5.22ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7749 render   5.39ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7760 guest  12.01ms  fe   5.55ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7750 render   7.17ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[rt] f7750 render   5.25ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7751 render   5.85ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[ft] f7761 guest  12.17ms  fe   5.22ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7751 render   5.42ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7762 guest  10.57ms  fe   4.56ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7752 render   5.86ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7752 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7763 guest  11.09ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7753 render   6.08ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7753 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7764 guest  11.58ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7754 render   5.96ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7754 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7765 guest  11.29ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7755 render   5.93ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7755 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7766 guest  11.49ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7756 render   5.81ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7756 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7767 guest  11.28ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7757 render   5.89ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7757 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7768 guest  11.38ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7758 render   5.90ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7758 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7769 guest  11.34ms  fe   4.31ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7759 render   5.95ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7759 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7770 guest  11.66ms  fe   4.49ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7760 render   6.02ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7760 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7771 guest  11.69ms  fe   4.67ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7761 render   5.89ms (tex  0.00 vbo  0.26)  applies 7046  programs 406
+[rt] f7761 render   5.63ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7772 guest  11.87ms  fe   4.74ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7762 render   6.01ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7762 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7773 guest  11.12ms  fe   4.55ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7763 render   5.90ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7763 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7774 guest  11.29ms  fe   4.49ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7764 render   5.93ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7764 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7775 guest  11.31ms  fe   4.41ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7765 render   5.81ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7765 render   5.42ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7776 guest  11.35ms  fe   4.33ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7766 render   6.04ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7766 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7777 guest  11.56ms  fe   4.45ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7767 render   6.07ms (tex  0.00 vbo  0.29)  applies 7046  programs 406
+[rt] f7767 render   5.21ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7778 guest  12.43ms  fe   5.12ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7768 render   7.25ms (tex  0.00 vbo  0.35)  applies 7046  programs 406
+[rt] f7768 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7779 guest  12.11ms  fe   4.79ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7769 render   5.99ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7769 render   5.30ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7780 guest  11.01ms  fe   4.35ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7770 render   5.92ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7770 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7781 guest  11.39ms  fe   4.38ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7771 render   5.77ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7771 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7782 guest  11.16ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7772 render   5.81ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7772 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7783 guest  11.30ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7773 render   5.85ms (tex  0.00 vbo  0.17)  applies 7046  programs 406
+[rt] f7773 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7784 guest  11.31ms  fe   4.36ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7774 render   5.87ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[rt] f7774 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7785 guest  11.32ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7775 render   5.92ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7775 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7786 guest  11.40ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7776 render   5.94ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7776 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7787 guest  11.37ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7777 render   5.76ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7777 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7788 guest  11.21ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7778 render   5.87ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7778 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7789 guest  11.34ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7779 render   5.98ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7779 render   6.05ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7790 guest  12.20ms  fe   4.33ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7780 render   5.69ms (tex  0.00 vbo  0.17)  applies 7046  programs 406
+[rt] f7780 render   5.38ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7791 guest  11.23ms  fe   4.38ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7781 render   5.82ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7781 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7792 guest  11.38ms  fe   4.46ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7782 render   5.69ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7782 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7793 guest  11.17ms  fe   4.41ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7783 render   5.95ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7783 render   5.45ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7794 guest  11.46ms  fe   4.35ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7784 render   5.91ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7784 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7795 guest  11.36ms  fe   4.36ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7785 render   5.98ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7785 render   5.22ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7796 guest  11.35ms  fe   4.39ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7786 render   5.96ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7786 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7797 guest  11.42ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7787 render   5.95ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7787 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7798 guest  11.47ms  fe   4.44ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7788 render   6.05ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7788 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7799 guest  11.39ms  fe   4.30ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7789 render   5.82ms (tex  0.00 vbo  0.17)  applies 7046  programs 406
+[rt] f7789 render   5.41ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7800 guest  11.37ms  fe   4.31ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7790 render   5.82ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7790 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7801 guest  11.22ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7791 render   6.04ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7791 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7802 guest  11.41ms  fe   4.36ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7792 render   5.99ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7792 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7803 guest  11.44ms  fe   4.38ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7793 render   6.05ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7793 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7804 guest  11.48ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7794 render   5.86ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7794 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7805 guest  11.29ms  fe   4.38ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7795 render   5.86ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7795 render   5.23ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7796 render   6.01ms (tex  0.00 vbo  0.25)  applies 7046  programs 406
+[ft] f7806 guest  12.34ms  fe   5.14ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7796 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7797 render   5.89ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7807 guest  11.30ms  fe   4.95ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7797 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7808 guest  11.11ms  fe   4.80ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7798 render   6.95ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7798 render   6.07ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7809 guest  14.03ms  fe   5.50ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7799 render   7.82ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7799 render   5.92ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7810 guest  14.03ms  fe   5.51ms (tex  0.08)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7800 render   7.11ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7800 render   5.55ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7811 guest  11.34ms  fe   4.43ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7801 render   5.97ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7801 render   5.48ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7812 guest  11.57ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7802 render   5.93ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7802 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7803 render   6.00ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7813 guest  12.39ms  fe   5.14ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7803 render   5.38ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7804 render   5.78ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7814 guest  11.82ms  fe   5.27ms (tex  0.13)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7804 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7805 render   5.99ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7815 guest  11.00ms  fe   5.08ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7805 render   5.30ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7806 render   5.88ms (tex  0.00 vbo  0.26)  applies 7046  programs 406
+[ft] f7816 guest  11.56ms  fe   5.23ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7806 render   5.40ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7807 render   5.89ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7817 guest  11.69ms  fe   5.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7807 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7818 guest   9.97ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7808 render   5.83ms (tex  0.01 vbo  0.21)  applies 7046  programs 406
+[rt] f7808 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7819 guest  11.32ms  fe   4.42ms (tex  0.07)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7809 render   5.93ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7809 render   5.39ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7820 guest  11.67ms  fe   4.60ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7810 render   5.99ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7810 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7821 guest  11.32ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7811 render   6.03ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7811 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7822 guest  11.80ms  fe   4.66ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7812 render   6.21ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7812 render   5.99ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7823 guest  13.32ms  fe   5.32ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7813 render   7.21ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7813 render   5.98ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7824 guest  13.29ms  fe   5.19ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7814 render   6.78ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7814 render   5.97ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7825 guest  12.75ms  fe   5.10ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7815 render   6.71ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7815 render   5.95ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7826 guest  12.19ms  fe   4.52ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7816 render   6.64ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7816 render   5.45ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7827 guest  12.07ms  fe   4.43ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7817 render   6.06ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7817 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7828 guest  11.48ms  fe   4.40ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7818 render   5.88ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7818 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7829 guest  11.35ms  fe   4.36ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7819 render   5.91ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7819 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7830 guest  11.39ms  fe   4.31ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7820 render   5.86ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7820 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7831 guest  11.46ms  fe   4.44ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7821 render   6.05ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7821 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7832 guest  11.40ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7822 render   5.86ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7822 render   5.54ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7833 guest  11.53ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7823 render   5.79ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7823 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7834 guest  11.24ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7824 render   6.04ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7824 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7835 guest  11.50ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7825 render   5.79ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7825 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7836 guest  11.31ms  fe   4.36ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7826 render   5.88ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7826 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7837 guest  11.35ms  fe   4.39ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7827 render   5.99ms (tex  0.00 vbo  0.28)  applies 7046  programs 406
+[rt] f7827 render   5.26ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7838 guest  11.35ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7828 render   5.88ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7828 render   5.30ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7829 render   6.19ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[ft] f7839 guest  12.48ms  fe   5.14ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7829 render   5.58ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7830 render   5.89ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7840 guest  12.38ms  fe   5.50ms (tex  0.08)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7830 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7841 guest  10.66ms  fe   4.88ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7831 render   6.08ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7831 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7832 render   5.79ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7842 guest  12.12ms  fe   5.27ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7832 render   5.48ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7843 guest  10.87ms  fe   4.97ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7833 render   6.15ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7833 render   5.44ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7834 render   5.98ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7844 guest  12.26ms  fe   5.27ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7834 render   6.45ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7845 guest  11.47ms  fe   4.41ms (tex  0.09)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7835 render   6.15ms (tex  0.00 vbo  0.29)  applies 7046  programs 406
+[rt] f7835 render   6.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7846 guest  13.29ms  fe   5.00ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7836 render   7.88ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7836 render   5.90ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7847 guest  13.76ms  fe   4.87ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7837 render   7.00ms (tex  0.00 vbo  0.25)  applies 7046  programs 406
+[rt] f7837 render   6.06ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7848 guest  12.67ms  fe   4.42ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7838 render   6.33ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7838 render   6.22ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7849 guest  12.93ms  fe   4.61ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7839 render   6.72ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7839 render   5.94ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7840 render   6.29ms (tex  0.00 vbo  0.27)  applies 7046  programs 406
+[ft] f7850 guest  13.71ms  fe   5.18ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7840 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7841 render   5.79ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[ft] f7851 guest  12.07ms  fe   5.48ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7841 render   5.41ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7842 render   6.06ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7852 guest  11.45ms  fe   5.51ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7842 render   5.37ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7853 guest  10.22ms  fe   4.43ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7843 render   5.78ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7843 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7854 guest  11.08ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7844 render   6.04ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7844 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7855 guest  11.48ms  fe   4.38ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7845 render   5.80ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7845 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7856 guest  11.18ms  fe   4.34ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7846 render   5.74ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7846 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7857 guest  11.23ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7847 render   5.95ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7847 render   6.72ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7858 guest  14.29ms  fe   5.37ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7848 render   9.51ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7848 render   6.01ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7859 guest  15.60ms  fe   5.35ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7849 render   6.82ms (tex  0.00 vbo  0.26)  applies 7046  programs 406
+[rt] f7849 render   6.96ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7860 guest  12.91ms  fe   4.51ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7850 render   6.36ms (tex  0.00 vbo  0.26)  applies 7046  programs 406
+[rt] f7850 render   5.39ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7861 guest  11.73ms  fe   4.36ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7851 render   5.82ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7851 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7862 guest  11.26ms  fe   4.33ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7852 render   5.77ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7852 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7863 guest  11.26ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7853 render   5.98ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7853 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7864 guest  11.34ms  fe   4.29ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7854 render   5.70ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7854 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7865 guest  11.17ms  fe   4.39ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7855 render   5.95ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7855 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7866 guest  11.62ms  fe   4.57ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7856 render   5.99ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7856 render   5.20ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7867 guest  11.87ms  fe   4.93ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7857 render   5.91ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7857 render   5.26ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7858 render   5.86ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7868 guest  11.36ms  fe   4.94ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7858 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7859 render   5.97ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[ft] f7869 guest  11.72ms  fe   5.20ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7859 render   5.41ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7860 render   5.86ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7870 guest  11.42ms  fe   5.17ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7860 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7861 render   5.82ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7871 guest  11.50ms  fe   5.24ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7861 render   5.39ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7862 render   5.84ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7872 guest  11.78ms  fe   5.50ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7862 render   5.44ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7863 render   5.90ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7873 guest  10.70ms  fe   4.88ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7863 render   5.42ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7874 guest  10.59ms  fe   4.34ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7864 render   6.08ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7864 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7875 guest  11.90ms  fe   4.72ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7865 render   5.98ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[rt] f7865 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7876 guest  11.28ms  fe   4.56ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7866 render   5.91ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[rt] f7866 render   5.48ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7877 guest  11.71ms  fe   4.68ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7867 render   5.80ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7867 render   5.38ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7868 render   5.87ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7878 guest  12.01ms  fe   5.08ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7868 render   5.47ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7869 render   5.99ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[ft] f7879 guest  12.12ms  fe   5.62ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7869 render   5.30ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7880 guest  10.53ms  fe   4.83ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7870 render   5.93ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7870 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7881 guest  10.72ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7871 render   5.89ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7871 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7882 guest  11.32ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7872 render   5.84ms (tex  0.01 vbo  0.19)  applies 7046  programs 406
+[rt] f7872 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7883 guest  11.29ms  fe   4.37ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7873 render   5.85ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7873 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7884 guest  11.55ms  fe   4.41ms (tex  0.08)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7874 render   5.83ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7874 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7885 guest  11.06ms  fe   4.35ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7875 render   5.91ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7875 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7886 guest  11.31ms  fe   4.30ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7876 render   5.90ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7876 render   5.26ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7887 guest  11.42ms  fe   4.41ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7877 render   6.02ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7877 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7888 guest  11.44ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7878 render   5.84ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7878 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7889 guest  11.87ms  fe   4.76ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7879 render   5.85ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7879 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7890 guest  11.32ms  fe   4.83ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7880 render   5.88ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7880 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7891 guest  11.19ms  fe   4.70ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7881 render   5.97ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7881 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7892 guest  11.52ms  fe   4.82ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7882 render   6.01ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7882 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7883 render   6.20ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[ft] f7893 guest  12.52ms  fe   5.65ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7883 render   5.86ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7894 guest  10.86ms  fe   4.54ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7884 render   5.96ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7884 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7895 guest  11.21ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7885 render   5.68ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7885 render   6.07ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7896 guest  12.38ms  fe   4.74ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7886 render   6.68ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7886 render   5.99ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7897 guest  13.03ms  fe   4.84ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7887 render   6.72ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7887 render   6.02ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7898 guest  13.30ms  fe   5.13ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7888 render   6.77ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7888 render   6.43ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7899 guest  12.29ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7889 render   5.92ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7889 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7900 guest  11.35ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7890 render   5.78ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7890 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7901 guest  11.27ms  fe   4.33ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7891 render   6.20ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7891 render   5.65ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7902 guest  12.04ms  fe   4.33ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7892 render   5.78ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7892 render   5.27ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7903 guest  11.23ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7893 render   5.85ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7893 render   5.23ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7904 guest  11.20ms  fe   4.29ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7894 render   5.73ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7894 render   5.44ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7905 guest  11.39ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7895 render   6.11ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7895 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7896 render   7.02ms (tex  0.00 vbo  0.17)  applies 7046  programs 406
+[ft] f7906 guest  14.80ms  fe   4.69ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7896 render   5.68ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7907 guest   9.58ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7897 render   5.91ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7897 render   5.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7908 guest  11.41ms  fe   4.38ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7898 render   6.04ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7898 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7909 guest  12.30ms  fe   4.94ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7899 render   6.13ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7899 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7910 guest  11.77ms  fe   5.02ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7900 render   7.67ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7900 render   5.40ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7901 render   5.88ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[ft] f7911 guest  13.15ms  fe   5.08ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7901 render   5.44ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7912 guest  10.89ms  fe   4.57ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7902 render   5.76ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7902 render   5.42ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7913 guest  10.96ms  fe   4.41ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7903 render   6.02ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7903 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7914 guest  11.46ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7904 render   6.10ms (tex  0.00 vbo  0.31)  applies 7046  programs 406
+[rt] f7904 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7915 guest  11.63ms  fe   4.41ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7905 render   6.06ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7905 render   5.43ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7916 guest  11.62ms  fe   4.35ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7906 render   5.91ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7906 render   5.38ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7917 guest  11.46ms  fe   4.39ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7907 render   6.15ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7907 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7918 guest  11.52ms  fe   4.37ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7908 render   6.07ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7908 render   5.43ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7919 guest  11.77ms  fe   4.49ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7909 render   5.94ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7909 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7920 guest  11.26ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7910 render   6.02ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7910 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7921 guest  11.56ms  fe   4.40ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7911 render   6.03ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7911 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7922 guest  11.96ms  fe   4.74ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7912 render   5.90ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7912 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7923 guest  10.92ms  fe   4.46ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7913 render   5.89ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7913 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7924 guest  11.39ms  fe   4.43ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7914 render   6.00ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7914 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7925 guest  11.82ms  fe   4.73ms (tex  0.06)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7915 render   6.09ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7915 render   5.61ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7926 guest  11.58ms  fe   4.47ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7916 render   5.97ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7916 render   5.26ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7927 guest  11.55ms  fe   4.47ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7917 render   5.92ms (tex  0.00 vbo  0.17)  applies 7046  programs 406
+[rt] f7917 render   5.50ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7918 render   6.03ms (tex  0.00 vbo  0.16)  applies 7046  programs 406
+[ft] f7928 guest  12.62ms  fe   5.31ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7918 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7929 guest  10.72ms  fe   4.78ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7919 render   6.02ms (tex  0.00 vbo  0.25)  applies 7046  programs 406
+[rt] f7919 render   5.30ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7920 render   5.91ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7930 guest  11.87ms  fe   5.12ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7920 render   5.42ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7931 guest  11.09ms  fe   4.80ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7921 render   5.87ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7921 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7932 guest  10.87ms  fe   4.40ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7922 render   5.89ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7922 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7933 guest  11.30ms  fe   4.39ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7923 render   5.98ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7923 render   5.24ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7934 guest  11.33ms  fe   4.36ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7924 render   5.93ms (tex  0.00 vbo  0.26)  applies 7046  programs 406
+[rt] f7924 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7935 guest  11.52ms  fe   4.36ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7925 render   6.12ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7925 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7936 guest  11.57ms  fe   4.41ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7926 render   6.03ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7926 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7937 guest  11.90ms  fe   4.70ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7927 render   5.82ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7927 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7938 guest  11.20ms  fe   4.67ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7928 render   5.88ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7928 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7929 render   5.91ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7939 guest  12.52ms  fe   5.60ms (tex  0.08)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7929 render   5.42ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7940 guest  10.57ms  fe   4.83ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7930 render   5.90ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7930 render   5.35ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7941 guest  10.77ms  fe   4.36ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7931 render   5.93ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7931 render   5.40ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7942 guest  11.41ms  fe   4.32ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7932 render   5.94ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7932 render   5.26ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7943 guest  11.42ms  fe   4.40ms (tex  0.04)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7933 render   5.98ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7933 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7944 guest  12.05ms  fe   4.83ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7934 render   5.93ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7934 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7945 guest  11.73ms  fe   5.06ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7935 render   6.91ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7935 render   5.43ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7946 guest  12.31ms  fe   4.94ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7936 render   7.39ms (tex  1.15 vbo  0.38)  applies 7046  programs 406
+[rt] f7936 render   5.55ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7937 render   6.05ms (tex  0.00 vbo  0.25)  applies 7046  programs 406
+[ft] f7947 guest  14.01ms  fe   5.72ms (tex  0.38)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   1 (64KB)  queue 8
+[rt] f7937 render   5.50ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7948 guest  10.59ms  fe   4.78ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7938 render   6.03ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7938 render   5.36ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7939 render   5.82ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[ft] f7949 guest  12.29ms  fe   5.32ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7939 render   5.69ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7940 render   7.14ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[ft] f7950 guest  12.93ms  fe   6.34ms (tex  0.07)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7940 render   5.51ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7951 guest  10.50ms  fe   4.49ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7941 render   6.05ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7941 render   5.28ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7952 guest  11.26ms  fe   4.31ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7942 render   5.81ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7942 render   5.74ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7953 guest  12.11ms  fe   4.48ms (tex  0.05)  draws 10032/7059  verts  70007  idx 138643  states 4109  newtex   0 (0KB)  queue 8
+[rt] f7943 render   6.35ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7943 render   7.06ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7954 guest  14.22ms  fe   5.06ms (tex  0.07)  draws 10033/7059  verts  70015  idx 138661  states 4110  newtex   1 (8KB)  queue 8
+[rt] f7944 render   7.16ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7944 render   6.46ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7955 guest  13.95ms  fe   5.16ms (tex  0.07)  draws 10029/7059  verts  69983  idx 138589  states 4106  newtex   1 (8KB)  queue 8
+[rt] f7945 render   6.91ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7945 render   6.07ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7956 guest  13.42ms  fe   5.36ms (tex  0.05)  draws 10031/7059  verts  69999  idx 138625  states 4108  newtex   0 (0KB)  queue 8
+[rt] f7946 render   6.68ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[rt] f7946 render   6.14ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7957 guest  13.19ms  fe   5.49ms (tex  0.05)  draws 10033/7059  verts  70015  idx 138661  states 4110  newtex   0 (0KB)  queue 8
+[rt] f7947 render   6.76ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7947 render   5.58ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7958 guest  12.16ms  fe   5.26ms (tex  0.04)  draws 10033/7059  verts  70015  idx 138661  states 4110  newtex   0 (0KB)  queue 8
+[rt] f7948 render   6.86ms (tex  0.15 vbo  0.30)  applies 7046  programs 406
+[rt] f7948 render   6.75ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7959 guest  14.09ms  fe   5.47ms (tex  0.05)  draws 10033/7059  verts  70015  idx 138661  states 4110  newtex   0 (0KB)  queue 8
+[rt] f7949 render   6.73ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7949 render   6.07ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7950 render   6.52ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7960 guest  12.89ms  fe   5.40ms (tex  0.05)  draws 10030/7059  verts  69991  idx 138607  states 4107  newtex   0 (0KB)  queue 8
+[rt] f7950 render   5.99ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7961 guest  12.57ms  fe   5.33ms (tex  0.37)  draws 10028/7059  verts  69975  idx 138571  states 4105  newtex   1 (64KB)  queue 8
+[rt] f7951 render   6.68ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7951 render   6.11ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7962 guest  12.06ms  fe   4.57ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7952 render   6.70ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7952 render   6.54ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7963 guest  13.43ms  fe   4.66ms (tex  0.05)  draws 10025/7059  verts  69951  idx 138517  states 4102  newtex   0 (0KB)  queue 8
+[rt] f7953 render   6.88ms (tex  0.00 vbo  0.37)  applies 7046  programs 406
+[rt] f7953 render   5.90ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7964 guest  12.81ms  fe   4.55ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7954 render   6.66ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7954 render   6.18ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7965 guest  13.13ms  fe   4.64ms (tex  0.05)  draws 10025/7059  verts  69951  idx 138517  states 4102  newtex   0 (0KB)  queue 8
+[rt] f7955 render   6.92ms (tex  0.14 vbo  0.27)  applies 7046  programs 406
+[rt] f7955 render   5.97ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7966 guest  14.33ms  fe   5.51ms (tex  0.06)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7956 render   6.99ms (tex  0.11 vbo  0.23)  applies 7046  programs 406
+[rt] f7956 render   5.98ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7957 render   6.80ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[ft] f7967 guest  13.57ms  fe   5.94ms (tex  0.07)  draws 10028/7059  verts  69975  idx 138571  states 4105  newtex   0 (0KB)  queue 8
+[rt] f7957 render   6.09ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7958 render   6.57ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7968 guest  12.79ms  fe   5.60ms (tex  0.07)  draws 10027/7059  verts  69967  idx 138553  states 4104  newtex   0 (0KB)  queue 8
+[rt] f7958 render   6.19ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7969 guest  12.97ms  fe   5.68ms (tex  0.06)  draws 10028/7059  verts  69975  idx 138571  states 4105  newtex   0 (0KB)  queue 8
+[rt] f7959 render   8.60ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7959 render   7.10ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7970 guest  14.37ms  fe   4.57ms (tex  0.05)  draws 10030/7059  verts  69991  idx 138607  states 4107  newtex   0 (0KB)  queue 8
+[rt] f7960 render   6.55ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7960 render   5.97ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7971 guest  12.87ms  fe   4.80ms (tex  0.05)  draws 10028/7059  verts  69975  idx 138571  states 4105  newtex   0 (0KB)  queue 8
+[rt] f7961 render   6.61ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7961 render   6.01ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7972 guest  13.15ms  fe   5.15ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7962 render   7.04ms (tex  0.17 vbo  0.25)  applies 7046  programs 406
+[rt] f7962 render   5.93ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7973 guest  12.93ms  fe   4.90ms (tex  0.05)  draws 10030/7059  verts  69991  idx 138607  states 4107  newtex   0 (0KB)  queue 8
+[rt] f7963 render   6.50ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7963 render   6.00ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7974 guest  12.72ms  fe   4.82ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7964 render   6.77ms (tex  0.00 vbo  0.17)  applies 7046  programs 406
+[rt] f7964 render   6.04ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7975 guest  13.54ms  fe   5.22ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7965 render   6.53ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7965 render   6.44ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7976 guest  13.54ms  fe   5.44ms (tex  0.04)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7966 render   6.93ms (tex  0.00 vbo  0.37)  applies 7046  programs 406
+[rt] f7966 render   6.25ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7977 guest  13.45ms  fe   5.52ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7967 render   6.77ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[rt] f7967 render   5.95ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7968 render   6.55ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[ft] f7978 guest  12.88ms  fe   5.51ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7968 render   6.11ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7969 render   6.73ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[ft] f7979 guest  13.26ms  fe   5.84ms (tex  0.06)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7969 render   6.13ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7980 guest  12.50ms  fe   5.36ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7970 render   6.74ms (tex  0.00 vbo  0.31)  applies 7046  programs 406
+[rt] f7970 render   6.03ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7971 render   6.68ms (tex  0.00 vbo  0.18)  applies 7046  programs 406
+[ft] f7981 guest  13.03ms  fe   5.46ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7971 render   5.99ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7982 guest  12.45ms  fe   5.18ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7972 render   6.66ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7972 render   6.00ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7983 guest  13.12ms  fe   5.39ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7973 render   6.64ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7973 render   5.95ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7984 guest  12.39ms  fe   5.10ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7974 render   6.68ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7974 render   6.17ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7985 guest  12.98ms  fe   5.12ms (tex  0.04)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7975 render   6.51ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7975 render   6.03ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7986 guest  13.25ms  fe   5.54ms (tex  0.05)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7976 render   7.61ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7976 render   5.97ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7987 guest  12.92ms  fe   4.88ms (tex  0.09)  draws 10028/7059  verts  69975  idx 138571  states 4105  newtex   1 (8KB)  queue 8
+[rt] f7977 render   6.73ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7977 render   6.05ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7988 guest  13.16ms  fe   5.02ms (tex  0.05)  draws 10029/7059  verts  69983  idx 138589  states 4106  newtex   0 (0KB)  queue 8
+[rt] f7978 render   6.66ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7978 render   6.08ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7989 guest  13.37ms  fe   5.41ms (tex  0.05)  draws 10030/7059  verts  69991  idx 138607  states 4107  newtex   0 (0KB)  queue 8
+[rt] f7979 render   6.75ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7979 render   6.04ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7980 render   6.67ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[ft] f7990 guest  13.14ms  fe   5.52ms (tex  0.05)  draws 10030/7059  verts  69991  idx 138607  states 4107  newtex   0 (0KB)  queue 8
+[rt] f7980 render   6.03ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7981 render   6.65ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[ft] f7991 guest  12.85ms  fe   5.54ms (tex  0.07)  draws 10029/7059  verts  69983  idx 138589  states 4106  newtex   0 (0KB)  queue 8
+[rt] f7981 render   6.11ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7992 guest  13.08ms  fe   5.71ms (tex  0.04)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7982 render   7.90ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7982 render   6.00ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7993 guest  12.80ms  fe   4.71ms (tex  0.04)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7983 render   7.83ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7983 render   6.29ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7994 guest  13.89ms  fe   4.45ms (tex  0.05)  draws 10028/7059  verts  69975  idx 138571  states 4105  newtex   0 (0KB)  queue 8
+[rt] f7984 render   6.20ms (tex  0.00 vbo  0.22)  applies 7046  programs 406
+[rt] f7984 render   5.34ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7995 guest  11.62ms  fe   4.31ms (tex  0.04)  draws 10024/7059  verts  69943  idx 138499  states 4101  newtex   0 (0KB)  queue 8
+[rt] f7985 render   6.12ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7985 render   5.33ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7996 guest  11.63ms  fe   4.38ms (tex  0.04)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7986 render   5.88ms (tex  0.00 vbo  0.24)  applies 7046  programs 406
+[rt] f7986 render   5.21ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7997 guest  11.36ms  fe   4.44ms (tex  0.04)  draws 10026/7059  verts  69959  idx 138535  states 4103  newtex   0 (0KB)  queue 8
+[rt] f7987 render   6.11ms (tex  0.00 vbo  0.20)  applies 7046  programs 406
+[rt] f7987 render   5.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7998 guest  11.46ms  fe   4.33ms (tex  0.04)  draws 10023/7059  verts  69935  idx 138481  states 4100  newtex   0 (0KB)  queue 8
+[rt] f7988 render   6.19ms (tex  0.13 vbo  0.28)  applies 7046  programs 406
+[rt] f7988 render   5.25ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[ft] f7999 guest  11.62ms  fe   4.27ms (tex  0.04)  draws 10027/7059  verts  69967  idx 138553  states 4104  newtex   0 (0KB)  queue 8
+[rt] f7989 render   5.87ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7989 render   5.31ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7990 render   5.86ms (tex  0.00 vbo  0.23)  applies 7046  programs 406
+[rt] f7990 render   7.22ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7991 render   6.64ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7991 render   5.95ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7992 render   6.75ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7992 render   5.85ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7993 render   6.76ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7993 render   6.01ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7994 render   6.60ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7994 render   5.88ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7995 render   6.58ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7995 render   6.15ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7996 render   6.74ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7996 render   6.32ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7997 render   6.75ms (tex  0.00 vbo  0.27)  applies 7046  programs 406
+[rt] f7997 render   5.97ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7998 render   6.77ms (tex  0.00 vbo  0.21)  applies 7046  programs 406
+[rt] f7998 render   6.06ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
+[rt] f7999 render   6.48ms (tex  0.00 vbo  0.19)  applies 7046  programs 406
+[rt] f7999 render   6.10ms (tex  0.00 vbo  0.00)  applies 7046  programs 406
