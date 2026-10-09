@@ -825,6 +825,18 @@ bands in an eye": a HUD layer and a draw filter for the eyes).
   eye pitched 15 degrees down: the previous build's window had its bottom on the gaze, the
   new one is centred on it.
 
+  That was not the whole of it. With the window on the gaze by construction, the headset
+  still showed it half a height too high, and its own log (`GCN_SCANLOG` through
+  `gcn_env.txt`, which now prints the window's point beside the zone's with the eyes'
+  field) agreed with the maths. The gaze was the eyes' optical axis, and a Quest 3's field
+  is 44 degrees above that axis and 55 below: the centre of what the viewer sees, which is
+  what reads as "straight ahead", is some 10 degrees under the axis, and the window on the
+  axis sat that far above it -- in the harness with `--eye-fov=44,55`, 83 pixels above
+  the image's centre, half the window. The gaze is now the direction of the field's
+  centre, the mean of the four edge tangents (the axis itself on a symmetric field);
+  `scan_gaze_field 0` in `vr.txt` takes the axis, `scan_gaze_pitch_deg` nudges either.
+  Level and pitched 15 degrees down, the window is now on the image's centre.
+
   Two harness findings on the way: `prime_egl` only asked the game's `wants_stereo` hook
   when `GCN_STEREOLOG` was set, and that hook is where the camera manager is found, so the
   scan patches had nothing to work from in the harness (fixed: asked every frame, as the

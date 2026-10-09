@@ -196,6 +196,8 @@ struct HudFrame { float dist, scale, height, pitch_rad; };
 HudFrame g_hud_frame = {4.0f, 0.5f, 0.0f, 0.0f};
 bool g_hide_helmet = true;      // hide_helmet
 bool g_hide_flat_warps = true;  // hide_flat_warps
+bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
+float g_gaze_pitch_rad = 0.0f;    // scan_gaze_pitch_deg: and this much further up
 
 // gun_x, gun_y and gun_z move the cannon from there, in metres in the controller's frame.
 void config_loaded(const VrConfig& c) {
@@ -214,6 +216,8 @@ void config_loaded(const VrConfig& c) {
     g_hud_frame = {c.hud_distance_m * u, c.hud_scale, c.hud_height_m * u, c.hud_pitch_deg * 3.14159265f / 180.0f};
     g_hide_helmet = c.get("hide_helmet", 1.0f) != 0.0f;
     g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
+    g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
+    g_gaze_pitch_rad = c.get("scan_gaze_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
 }
 
 inline float rd_f(uint32_t a) { const uint32_t u = mem_r32(a); float f; memcpy(&f, &u, 4); return f; }
@@ -611,12 +615,30 @@ bool head_screen_point(float out[2], bool on_hud_frame = false) {
     if (!pair) return false;
     const uint32_t camera = mem_r32(pair);
     if (!is_camera(camera, kFirstPersonCameraVtable)) return false;
+    // The gaze. An eye's pose points along its optical axis, but a headset's field is not
+    // centred on that axis: a Quest 3 sees 44 degrees above it and 55 below, so the centre
+    // of what the viewer sees -- what reads as "straight ahead" -- is some 10 degrees
+    // below the axis. A window placed on the axis sat half its height above where the
+    // viewer looked (the headset's own log put the game's zone where the maths said,
+    // and the viewer disagreed). So the gaze is the direction of the field's centre, the
+    // mean of the four edge tangents, which is the axis itself on a symmetric field;
+    // scan_gaze_field 0 in vr.txt takes the axis, and scan_gaze_pitch_deg nudges either.
     float d[3] = {0, 0, 0};
     for (int e = 0; e < 2; e++) {
-        const float ahead[3] = {0, 0, -1};
+        float ahead[3] = {0, 0, -1};
+        if (g_gaze_field_centre) {
+            ahead[0] = 0.5f * (ev[e].tan_left + ev[e].tan_right);
+            ahead[1] = 0.5f * (ev[e].tan_up + ev[e].tan_down);
+        }
+        if (g_gaze_pitch_rad != 0.0f) {
+            const float cp = cosf(g_gaze_pitch_rad), sp = sinf(g_gaze_pitch_rad);
+            const float y = ahead[1] * cp - ahead[2] * sp, z = ahead[1] * sp + ahead[2] * cp;
+            ahead[1] = y; ahead[2] = z;
+        }
         float f[3];
         qrot(ev[e].rot, ahead, f);
-        for (int i = 0; i < 3; i++) d[i] += f[i];
+        const float len = sqrtf(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
+        for (int i = 0; i < 3; i++) d[i] += f[i] / (len > 0.0f ? len : 1.0f);
     }
     const float W = (float)(int32_t)mem_r32(kViewport + 8), H = (float)(int32_t)mem_r32(kViewport + 12);
     if (!(W > 0.0f) || !(H > 0.0f)) return false;
