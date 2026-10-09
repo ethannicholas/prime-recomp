@@ -16,3 +16,18 @@
 80046180 { void prime_cull_frustum(CPU*); c->lr = 0x80046184u; prime_cull_frustum(c); }
 800474D8 { void prime_cull_frustum(CPU*); c->lr = 0x800474DCu; prime_cull_frustum(c); }
 80047774 { void prime_cull_frustum(CPU*); c->lr = 0x80047778u; prime_cull_frustum(c); }
+# The scan visor follows the head (src/vr_prime.cpp, "The scan visor follows the head").
+# Once a frame, CPlayer::UpdateOrbitZone (r3 the player): the scan zone's centre in the tweaks.
+8017E96C { void prime_scan_frame(CPU*); prime_scan_frame(c); } c->r[4] = LD32((c->r[4] + (uint32_t)2232));
+# CPlayerVisor::DrawScanEffect: the EFB copy the window magnifies (the call of
+# GXSetTexCopySrc), and the ortho projection the window is drawn with, set again shifted
+# once SetViewportOrtho has returned.
+80113998 { void prime_scan_copy_src(CPU*); prime_scan_copy_src(c); }
+801139F0 { void prime_scan_ortho(CPU*); prime_scan_ortho(c); } { uint32_t ea = (c->r[28] + (uint32_t)72); double v = LDF32(ea); c->f[1].d = v; c->ps1[1] = v; }
+# Locking on in the scan visor would turn the body and the camera to the target: the reads
+# of CPlayer::mOrbitState in CPlayer::UpdateOrbitOrientation and
+# CFirstPersonCamera::UpdateTransform.
+8017F2D0 { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[31]); }
+8000E9D8 { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[30]); }
+8000ECD8 { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[30]); }
+8000F8FC { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[30]); }

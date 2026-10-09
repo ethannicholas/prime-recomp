@@ -182,7 +182,7 @@ With your disc image in `rom/`:
 ```
 
 The disc image is not part of the APK. It is copied to the app's data directory on the
-headset, `/sdcard/Android/data/com.example.prime/files/`, which takes a few minutes the first
+headset, `/sdcard/Android/data/com.ethannicholas.prime/files/`, which takes a few minutes the first
 time. The memory card and the shader cache live there too, and survive reinstalling.
 
 ### Playing
@@ -190,16 +190,18 @@ time. The memory card and the shader cache live there too, and survive reinstall
 The app appears under **Library → Unknown Sources → Metroid Prime**. Menus, cinematics and
 the morph ball are shown on a flat screen in front of you; first-person play switches to
 stereo 3D by itself. Clicking the left thumbstick switches by hand, until the game next
-changes view.
+changes view. In stereo the arm cannon is in your right hand and fires where it points, and
+the scan visor's window follows your head: look at something to scan it, no free look needed.
 
 | GameCube | Touch controller |
 |---|---|
 | Control stick | Left thumbstick |
 | C stick | Right thumbstick |
 | A / B | A / B (right) |
-| X / Y | X / Y (left) |
+| A (fire) | Right trigger as well, except on the pause and map screens, where it is R |
+| X (morph ball) / Y (missile) | Y / X (left) |
 | Z | Right grip |
-| L / R | Left / right trigger |
+| L | Left trigger |
 | Start | Menu (left) |
 | D-pad (visors) | Hold left grip + left thumbstick |
 | *(flat screen / stereo, by hand)* | Left thumbstick click |
@@ -208,7 +210,7 @@ changes view.
 
 ### Tuning the VR view
 
-Settings are read at startup from `/sdcard/Android/data/com.example.prime/files/vr.txt`, so
+Settings are read at startup from `/sdcard/Android/data/com.ethannicholas.prime/files/vr.txt`, so
 they can be changed with `adb push` between runs. The file is optional; every key has a
 default. One `key value` per line, `#` starts a comment:
 
@@ -222,8 +224,12 @@ foreground_scale 0.5     # how much nearer and smaller the arm cannon and visor 
 eye_scale 1.4            # eye resolution, times what the headset recommends
 msaa 4                   # antialiasing samples per pixel in stereo
 theater_scale 3          # supersampling of the flat screen
+stereo_scale 1           # resolution of what stereo copies out of the flat pass, such as
+                         #   the scan visor's magnified window: 2 doubles it
 transition_s 1           # seconds the switch between flat and stereo takes
 start_in_stereo 0        # 1 to start in stereo
+gun_follows_hand 1       # the arm cannon in the right hand (0: the game's own aim)
+scan_follows_head 1      # the scan visor's window and target follow the head
 ```
 
 ## Repository layout

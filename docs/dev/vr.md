@@ -13,7 +13,7 @@ from inside the headset.
   the headless EGL harness, the AAudio device and APK packaging without Gradle -- moved into
   `gcn-recomp/android/` and `gcn-recomp/tools/package-apk.ps1`, with everything Wave
   Race-specific taken out and put behind `vr::GameHooks` (`gcn-recomp/runtime/vr_game.h`).
-  `gcn_add_game(... ANDROID_PACKAGE com.example.prime)` builds `libprime.so` (the app) and
+  `gcn_add_game(... ANDROID_PACKAGE com.ethannicholas.prime)` builds `libprime.so` (the app) and
   `prime_egl` (the harness) on an Android build. Blue Storm still builds its own copies until
   it moves over.
 - **`src/vr_prime.cpp`** holds Prime's answers: `units_per_metre 1` (world units taken to be
@@ -30,7 +30,8 @@ from inside the headset.
 ## The CPU is not the limit (2026-10-08)
 
 `prime_bench` on the Quest 3, run over adb against the image the app uses
-(`/sdcard/Android/data/com.example.prime/files/game.ciso`), unpaced under the virtual clock:
+(`/sdcard/Android/data/com.ethannicholas.prime/files/game.ciso`, then under `com.example.prime`),
+unpaced under the virtual clock:
 **98 fps steady state, 164% of the game's 60** (6,302 frames in 60 s). With no input the
 benchmark sits on the title screen and menus, so this is not yet a gameplay figure; the
 frigate needs measuring the same way with a route (`GCN_INPUT` or a replay in the env).
@@ -586,7 +587,20 @@ the same frame rate, and frames are unchanged.
   half of the screen, read as IA8 indirect textures to index a ramp. The copies were in the
   wrong layout for that; fixed in gcn-recomp (`docs/graphics.md`, "Texture lifetimes and
   EFB copies"). At internal scale 2 the frame is clean; at 1, which stereo uses for its
-  copies, faint lines remain every few dozen rows, and so do the specks. Open.
+  copies, faint lines remained every few dozen rows, and so did the specks.
+
+  **Every few dozen rows is every chunk** (2026-10-09, from the code, not yet from the
+  headset): the fog volume is drawn in horizontal chunks of the screen
+  (`CCubeRenderer::DrawFogVolume`), each depth-copied and read back by a quad whose
+  texture coordinates run from the first texel's centre to the last's over exactly the
+  chunk's pixels. At internal scale 1 the last row's coordinate sits within 1/256 of a
+  texel edge, where a GPU's subtexel rounding can read the next texel -- a different depth
+  byte, and a wrong ramp index along that row. The renderer now snaps a depth copy's
+  coordinate to the centre of the texel GX would read (`u_texsnap` in
+  `gcn-recomp/runtime/gx/shadergen.cpp`), which has the frigate's frames unchanged; the acid
+  rooms are not reachable on this machine (the Chozo input logs are on the headset), so the
+  next run there should look. `stereo_scale 2` in `vr.txt` is the other lever, since the
+  copies were clean at scale 2.
 - **Black HUD text.** The energy digits, the warning ("Damage") and the map's room title
   became black rectangles as a session went on. Reproduced by replaying
   `inputs/20261009-140323` in stereo: the room title from frame 4200 and every "Damage" from
@@ -676,6 +690,93 @@ Next, in order:
 3. The guest's skinning store path (`PSMTXROMultS16VecArrayGathered`, a bit-exact HLE
    in `src/`) and the gather-pipe path, each about a tenth of the guest thread.
 
+## The scan visor follows the head (2026-10-09)
+
+The scan visor was the one thing left that needed the free look: its window (the magnified
+rectangle) and its target zone sat at the centre of the game's camera, so in the headset
+an object could only be scanned by turning the camera onto it with R. Now, in stereo, both
+follow the head. The mechanism is written out in `src/vr_prime.cpp` ("The scan visor follows
+the head"); in short:
+
+- **The game projects the head's direction itself.** The eyes' mean forward direction, in
+  the camera's frame, goes through the first-person camera's own perspective (vertical
+  field of view at +0x16C of `CGameCamera`, aspect at +0x178) to a pixel of the game's
+  screen. That one point is written each frame into the tweaks the scan zone is read from
+  -- `CTweakPlayer`'s box centre and ideal point for zone 1, which is what the Wii version
+  does with its pointer -- so `CPlayer::FindOrbitableObjects` finds what the head is on, and
+  the scan indicators and the lock follow. The zone's size is the game's: 252 by 88 pixels.
+- **The window is moved by two patches in `CPlayerVisor::DrawScanEffect`**: the EFB copy it
+  magnifies is taken around the point instead of the viewport's centre, and the ortho
+  projection the window and its frame are drawn with is set again shifted by the point's
+  offset, right after the game sets it. The point is clamped so the window stays inside the
+  screen (and so inside the visor): looking past the edge pins it there.
+- **Locking on no longer turns the body or the camera in the scan visor.** The game turns
+  both to face an orbit target (`CPlayer::UpdateOrbitOrientation` snaps the body's yaw;
+  `CFirstPersonCamera::UpdateTransform` looks at the orbit point), which in the headset
+  would move the world under a viewer who is already facing the target, and take the zone,
+  which follows the head, off it. While the scan follows the head, the four reads of the
+  orbit state in those two functions are answered "no orbit" in the scan visor; the state
+  itself, which the scanning checks, is untouched. Circling a target with L and the stick
+  in the scan visor still moves the body; it just does not turn it.
+- **Only while the eyes are published** (stereo), so theater and the desktop keep the game's
+  own scan; `scan_follows_head 0` in `vr.txt` turns it off.
+
+Checked on the desktop with the stand-in head (`GCN_CULL_HEAD`, which the scan reads too)
+and scripted presses on the new-game route, frames dumped around 10500 in the hangar:
+
+```
+GCN_CULL_HEAD="20 8" GCN_STEREOLOG=1 GCN_SCANLOG=1 GCN_INPUT="10350:LEFT:10" \
+    GCN_DUMP_RANGE=10300-10800 ./build/prime --replay=routes/new-game --no-input-log \
+    --hidden --fast --dump-dir=frames --dump-every=50
+```
+
+With the head 20 degrees left and 8 up, the window and its magnified contents sat at
+(163, 288) of the 640x448 screen, where the log put the zone, and the scan indicators stayed
+on their objects; without `GCN_CULL_HEAD` the frame is the game's own, window and zone at
+the centre. With the head 3 degrees right, L held on the console light at the centre of the
+hangar (`GCN_INPUT="10350:LEFT:10,10450:L:200"`), the scan ran to "Scan complete" with the
+window on the light, and the camera's forward vector in the log settled on the body's
+heading, where the game's own scan turned it onto the light instead (the light sits a
+degree to the right of centre; both logs show the turn, or its absence, over the 50 frames
+after the press).
+
+Not yet seen in the headset. What to look at there: whether the window keeps up with the
+head (it is placed a frame or two behind, like the cannon); whether its magnified copy is
+sharp enough -- the copy is taken from the flat pass at `stereo_scale`, 1 by default, so a
+170-pixel window holds about 100 source pixels; `stereo_scale 2` doubles that at the cost
+of the flat pass, which in the scan visor draws the whole world for the copy; and whether
+pinning the window at the edge of the visor reads right. The data dots that fly from the
+window to the scan panes still start from the screen's centre.
+
+## The controllers, Prime's way (2026-10-09)
+
+`vr::GameHooks::map_pad` (new in `gcn-recomp/runtime/vr_game.h`) lets a game rearrange the
+pad the headset frontend built from the Touch controllers, before the game reads it and
+before the input log records it, so replays carry the result. Prime's (`map_pad` in
+`src/vr_prime.cpp`):
+
+- The left controller's lower button (X) fires missiles and its upper one (Y) morphs, the
+  other way round from the frontend's X-to-X mapping.
+- The right trigger is a second A -- firing, with the cannon in that hand -- except on the
+  pause and map screens, where it stays R for the pause screen's tabs and the map's zoom.
+  Those screens are when the game is in play but not drawing its world (`prime_world_drawn`,
+  the same answer the view decision reads), so the rule needs no new state. The free look
+  that R gave is no longer needed now that the scan visor follows the head.
+
+## The package (2026-10-09)
+
+The app's package is `com.ethannicholas.prime` (it was `com.example.prime`, which showed
+under Unknown Sources). A package is an app to Android, so the new one installs beside
+the old and starts with an empty data directory: the disc image, the memory card, `vr.txt`
+and the shader cache have to be copied across once, then the old app removed:
+
+```
+adb shell cp -r /sdcard/Android/data/com.example.prime/files/. /sdcard/Android/data/com.ethannicholas.prime/files/
+adb uninstall com.example.prime
+```
+
+(`package-apk.ps1 -Install` pushes the disc image on its own, but not the card.)
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
@@ -683,5 +784,5 @@ Next, in order:
   treats them is the first thing to look at in the headset.
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.
-- **Visor effects** (scan, thermal, X-ray) and the EFB copies behind them are the
-  renderer's hard part, as the water was for Blue Storm.
+- **Visor effects** (thermal, X-ray) and the EFB copies behind them are the renderer's
+  hard part, as the water was for Blue Storm; the scan visor is above.

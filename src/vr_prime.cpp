@@ -43,6 +43,7 @@
 // where there is nothing to find, it would otherwise run constantly.
 #include "runtime.h"
 #include "vr_game.h"
+#include "hw/pad.h"
 #include <atomic>
 #include <cmath>
 #include <cstdio>
@@ -188,6 +189,7 @@ struct CullConfig {
     bool on = true;                                    // cull_to_eyes
 };
 CullConfig g_cull;
+bool g_scan_on = true;  // scan_follows_head
 
 // gun_x, gun_y and gun_z move the cannon from there, in metres in the controller's frame.
 void config_loaded(const VrConfig& c) {
@@ -202,6 +204,7 @@ void config_loaded(const VrConfig& c) {
     g_gun.loaded = true;
     g_cull.margin_rad = c.get("cull_margin_deg", 10.0f) * 3.14159265f / 180.0f;
     g_cull.on = c.get("cull_to_eyes", 1.0f) != 0.0f;
+    g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
 }
 
 inline float rd_f(uint32_t a) { const uint32_t u = mem_r32(a); float f; memcpy(&f, &u, 4); return f; }
@@ -519,6 +522,218 @@ void cull_to_eyes(CPU* c) {
                 count, atanf(L) * 57.2958f, atanf(R) * 57.2958f, atanf(D) * 57.2958f, atanf(U) * 57.2958f);
 }
 
+// ---------------------------------------------------------------------------
+// The scan visor follows the head.
+//
+// Prime's scan visor looks straight down the camera. The window that magnifies the view
+// (CPlayerVisor::DrawScanEffect) sits at the centre of the screen, and a scannable object
+// is found by projecting it with the first-person camera and asking whether it lands in
+// the scan zone, a box of screen pixels around that same centre
+// (CPlayer::FindOrbitableObjects, CPlayer::WithinOrbitScreenBox, the box from CTweakPlayer).
+// On the GameCube only the free look moves the camera, which in the headset turns the world
+// under the viewer. The Wii version moved the window and the zone to the pointer
+// (CTweakPlayer::GetOrbitZoneCentreX there reads the cursor); here they move to where the
+// head looks, projected through the game's camera, so that looking at an object scans it.
+//
+//  - Once a frame (a patch at CPlayer::UpdateOrbitZone, 0x8017E96C, recomp/patches.txt) the
+//    head's direction in the camera's frame is projected to screen pixels and written to
+//    the scan zone's centre and ideal point in the tweaks: CTweakPlayer's
+//    mOrbitScreenBoxCenterX/Y and mOrbitZoneIdealX/Y for zone 1, which the generated code
+//    of WithinOrbitScreenBox reads at +0x1B8 and +0x1C0 plus four bytes a zone. The zone's
+//    size stays the game's, and the game's own values are put back when the eyes go away.
+//  - DrawScanEffect copies the EFB around the centre of the viewport (GXSetTexCopySrc at
+//    0x80113998) and draws the window with an ortho projection centred on the screen
+//    (gpRender->SetViewportOrtho(true, -1, 1), the virtual call at 0x801139EC). One patch
+//    moves the copy to the head's point; another, once the ortho is set, sets it again
+//    through CGraphics::SetOrtho shifted by the point's offset from the centre, so the
+//    window, its frame and the copy inside follow. The point is kept far enough inside the
+//    screen for the window to fit, so looking past the edge of the visor pins it there.
+//  - Locking on (L) in the scan visor turns the body to face the target
+//    (CPlayer::UpdateOrbitOrientation) and the camera too
+//    (CFirstPersonCamera::UpdateTransform, which looks at the orbit point). The viewer is
+//    already facing it, and the turn would move the world under them, and the zone, which
+//    follows the head, off the target. While the scan follows the head, the reads of
+//    CPlayer::mOrbitState (+0x314) in both are answered "no orbit" in the scan visor; the
+//    game's own copy of the state, which the scanning itself checks, is untouched.
+//
+// Which visor is up is CPlayer::mOrbitZoneMode (+0x340), which UpdateOrbitZone sets to 1 in
+// the scan visor. The first-person camera's field of view (vertical, degrees) and aspect
+// are at +0x16C and +0x178 of CGameCamera, the viewport is CGraphics::mViewport. All of
+// this is only while the eyes are published -- stereo in the headset, GCN_CULL_HEAD on the
+// desktop -- and scan_follows_head 0 in vr.txt turns it off; otherwise the scan is the
+// game's own. GCN_SCANLOG=1 prints the point as it moves.
+
+constexpr uint32_t kTweakPlayer = 0x805A9D78;  // gpTweakPlayer
+constexpr uint32_t kScanZoneFields[4] = {0x1BC, 0x1C4, 0x1CC, 0x1D4};  // centre x, y, ideal x, y of zone 1
+constexpr uint32_t kViewport = 0x803EE928;     // CGraphics::mViewport: left, top, width, height
+constexpr uint32_t kCameraFov = 0x16C, kCameraAspect = 0x178;
+constexpr uint32_t kPlayerOrbitState = 0x314, kPlayerOrbitZoneMode = 0x340;
+// The scan window at its idle size: 169 by 152 pixels (DrawScanEffect's 169.218 and
+// 152.218 at a window scale of 1).
+constexpr float kWindowHalfW = 85.0f, kWindowHalfH = 77.0f;
+
+extern "C" void fn_80379B4C(CPU* c);  // GXSetTexCopySrc
+extern "C" void fn_8030CFA4(CPU* c);  // CGraphics::SetOrtho(left, right, top, bottom, near, far)
+
+// Where the head looks, as a point on the game's screen: the eyes' mean forward direction
+// in the camera's frame, through the first-person camera's projection, in pixels of the
+// viewport with y up (the convention of CPlayer's screen tests), kept far enough from the
+// edges for the window to fit. False when the scan is the game's own.
+bool head_screen_point(float out[2]) {
+    ensure_config();
+    if (!g_scan_on) return false;
+    vr::EyeView ev[2];
+    if (!(vr::eye_views(ev) || stand_in_eyes(ev))) return false;
+    const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+    if (!pair) return false;
+    const uint32_t camera = mem_r32(pair);
+    if (!is_camera(camera, kFirstPersonCameraVtable)) return false;
+    float d[3] = {0, 0, 0};
+    for (int e = 0; e < 2; e++) {
+        const float ahead[3] = {0, 0, -1};
+        float f[3];
+        qrot(ev[e].rot, ahead, f);
+        for (int i = 0; i < 3; i++) d[i] += f[i];
+    }
+    const float t = tanf(rd_f(camera + kCameraFov) * 0.5f * 3.14159265f / 180.0f);
+    const float aspect = rd_f(camera + kCameraAspect);
+    if (!(t > 0.0f) || !(aspect > 0.0f)) return false;
+    const float W = (float)(int32_t)mem_r32(kViewport + 8), H = (float)(int32_t)mem_r32(kViewport + 12);
+    if (!(W > 0.0f) || !(H > 0.0f)) return false;
+    // Normalised device coordinates; a head turned past the edge of the view pins to it.
+    float nx, ny;
+    if (d[2] < -1e-3f) {
+        nx = d[0] / -d[2] / (aspect * t);
+        ny = d[1] / -d[2] / t;
+    } else {
+        nx = d[0] * 1e3f;
+        ny = d[1] * 1e3f;
+    }
+    const float lim_x = 1.0f - 2.0f * kWindowHalfW / W, lim_y = 1.0f - 2.0f * kWindowHalfH / H;
+    nx = fmaxf(-lim_x, fminf(lim_x, nx));
+    ny = fmaxf(-lim_y, fminf(lim_y, ny));
+    out[0] = 0.5f * W * (1.0f + nx);
+    out[1] = 0.5f * H * (1.0f + ny);
+    return true;
+}
+
+// The patch at CPlayer::UpdateOrbitZone: the scan zone's centre, or the game's own.
+void scan_frame(uint32_t player) {
+    static const bool log = getenv("GCN_SCANLOG") != nullptr;
+    static bool have_original = false, moved = false;
+    static uint32_t original[4];
+    const uint32_t tweak = mem_r32(kTweakPlayer);
+    if (!in_ram(tweak)) return;
+    if (!have_original) {
+        for (int i = 0; i < 4; i++) original[i] = mem_r32(tweak + kScanZoneFields[i]);
+        have_original = true;
+        if (log)
+            fprintf(stderr, "[prime] scan zone: the game's centre %u %u, ideal %u %u, half extents %u %u\n",
+                    original[0], original[1], original[2], original[3], mem_r32(tweak + 0x1AC), mem_r32(tweak + 0x1B4));
+    }
+    if (log) {
+        // Every 50 frames: where the camera looks and the orbit state, for checking that
+        // locking on does not turn it.
+        static uint32_t calls = 0;
+        const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+        if (calls++ % 50 == 0 && pair && is_camera(mem_r32(pair), kFirstPersonCameraVtable)) {
+            float cam[12];
+            read_xf(mem_r32(pair) + kActorXf, cam);
+            fprintf(stderr, "[prime] scan frame %u: camera forward %.4f %.4f %.4f, orbit state %u\n", calls - 1, cam[1],
+                    cam[5], cam[9], mem_r32(player + kPlayerOrbitState));
+        }
+    }
+    float p[2];
+    if (head_screen_point(p)) {
+        const uint32_t v[4] = {(uint32_t)p[0], (uint32_t)p[1], (uint32_t)p[0], (uint32_t)p[1]};
+        for (int i = 0; i < 4; i++) mem_w32(tweak + kScanZoneFields[i], v[i]);
+        if (log) {
+            static uint32_t last_x = ~0u, last_y = ~0u;
+            if (v[0] != last_x || v[1] != last_y) {
+                last_x = v[0];
+                last_y = v[1];
+                fprintf(stderr, "[prime] scan zone at %u %u\n", v[0], v[1]);
+            }
+        }
+        moved = true;
+    } else if (moved) {
+        for (int i = 0; i < 4; i++) mem_w32(tweak + kScanZoneFields[i], original[i]);
+        moved = false;
+        if (log) fprintf(stderr, "[prime] scan zone: the game's again\n");
+    }
+}
+
+// In place of DrawScanEffect's call of GXSetTexCopySrc(x, y, width, height): the copy
+// centred on the head's point, inside the viewport. The EFB's y runs down.
+void scan_copy_src(CPU* c) {
+    float p[2];
+    if (head_screen_point(p)) {
+        const int32_t left = (int32_t)mem_r32(kViewport), top = (int32_t)mem_r32(kViewport + 4);
+        const int32_t W = (int32_t)mem_r32(kViewport + 8), H = (int32_t)mem_r32(kViewport + 12);
+        const int32_t w = (int32_t)(c->r[5] & 0xFFFF), h = (int32_t)(c->r[6] & 0xFFFF);
+        int32_t x = (int32_t)(left + p[0] - 0.5f * w), y = (int32_t)(top + (H - p[1]) - 0.5f * h);
+        x = x < left ? left : x > left + W - w ? left + W - w : x;
+        y = y < top ? top : y > top + H - h ? top + H - h : y;
+        c->r[3] = (uint32_t)(x & ~1) & 0xFFFF;  // the copy's origin is taken in pairs of pixels
+        c->r[4] = (uint32_t)(y & ~1) & 0xFFFF;
+    }
+    c->lr = 0x8011399Cu;
+    fn_80379B4C(c);
+}
+
+// Right after DrawScanEffect's SetViewportOrtho(true, -1, 1): the same ortho again, shifted
+// so that what the game draws about the origin lands on the head's point. SetViewportOrtho
+// centred the viewport's pixel bounds and passed them to SetOrtho as (left, right, bottom,
+// top), y up; the generated code's volatile registers are free here, between a call's
+// return and the next instruction's use of a saved one.
+void scan_ortho(CPU* c) {
+    float p[2];
+    if (!head_screen_point(p)) return;
+    const int32_t left = (int32_t)mem_r32(kViewport), top = (int32_t)mem_r32(kViewport + 4);
+    const int32_t W = (int32_t)mem_r32(kViewport + 8), H = (int32_t)mem_r32(kViewport + 12);
+    const float ox = p[0] - 0.5f * W, oy = p[1] - 0.5f * H;
+    const float args[6] = {(float)(left - W / 2) - ox, (float)(left + W / 2) - ox, (float)(top + H / 2) - oy,
+                           (float)(top - H / 2) - oy, -1.0f, 1.0f};
+    for (int i = 0; i < 6; i++) {
+        c->f[1 + i].d = args[i];
+        c->ps1[1 + i] = args[i];
+    }
+    c->lr = 0x801139F0u;
+    fn_8030CFA4(c);
+}
+
+// The reads of CPlayer::mOrbitState in UpdateOrbitOrientation and the first-person camera:
+// no orbit, while a scan that follows the head is up.
+uint32_t orbit_state_for_turning(uint32_t player) {
+    const uint32_t s = mem_r32(player + kPlayerOrbitState);
+    if (s >= 1 && s <= 4 && mem_r32(player + kPlayerOrbitZoneMode) == 1) {
+        float p[2];
+        if (head_screen_point(p)) return 0;
+    }
+    return s;
+}
+
+// ---------------------------------------------------------------------------
+// The Touch controllers, after the frontend's own mapping (vr::GameHooks::map_pad).
+//
+// The left controller's lower button (X) fires missiles and its upper one (Y) morphs: the
+// frontend maps them the other way. The right trigger is a second A -- firing, as the
+// cannon in that hand suggests -- except on the pause and map screens, where it stays R:
+// the pause screen's tabs and the map's zoom need it, and nothing in first-person play does
+// now that the scan visor follows the head rather than the free look. Those screens are
+// where the game is in play but not drawing its world (prime_world_drawn), which the view
+// decision reads too.
+void map_pad(PadState& p) {
+    const bool x = p.buttons & PAD_X, y = p.buttons & PAD_Y;
+    p.buttons = (uint16_t)((p.buttons & ~(PAD_X | PAD_Y)) | (x ? PAD_Y : 0) | (y ? PAD_X : 0));
+    const bool pause_or_map = g_camera_pair.load(std::memory_order_relaxed) != 0 &&
+                              g_world_drawn.load(std::memory_order_relaxed) == 0;
+    if (pause_or_map) return;
+    if ((p.buttons & PAD_R) || p.trig_r > 127) p.buttons |= PAD_A;
+    p.buttons &= (uint16_t)~PAD_R;
+    p.trig_r = 0;
+}
+
 void config_defaults(VrConfig& c) {
     // Prime's world units are taken to be metres. A guess, to be judged from inside the
     // headset like Blue Storm's 50 was.
@@ -561,6 +776,7 @@ const bool installed = [] {
     h.config_defaults = config_defaults;
     h.config_loaded = config_loaded;
     h.wants_stereo = wants_stereo;
+    h.map_pad = map_pad;
     vr::set_game_hooks(h);
     return true;
 }();
@@ -577,3 +793,11 @@ extern "C" void prime_world_drawn(uint32_t drawn) { g_world_drawn.store(drawn, s
 // The patches at three calls of the CFrustumPlanes constructor (recomp/patches.txt), in
 // place of the call.
 extern "C" void prime_cull_frustum(CPU* c) { cull_to_eyes(c); }
+
+// The scan visor's patches (recomp/patches.txt): once a frame in CPlayer::UpdateOrbitZone,
+// the two draws in CPlayerVisor::DrawScanEffect, and the orbit state as the body's and the
+// camera's turning read it.
+extern "C" void prime_scan_frame(CPU* c) { scan_frame(c->r[3]); }
+extern "C" void prime_scan_copy_src(CPU* c) { scan_copy_src(c); }
+extern "C" void prime_scan_ortho(CPU* c) { scan_ortho(c); }
+extern "C" uint32_t prime_orbit_state(uint32_t player) { return orbit_state_for_turning(player); }

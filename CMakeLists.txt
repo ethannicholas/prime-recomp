@@ -19,4 +19,4 @@ gcn_add_game(
   SOURCES ${CMAKE_SOURCE_DIR}/src/heap_check.cpp ${CMAKE_SOURCE_DIR}/src/gx_prime.cpp ${CMAKE_SOURCE_DIR}/src/vr_prime.cpp
   # The headset app and its harness, on an Android build: see build-android.ps1 and
   # package-apk.ps1.
-  ANDROID_PACKAGE com.example.prime)
+  ANDROID_PACKAGE com.ethannicholas.prime)
