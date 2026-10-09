@@ -159,6 +159,49 @@ route:
   Multiview (`GL_OVR_multiview2`, both eyes from one set of calls) is the lever there if
   heavier rooms turn out not to hold 60; `eye_scale` 1.2 is the cheap one.
 
+## The arm cannon in the right hand (2026-10-09)
+
+In stereo the cannon follows the right controller, and so do the shots. Built and checked on
+the desktop with a stand-in controller; not yet tried in the headset.
+
+- **The frontend publishes the controllers.** `vr::hand_pose` (`gcn-recomp/runtime/vr_game.h`)
+  gives each controller's aim pose in the eyes' frame, converted the way the eyes are. It is
+  published only while the eyes are drawn, so the game falls back to its own aim on the theater
+  panel and on the desktop.
+- **The game is told, not the renderer.** A patch in `CPlayerGun::Update` (0x800412AC,
+  `recomp/patches.txt`) runs `prime_aim_gun` (`src/vr_prime.cpp`) just before the game computes
+  `mGunWorldXf = mXf * mGunLocalXf * bob`. The hook sets `mXf`, the gun's base transform that
+  `CPlayer` would otherwise aim at the cursor, from the first-person camera and the controller.
+  The game's own idle animation, bob and recoil stay on top, and the muzzle moves with the model.
+  Moving the drawn model in the renderer would have left the shots going straight ahead.
+- **Shots go where the cannon points.** This revision fires along `mAssistAimXf`'s rotation,
+  from the muzzle (`UpdateNormalShotCycle`, `FireSecondary`), not along the gun or at the
+  cursor as the decompilation's older `FirePrimary` does. The hook sets that rotation too,
+  except while locked on, so lock-on still lands.
+- **Where it sits.** At rest `mXf` is 0.25 right, 0.30 ahead and 0.35 below the eye, but the
+  cannon model hangs about three units in front of it (draws 4-7 of frame 9600 on the
+  new-game route). The renderer draws the near band at `foreground_scale`. So `mXf` is put at
+  `(hand + offset) / foreground_scale`, with the offset chosen to put the visible cannon's
+  centre 5 cm ahead of the controller's aim point. `gun_x`, `gun_y`, `gun_z` (metres, the
+  controller's frame) and `gun_pitch_deg` in `vr.txt` move it from there; `gun_follows_hand 0`
+  turns it off.
+- **On the desktop**, `GCN_GUN_HAND="x y z yaw pitch"` holds a controller still (with
+  `GCN_STEREOLOG=1`, which is what finds the camera there), and `GCN_GUNLOG=1` prints where the
+  game itself puts `mXf`. With `0.25 -0.3 -0.35 25 10` the cannon turns up and to the left,
+  close and large in the flat picture.
+
+Expected rough edges, to judge in the headset:
+
+- In the world the gun is at twice the distance it is seen at, so shots start about that far
+  out along the line from the eye to the muzzle. That is no further than the game's own
+  cannon, which is modelled three units out.
+- The camera's transform is read during the gun's update. If the camera moves later in the
+  frame, the cannon lags a frame behind a stick turn, as the game's own does.
+- The aim pose on a Touch controller points along the ring, tilted from the grip;
+  `gun_pitch_deg` corrects that if holding it feels wrong.
+- The grapple arm is placed from `mXf` (`UpdateLeftArmTransform`), so it follows the right
+  controller too; the left controller is published but nothing reads it yet.
+
 ## Still to look at
 
 - **A short stretch of stereo before the intro cinematic.** On the `new-game` route the hook

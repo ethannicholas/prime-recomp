@@ -34,8 +34,11 @@
 // where there is nothing to find, it would otherwise run constantly.
 #include "runtime.h"
 #include "vr_game.h"
+#include <atomic>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 namespace {
 
@@ -72,9 +75,17 @@ uint32_t search() {
     return 0;
 }
 
+// The manager's camera pair, for the guest thread's gun hook below: found here, on the
+// render thread, and re-checked there before use.
+std::atomic<uint32_t> g_camera_pair{0};
+
 bool wants_stereo(const gx::Batch&) {
     static const bool log = getenv("GCN_STEREOLOG") != nullptr;
     static uint32_t pair = 0, frames_since_search = 1000;
+    struct Publish {
+        uint32_t& p;
+        ~Publish() { g_camera_pair.store(p, std::memory_order_relaxed); }
+    } publish{pair};
     if (!pair || !live_pair(pair)) {
         if (pair && log) fprintf(stderr, "[prime] camera manager gone\n");
         pair = 0;
@@ -98,6 +109,182 @@ bool wants_stereo(const gx::Batch&) {
         }
     }
     return current == first_person && cinematic == 0;
+}
+
+// ---------------------------------------------------------------------------
+// The arm cannon in the right hand.
+//
+// CPlayerGun (revision 2's layout, confirmed against the generated code; `this` is r28
+// throughout CPlayerGun::Update):
+//
+//   +0x3E8  mXf           the gun's base transform, which CPlayer sets every frame from the
+//                         first-person camera and the aiming cursor
+//   +0x478  mAssistAimXf  the direction shots leave in: UpdateNormalShotCycle and
+//                         FireSecondary fire from the muzzle along this transform's rotation,
+//                         which CPlayer points at the aim-assist target
+//   +0x4A8  mGunWorldXf   mXf * mGunLocalXf * the camera bob, then the recoil motion on top;
+//                         what the cannon is drawn with and where the muzzle is
+//   +0x832  bit 0x04      mLockedOn
+//
+// CPlayerGun::Update computes mGunWorldXf at 0x800412B8, after the locators are read; the
+// patch at 0x800412AC (recomp/patches.txt) runs this just before it. Setting mXf there from
+// the controller keeps the game's own animation, bob and recoil on top of the hand, and
+// moves the muzzle with it. Setting mAssistAimXf's rotation sends the shots where the
+// cannon points; when locked on it is left alone, so the shots still find the target.
+//
+// A CTransform4f is three rows of four floats: the columns are right, forward and up (Retro's
+// world is z-up, y-forward) and the translation. Every CActor, cameras included, keeps its
+// transform at +0x34.
+//
+// The controller's pose arrives in the eyes' frame (x right, y up, z back, origin at the
+// camera). The renderer draws Prime's near layers scaled by foreground_scale about the
+// camera, so a gun placed at h / foreground_scale is seen at h, at that scale.
+
+constexpr uint32_t kGunXf = 0x3E8, kGunAssistAimXf = 0x478, kGunFlags = 0x832;
+constexpr uint8_t kGunLockedOn = 0x04;
+constexpr uint32_t kActorXf = 0x34;
+
+// Where the cannon is, from mXf. At rest mXf's origin is 0.25 right, 0.30 ahead and 0.35
+// below the camera, turned with it (GCN_GUNLOG), but the cannon model hangs well forward of
+// that: in a frame of play on the frigate (GCN_DRAWLOG=9600 on the new-game route, draws
+// 4-7) its box centre is (1.03, -0.27, -3.24) in view space and it is 0.86 long, so
+// (0.78, 0.08, -2.94) from mXf in the gun's own frame (x right, y up, z back). Seen at
+// foreground_scale that is scaled too, so mXf's origin is put that much behind the hand,
+// and the cannon's centre is seen kGunAhead in front of the controller's aim point.
+constexpr float kCannonFromXf[3] = {0.78f, 0.08f, -2.94f};
+constexpr float kGunAhead = 0.05f;
+
+struct GunConfig {
+    float scale = 1.0f;            // foreground_scale
+    float offset[3] = {};          // where mXf's origin is seen, in units in the controller's frame
+    float pitch_rad = 0.0f;        // gun_pitch_deg: the cannon's tilt against the controller
+    bool on = true;                // gun_follows_hand
+};
+GunConfig g_gun;
+
+// gun_x, gun_y and gun_z move the cannon from there, in metres in the controller's frame.
+void config_loaded(const VrConfig& c) {
+    g_gun.scale = c.foreground_scale > 0.0f ? c.foreground_scale : 1.0f;
+    const float u = c.units_per_metre;
+    const float nudge[3] = {c.get("gun_x", 0.0f), c.get("gun_y", 0.0f), c.get("gun_z", 0.0f) - kGunAhead};
+    for (int i = 0; i < 3; i++) g_gun.offset[i] = u * nudge[i] - g_gun.scale * kCannonFromXf[i];
+    g_gun.pitch_rad = c.get("gun_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
+    g_gun.on = c.get("gun_follows_hand", 1.0f) != 0.0f;
+}
+
+inline float rd_f(uint32_t a) { const uint32_t u = mem_r32(a); float f; memcpy(&f, &u, 4); return f; }
+inline void wr_f(uint32_t a, float f) { uint32_t u; memcpy(&u, &f, 4); mem_w32(a, u); }
+
+void read_xf(uint32_t a, float m[12]) { for (int i = 0; i < 12; i++) m[i] = rd_f(a + 4 * i); }
+
+// The eyes' frame to the camera's own: x right, y forward, z up.
+inline void eye_to_camera(const float v[3], float out[3]) { out[0] = v[0]; out[1] = -v[2]; out[2] = v[1]; }
+
+// `m`'s rotation applied to `v`.
+inline void rotate(const float m[12], const float v[3], float out[3]) {
+    for (int i = 0; i < 3; i++) out[i] = m[4 * i] * v[0] + m[4 * i + 1] * v[1] + m[4 * i + 2] * v[2];
+}
+
+// With GCN_GUNLOG set, the game's own mXf in the camera's frame whenever it moves by more
+// than a little: where the cannon sits when nothing is in the hand.
+void log_rest(uint32_t gun, const float cam[12]) {
+    static float last[3] = {1e9f, 1e9f, 1e9f};
+    float g[12], d[3], local[3], fwd[3];
+    read_xf(gun + kGunXf, g);
+    for (int i = 0; i < 3; i++) d[i] = g[4 * i + 3] - cam[4 * i + 3];
+    for (int i = 0; i < 3; i++) local[i] = cam[i] * d[0] + cam[4 + i] * d[1] + cam[8 + i] * d[2];
+    for (int i = 0; i < 3; i++) fwd[i] = cam[i] * g[1] + cam[4 + i] * g[5] + cam[8 + i] * g[9];
+    if (fabsf(local[0] - last[0]) + fabsf(local[1] - last[1]) + fabsf(local[2] - last[2]) < 0.05f) return;
+    memcpy(last, local, sizeof(last));
+    fprintf(stderr, "[prime] gun at %.3f %.3f %.3f from the camera (right, forward, up), pointing %.3f %.3f %.3f\n",
+            local[0], local[1], local[2], fwd[0], fwd[1], fwd[2]);
+}
+
+// GCN_GUN_HAND="x y z yaw pitch": a controller held still, for looking at the result without
+// a headset -- metres in the eyes' frame, degrees left and up. The flat picture shows the
+// cannon where the eye sees it, at twice the distance and size.
+bool stand_in_hand(vr::HandPose* out) {
+    static const char* env = getenv("GCN_GUN_HAND");
+    static vr::HandPose pose;
+    static const bool ok = [] {
+        float yaw, pitch;
+        if (!env || sscanf(env, "%f %f %f %f %f", &pose.pos[0], &pose.pos[1], &pose.pos[2], &yaw, &pitch) != 5)
+            return false;
+        const float h = 3.14159265f / 360.0f;  // half a degree, in radians
+        const float cy = cosf(yaw * h), sy = sinf(yaw * h), cp = cosf(pitch * h), sp = sinf(pitch * h);
+        // Yaw about y, then pitch about the turned x.
+        pose.rot[0] = cy * sp;
+        pose.rot[1] = sy * cp;
+        pose.rot[2] = -sy * sp;
+        pose.rot[3] = cy * cp;
+        return true;
+    }();
+    if (ok) *out = pose;
+    return ok;
+}
+
+void aim_gun(uint32_t gun) {
+    static const bool log = getenv("GCN_GUNLOG") != nullptr;
+    const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+    if (!pair) return;
+    const uint32_t camera = mem_r32(pair);
+    if (!is_camera(camera, kFirstPersonCameraVtable)) return;
+    float cam[12];
+    read_xf(camera + kActorXf, cam);
+
+    vr::HandPose hand;
+    if (!g_gun.on || !(vr::hand_pose(vr::kRightHand, &hand) || stand_in_hand(&hand))) {
+        if (log) log_rest(gun, cam);
+        return;
+    }
+
+    // The controller's axes in the eyes' frame, tilted by gun_pitch_deg about its own x.
+    const float x = hand.rot[0], y = hand.rot[1], z = hand.rot[2], w = hand.rot[3];
+    float ax[3] = {1 - 2 * (y * y + z * z), 2 * (x * y + w * z), 2 * (x * z - w * y)};
+    float ay[3] = {2 * (x * y - w * z), 1 - 2 * (x * x + z * z), 2 * (y * z + w * x)};
+    float az[3] = {2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)};
+    const float cp = cosf(g_gun.pitch_rad), sp = sinf(g_gun.pitch_rad);
+    for (int i = 0; i < 3; i++) {
+        const float yi = ay[i], zi = az[i];
+        ay[i] = cp * yi + sp * zi;
+        az[i] = -sp * yi + cp * zi;
+    }
+
+    // Where the gun's origin is seen, in the eyes' frame, then where it has to be put.
+    float at[3];
+    for (int i = 0; i < 3; i++)
+        at[i] = (hand.pos[i] + ax[i] * g_gun.offset[0] + ay[i] * g_gun.offset[1] + az[i] * g_gun.offset[2]) /
+                g_gun.scale;
+
+    // Into the camera's frame (the cannon points along the controller's -z), then the world.
+    const float back[3] = {-az[0], -az[1], -az[2]};
+    float right_c[3], fwd_c[3], up_c[3], at_c[3];
+    eye_to_camera(ax, right_c);
+    eye_to_camera(back, fwd_c);
+    eye_to_camera(ay, up_c);
+    eye_to_camera(at, at_c);
+    float right[3], fwd[3], up[3], pos[3];
+    rotate(cam, right_c, right);
+    rotate(cam, fwd_c, fwd);
+    rotate(cam, up_c, up);
+    rotate(cam, at_c, pos);
+    for (int i = 0; i < 3; i++) pos[i] += cam[4 * i + 3];
+
+    for (int i = 0; i < 3; i++) {
+        const uint32_t row = gun + kGunXf + 16 * i;
+        wr_f(row, right[i]);
+        wr_f(row + 4, fwd[i]);
+        wr_f(row + 8, up[i]);
+        wr_f(row + 12, pos[i]);
+    }
+    if (!(mem_r8(gun + kGunFlags) & kGunLockedOn)) {
+        for (int i = 0; i < 3; i++) {
+            const uint32_t row = gun + kGunAssistAimXf + 16 * i;
+            wr_f(row, right[i]);
+            wr_f(row + 4, fwd[i]);
+            wr_f(row + 8, up[i]);
+        }
+    }
 }
 
 void config_defaults(VrConfig& c) {
@@ -125,9 +312,13 @@ void config_defaults(VrConfig& c) {
 const bool installed = [] {
     vr::GameHooks h;
     h.config_defaults = config_defaults;
+    h.config_loaded = config_loaded;
     h.wants_stereo = wants_stereo;
     vr::set_game_hooks(h);
     return true;
 }();
 
 }  // namespace
+
+// The patch in CPlayerGun::Update (recomp/patches.txt); r28 is the gun.
+extern "C" void prime_aim_gun(CPU* c) { aim_gun(c->r[28]); }

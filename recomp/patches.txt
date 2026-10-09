@@ -1,1 +1,5 @@
 # addr  C statement replacing the original instruction at addr (one per line)
+# The arm cannon follows the right controller in stereo (src/vr_prime.cpp, "The arm cannon
+# in the right hand"): CPlayerGun::Update, just before it computes mGunWorldXf from mXf. The
+# hook is declared here because the generated code is C and sees only recomp.h.
+800412AC { void prime_aim_gun(CPU*); prime_aim_gun(c); } c->r[3] = c->r[1] + (uint32_t)720;
