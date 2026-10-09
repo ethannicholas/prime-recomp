@@ -477,6 +477,54 @@ The flat pass looked like a second culprit at first, 5-8 ms a frame. It was not:
 `[eye-rt]` time includes the batch's texture and vertex uploads, and `GCN_EYELOG=1` showed
 the trim leaving out all 852 of the scene's draws in a frame of the plaza.
 
+## The second room (2026-10-09)
+
+The next room past the save station (`inputs/20261009-122345`, a few seconds in it) gave
+40-48 game frames a second in the headset. This time the app's own log said so (`compositor
+.. game .. frames`, one line a second) and the compositor's `VrApi FPS=` lines beside it
+said why not the GPU: `GPU%` 0.35-0.41 at 545 MHz. (The boost levels were granted, `cpu 0,
+gpu 0`, and still showed GPU level 4.) It is the CPU.
+
+The room is about 20,000 GX draws and 115,000 vertices a frame, nearly all 4-8-vertex fans
+and strips out of the room's display lists. `prime_bench` alone, with no renderer, managed
+50-58 fps there, so the guest pipeline itself was short of 60. `GCN_STALLS=1` (new) showed
+where the guest's time went: 4.5 ms of every frame waiting at draw-sync token reads.
+
+- **The tokens are the skinned models'.** `CSkinnedModel::PostDrawFunc` sets one after
+  each skinned model; `Skinning::AddSkinnedRef`, `CSkinnedModel::EnsureAllocation` and
+  `TickAllocations` read it back to recycle the skinning buffer -- two reads per model,
+  about 80 a frame here, against about one a frame on the frigate. Each read waited for
+  the front end to decode everything drawn before it, and the creatures are drawn after
+  the world, so each waited behind the world's 20,000 fans.
+- **What was changed**, all in gcn-recomp's front end (`docs/graphics.md`, "Threads"): the
+  wait moved from the token's issue to its read; the guest hands commands over 4 KB at a
+  time instead of 64 KB; the threads wake each other only when asleep; the transform keeps
+  a draw's plan while the registers are unchanged; and Prime turns on draw-sync lag
+  (`src/gx_prime.cpp`), which shows the game a GPU a frame behind. With the lag no token
+  read waits at all, and no read spun (`token reads .. lagged .. spun 0`).
+
+The stereo harness at the headset's settings (`prime_egl --eye --eyes=2
+--eye-size=2016x2112 --msaa=2 --fast`, top clocks), frames 2400-3200 of the run:
+
+| Build | Frame interval | Token waits |
+|---|---|---|
+| before | 21-24 ms | 5-8 ms |
+| token read lazy, 4 KB hand-off | 17.7-19 ms | 4.5 ms |
+| + plan cache, fewer wake-ups | 17.7 ms | 4.5 ms |
+| + draw-sync lag | 11.2-11.6 ms | 0.01 ms |
+
+`prime_bench` over the same stretch went from 55 to 73 fps before the lag. Frames of this
+run are byte-identical throughout. Two frames of the earlier Chozo run are not: a few
+hundred pixels on the HUD map and the edges of the visor and the cannon moved, by up to 61
+of 255. Both runs of each build agree, and with the front end inline (`GCN_GX_SYNC=1`) the
+new build matches the old exactly, so it is the front end reading guest memory the game
+rewrites each frame at a different moment, not a wrong result. Those are the same pixels as
+the HUD map's shimmer, below.
+
+What is left in the room is the game's own work, about 13 ms of the guest thread a frame,
+much of it CPU skinning (`fn_80355298`, `fn_803553B4`, paired-single loads), and the
+front end's 8 ms of decoding, now mostly in parallel with it.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
