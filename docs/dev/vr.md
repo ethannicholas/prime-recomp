@@ -593,6 +593,89 @@ the same frame rate, and frames are unchanged.
   5700. The renderer had deleted textures the front end still held as sent; the front end
   now decides alone when a texture dies, and the same replay draws all of them.
 
+## The beetle room again: the clocks, the copies, the transform (2026-10-09)
+
+A minute in the second room (`inputs/20261009-151339`, on the device as
+`/data/local/tmp/prime/s5`) ran at 46-53 game frames a second with the sound breaking
+up. Three things learned from the session's logcat before replaying anything:
+
+- **The GPU is not the limit there**: the compositor's `VrApi FPS=` lines had `GPU%`
+  0.57-0.69 and `CPU%` 0.95.
+- **The CPU boost is on a timer.** The app asks for `XR_PERF_SETTINGS_LEVEL_BOOST`, and
+  the OS's clock governor grants CPU level 8, 2361 MHz -- for 47 seconds. Then
+  (`adb logcat -s crcs`): `Clock levels changed: CPU 8 -> 4 (CPU boost ran for too long
+  or was requested too frequently. The boost must be disabled by the app.)`, and the
+  session ran its remaining twenty seconds at 1920 MHz. The GPU's boost request is
+  answered "based on Utilization" and never granted: 545 MHz throughout. So the steady
+  state is 1920/545 MHz, and the headset's own log is the only honest reading of it.
+- **The harness runs faster than the app.** `prime_egl` over `adb shell` runs the big
+  cores at 2361 MHz and the GPU at 690 MHz under load (`scaling_cur_freq`, `gpuclk`).
+  Every harness figure below is at those clocks; the app's CPU side is about 1.23 times
+  slower, its GPU 1.27. The app logs the perf-settings notices now, beside the
+  compositor's lines.
+
+The replay in the harness (`--eye --eyes=2 --eye-size=2016x2112 --msaa=2 --fast`,
+`GCN_FRAMETIME=1 GCN_STALLS=1 GCN_EYE_GPU=1`), frames 2200-3150, about 20,000 GX draws
+and 115,000 vertices a frame, mean milliseconds per frame:
+
+| Stage | Before | Texgen matrices cached | + copies keep their ids |
+|---|---|---|---|
+| guest thread | 12.2 | 11.7 | 11.5 |
+| front end | 8.1 | 8.0 | 8.0 |
+| transform (two workers, wall) | 7.2 | 6.5 | 6.5 |
+| flat pass (render thread) | 5.1 | 4.6 | 2.9 |
+| each eye (render thread) | 2.9 | 2.9 | 2.9 |
+| render thread, stereo frame | 11.0 | 10.4 | 8.6 |
+
+Frames byte-identical throughout. The GPU is 8.5-9.7 ms a stereo frame at 690 MHz. The
+profile (`GCN_PROFILE`, by thread): the two transform workers 34% of all CPU time
+(`transform_vertex` 25% on its own), the front end 24% (`draw_impl`, the vertex decode),
+the render thread 23% (58% of it inside the Adreno driver), the guest 19% and flat --
+`PSMTXROMultS16VecArrayGathered` and its stores about 12% of the guest thread, the
+gather-pipe-to-parser path about the same, the rest the game's own code spread thin.
+
+- **The flat pass was mostly copies.** This room makes four *depth* copies of the lower
+  part of the screen each frame (the acid's fog volume), the first after the whole world
+  has been drawn, so the trim can only leave out the 645 draws after the last of them.
+  But the 4.6 ms was not those 800 draws: the game copies three targets of different
+  sizes through one scratch buffer every frame (`GCN_COPYLOG`: a 128x128 reflection, a
+  320x76 depth copy, a 4x76 sliver, all to `0047AD40`, and two more to `0049DD40`), the
+  texture cache keyed copies by address, so each replaced the last and every one was new
+  the next frame -- five GL textures allocated and freed a frame. Fixed in gcn-recomp
+  (`docs/graphics.md`, "A copy keeps its id"); the copies are 0.2 ms of the pass now
+  (`[rt]` prints their share), and the 800 draws the rest, at the same 2.5 µs a call as
+  the eyes'.
+- **What the transform is asked for** (`GCN_XFSTATS=1`, new): 115k vertices, 95% with a
+  normal, 30% lit by 2.5 lights on average, 1.9 texgens per vertex and every texgen
+  post-transformed. The texgen and post matrices were read through the snapshot's page
+  table per vertex; cached per draw now, 9% off the transform. What is left is the
+  arithmetic itself, at about 100 ns a vertex over two threads.
+
+Where that leaves the room at the headset's 1920 MHz, scaling: the guest about 14 ms,
+the render thread about 10.5, the front end 10, each transform worker 8 -- against a
+16.7 ms frame, on four fast cores that also run the compositor. The guest sets the pace
+and has no hot spot; the render thread is 3,500 draw calls a stereo frame and the eyes
+are two thirds of them.
+
+Next, in order:
+
+1. **Multiview** (`GL_OVR_multiview2` with `GL_OVR_multiview_multisampled_render_to_texture`):
+   both eyes from one set of draw calls, which takes an eye pass (2.9 ms here) off the
+   render thread and the second eye's binning off the GPU. The vertex shader's `u_proj`,
+   `u_view` and `u_crop` become pairs indexed by `gl_ViewID_OVR`, the eye target a
+   two-layer array, and the app's eye swapchain one with `arraySize 2`; the shader cache
+   rebuilds once. The eye grabs (a visor effect's whole-frame copy) need the per-eye
+   path, so a frame that grabs falls back to it.
+2. **The clock when the guest is slow.** Under the virtual clock a guest that cannot keep
+   real time runs the game in slow motion and starves the sound, which is what the
+   dropouts are. The hardware would drop frames instead: its DSP keeps real time and
+   the game's own `UpdateTicks` takes a longer step. A catch-up -- virtual time jumping
+   forward when the host falls more than a frame behind, with each jump written to the
+   input log so a replay makes the same one at the same tick -- would keep the sound and
+   the game's speed and still replay exactly. Not done; a design change in gcn-recomp.
+3. The guest's skinning store path (`PSMTXROMultS16VecArrayGathered`, a bit-exact HLE
+   in `src/`) and the gather-pipe path, each about a tenth of the guest thread.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
