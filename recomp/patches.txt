@@ -3,3 +3,10 @@
 # in the right hand"): CPlayerGun::Update, just before it computes mGunWorldXf from mXf. The
 # hook is declared here because the generated code is C and sees only recomp.h.
 800412AC { void prime_aim_gun(CPU*); prime_aim_gun(c); } c->r[3] = c->r[1] + (uint32_t)720;
+# Whether the game is drawing its world this frame (src/vr_prime.cpp, "When the world is
+# drawn"). CMFGame::Draw asks CInGameGuiManager::GetIsGameDraw before drawing the world, and
+# draws only the GUI when it says no (the pause and map screens, once their blur is up); the
+# answer is in r3 here. CMFGameLoader::Draw runs between worlds and draws only the transition
+# (a model, or the new world's name on black).
+80024888 { void prime_world_drawn(uint32_t); prime_world_drawn(c->r[3] & 0xFFu); } c->r[0] = c->r[3] & 0xFFu; SET_CR0(c->r[0]);
+80023D10 { void prime_world_drawn(uint32_t); prime_world_drawn(0); } { uint32_t ea = (c->r[1] + (uint32_t)-16); ST32(ea, c->r[1]); c->r[1] = ea; }

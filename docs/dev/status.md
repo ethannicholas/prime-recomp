@@ -146,8 +146,10 @@ play, approximately.
 - Quest 3 (2026-10-08). The OpenXR app is installed on a Quest 3, on the headset frontend
   now shared in `gcn-recomp/android/`, but has not been played in the headset yet. The
   benchmark ran on it at 164% of the game's 60 fps over the menus. Stereo is chosen from
-  the game's camera manager (first-person camera current, no cinematic camera), with the
-  left thumbstick click as an override. See `vr.md`.
+  the game's camera manager (first-person camera current, no cinematic camera) and whether
+  the game draws its world that frame (not on the pause and map screens, nor between
+  worlds), with the left thumbstick click as an override; leaving stereo is a cut. See
+  `vr.md`.
 
 ## Next milestones
 

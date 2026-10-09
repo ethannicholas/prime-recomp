@@ -71,6 +71,43 @@ written out):
   The search reads all of RAM, at most every two seconds while there is no manager; on this
   VM's software renderer the route reaches gameplay in about 12 minutes.
 
+**The camera is not enough (2026-10-09).** In the headset the view went to stereo on the
+world's name shown on black between worlds ("Chozo Ruins"), and stayed there on the pause
+and map screens. All three keep the first-person camera current with no cinematic camera:
+the pause and map screens draw their GUI over a blurred copy of the last frame, and between
+worlds the new world's `CStateManager`, camera manager and cameras already exist while
+`CMFGameLoader` draws the transition. What marks them is that the world is not drawn, and
+the game's own decision is read rather than guessed at: `CMFGame::Draw` asks
+`CInGameGuiManager::GetIsGameDraw` before drawing the world (the pause screen's blur turns
+it off once it is up), and `CMFGameLoader::Draw` draws only the transition. Two patches
+(`recomp/patches.txt`, 0x80024888 and 0x80023D10) pass that answer to `prime_world_drawn`
+(`src/vr_prime.cpp`), and stereo is *first-person camera current, no cinematic camera, world
+drawn*. It is a state the guest thread rewrites every frame, not a per-frame event, so the
+render thread reading it a frame early or late can at worst move a transition by a frame;
+a count of world draws was considered and rejected because the guest runs ahead of the
+render thread by a varying fraction of a frame, which would have read as the world missing
+a frame.
+
+On the `new-game` route (`GCN_STEREOLOG=1`): the manager appears at frame 2280 with the
+world not drawn (the loader), the cinematic count goes to 1 and then the world is drawn
+(`CMFGame` taking over, the intro cinematic), and the first stereo frame is 9243, when the
+count drops to 0. That also explains the stretch of stereo before the cinematic the earlier
+notes had not looked at: it was the loader, and is gone.
+Checked on the desktop with scripted presses on top of the route (`GCN_INPUT=
+"10500:START:10,11100:START:10,11700:Z:10,12300:Z:10"` with `GCN_STEREOLOG=1` and frame
+dumps): theater from the first frame of the pause screen (the game stops drawing the world
+as soon as the blur is asked for, not when it is up), stereo again 50 frames after the
+unpause press, once the blur has gone; theater on the map two frames after Z, stereo 40
+frames after the Z that leaves it, with the map still zooming back into the HUD over the
+world for that last stretch. The world's name between worlds is not on this route; it is
+the loader, the same case as the frigate's load.
+
+One trap in checking this: run paced. Unpaced (`--fast`) the guest is cheap while the game
+is paused and runs about 100 frames ahead of the render thread, so the hook, reading the
+guest's current state, said the world was drawn 95 frames before the dumps showed the map
+leaving (a draw log of such a frame had only the map's 286 draws, at 2 and 28 units, and no
+world). Paced, the answer and the frames agree. On the headset the guest is paced.
+
 ## First session in the headset (2026-10-08)
 
 Played to the first room. Three faults, all addressed the same day:
@@ -291,14 +328,35 @@ is now expected to be under 7. The levers, in order:
   quarter of the upload and of the bandwidth per sample, if texture bandwidth turns out
   to matter once the pixels are fewer.
 
+## Leaving stereo is a cut (2026-10-09)
+
+Every exit from stereo is noticed only once the game is already drawing something that is
+wrong in stereo: the pause screen's blur, the ball camera, a cinematic camera, the loader's
+transition. Folding the world back onto the panel over `transition_s` only showed more of
+it, so for Prime the way back snaps: `transition_out_s 0` in the defaults
+(`config_defaults` in `src/vr_prime.cpp`; a negative value, the shared default, keeps
+`transition_s` both ways). Entering stereo still folds out over `transition_s`.
+
 ## Still to look at
 
-- **A short stretch of stereo before the intro cinematic.** On the `new-game` route the hook
-  answers stereo from frame 2280 (the camera manager appearing, first-person camera current)
-  to 2721 (the first cinematic camera). What is on screen then has not been looked at.
-
-- **The pause and map screens** keep the first-person camera current; whether they want
-  theater, and what marks them, is open.
+- **A stereo panel for the 2D views.** The menus, the map and the morph ball are shown flat
+  on the theater panel. They could be shown like a 3D film instead: the game's own framing,
+  but each eye's image rendered from a viewpoint half an interpupillary distance to its
+  side, so the ball sits in its room at its distance and the map's rooms have depth. The
+  vertices reach the renderer in the game camera's view space with each draw's own
+  projection, so the change is per draw: translate the view by ∓δ (δ = half the IPD in
+  game units) and shift the projection's x-from-z term by ±P00·δ/D so that things D game
+  units out have no parallax (D = the panel's distance, so the screen is the window);
+  orthographic draws, the 2D elements, are left alone and sit on the screen. Two ways to
+  present it: the eye path at morph 0 with that per-eye change in `morph_chain`, through the
+  projection layer, which costs two full eye passes; or the flat pass run twice with the
+  shear, into two theater swapchains, submitted as two `XrCompositionLayerQuad`s with
+  `eyeVisibility` LEFT and RIGHT -- about twice theater's 1.4 ms, and it keeps the quad's
+  reprojection, so it is the one to try. Two things to decide in the headset: the near
+  layers (the visor frame at 2.6-4.6 units, the ball's HUD) would stand in front of the
+  screen, so the foreground band may want pinning to the panel or the parallax clamping to
+  the IPD; and the cinematics, which are shown in theater for cost, would pay the second
+  pass too.
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
   with Blue Storm's countdown rig (`PixelState::view_space`); how the renderer's HUD frame

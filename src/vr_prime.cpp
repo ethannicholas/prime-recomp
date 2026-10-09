@@ -23,6 +23,15 @@
 //   CEntity          vtable at +0, area id at +4, its own TUniqueId at +8; every camera
 //                    is one.
 //
+// The camera alone is not enough: the pause and map screens, and the world's name shown on
+// black between worlds, all keep the first-person camera current with no cinematic. What
+// marks them is that the world is not drawn. CMFGame::Draw draws the world only when
+// CInGameGuiManager::GetIsGameDraw says to (the pause screen's blur turns that off once it is
+// up), and between worlds CMFGameLoader::Draw draws just the transition. Patches at both
+// (recomp/patches.txt) report the answer through prime_world_drawn; it is a state, not an
+// event, so the render thread reading it a frame early or late sees at worst a transition
+// one frame early.
+//
 // There is no global pointer to it, so it is found: the word pair that points at a
 // first-person camera and a ball camera, each recognised by its vtable. A pair found where a
 // previous world's manager stood would point at freed cameras whose memory still holds their
@@ -79,6 +88,10 @@ uint32_t search() {
 // render thread, and re-checked there before use.
 std::atomic<uint32_t> g_camera_pair{0};
 
+// The game's latest answer to whether it draws its world (the patches above), written on the
+// guest thread, read on the render thread.
+std::atomic<uint32_t> g_world_drawn{0};
+
 bool wants_stereo(const gx::Batch&) {
     static const bool log = getenv("GCN_STEREOLOG") != nullptr;
     static uint32_t pair = 0, frames_since_search = 1000;
@@ -99,16 +112,19 @@ bool wants_stereo(const gx::Batch&) {
     const uint16_t current = mem_r16(mgr);
     const uint32_t cinematic = mem_r32(mgr + kCinematicCount);
     const uint16_t first_person = mem_r16(mem_r32(pair) + 8);
+    const bool world = g_world_drawn.load(std::memory_order_relaxed) != 0;
     if (log) {
         static uint32_t last = ~0u, last_cine = ~0u;
-        if (current != last || cinematic != last_cine) {
+        static bool last_world = false;
+        if (current != last || cinematic != last_cine || world != last_world) {
             last = current;
             last_cine = cinematic;
-            fprintf(stderr, "[prime] current camera %04X, %u cinematic (first person %04X, ball %04X)\n",
-                    current, cinematic, first_person, mem_r16(mem_r32(pair + 4) + 8));
+            last_world = world;
+            fprintf(stderr, "[prime] current camera %04X, %u cinematic (first person %04X, ball %04X), world %s\n",
+                    current, cinematic, first_person, mem_r16(mem_r32(pair + 4) + 8), world ? "drawn" : "not drawn");
         }
     }
-    return current == first_person && cinematic == 0;
+    return current == first_person && cinematic == 0 && world;
 }
 
 // ---------------------------------------------------------------------------
@@ -350,6 +366,11 @@ void config_defaults(VrConfig& c) {
     c.background_band = 0.99f;
     c.foreground_band = 0.5f;
     c.foreground_scale = 0.5f;
+    // Leaving stereo is a cut, not a fold. Every exit -- the pause screen's blur, the ball,
+    // a cinematic, the world's name between worlds -- is noticed only once the game is
+    // already drawing something that looks wrong in stereo, so the fold would only show
+    // more of it. Entering keeps transition_s.
+    c.transition_out_s = 0.0f;
 }
 
 const bool installed = [] {
@@ -365,3 +386,7 @@ const bool installed = [] {
 
 // The patch in CPlayerGun::Update (recomp/patches.txt); r28 is the gun.
 extern "C" void prime_aim_gun(CPU* c) { aim_gun(c->r[28]); }
+
+// The patches in CMFGame::Draw and CMFGameLoader::Draw (recomp/patches.txt): whether the
+// game draws its world this frame.
+extern "C" void prime_world_drawn(uint32_t drawn) { g_world_drawn.store(drawn, std::memory_order_relaxed); }
