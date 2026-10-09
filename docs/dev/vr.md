@@ -400,9 +400,20 @@ In stereo the game now culls to what the eyes see instead.
   eyes last published, and the head turns in between: each side is widened by
   `cull_margin_deg` (vr.txt, default 10, judged nowhere yet; at 200 degrees a second, a
   quick turn, 10 degrees is 50 ms). `cull_to_eyes 0` turns it all off.
+- **The planes point out.** `CFrustumPlanes` is a count, then planes of (n, d) with a point
+  *outside* when n.p >= d (`PointInFrustumPlanes`). The first build read that test the other
+  way round, took the normals for inward ones and wrote every plane inside out: in the
+  headset most of the world went missing. `GCN_CULLLOG=1` on `prime_egl` showed it at once
+  -- the camera facing -y, the game's first plane with its normal along +y and passing just
+  by the camera, which only an outward near plane does. On the frigate `SetupViewForDraw`
+  and `PreRender` build five planes, the near plane first, then the sides; no far plane.
+  Checked on the headset with `prime_egl --eye --eyes=2` at `--eye-yaw=0` and `45`, frame
+  10500 of the new-game route: the hangar whole straight ahead, and at 45 degrees the deck
+  and the far structures out to the edge of the eye.
 - **On the desktop**, `GCN_CULL_HEAD="yaw pitch"` (degrees left and up) stands in for a
   head with a Quest-like field, so the flat picture shows the world culled to where that
-  head looks; `GCN_CULLLOG=1` prints the field culled to every 600 frustums.
+  head looks; `GCN_CULLLOG=1` prints, every 600 frustums, the camera and each plane as the game built it
+  and as rebuilt (both inward), and the field culled to.
 
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the

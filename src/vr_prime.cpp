@@ -373,7 +373,10 @@ void aim_gun(uint32_t gun) {
 // are a light's view for shadows and the HUD's markers, left as they are.
 //
 // CFrustumPlanes: a count at +0, then that many planes of four floats (n, d), a point
-// inside when n.p > d. The count is 5 or 6: four sides, the near plane and maybe a far one.
+// outside when n.p >= d: the normals point out (PointInFrustumPlanes). The count is 5 or 6:
+// the near plane, four sides and maybe a far one; on the frigate SetupViewForDraw and
+// PreRender build 5, the near plane first. Below, planes are worked with inward, n.p > d,
+// and turned back out as they are written.
 // Each plane the game built is replaced by its counterpart around the eyes, in the same
 // slot. The counterpart is one frustum around both eyes: the head's orientation (the left
 // eye's), wide enough for both fields, its apex between the eyes and each plane moved out by
@@ -479,11 +482,19 @@ void cull_to_eyes(CPU* c) {
     for (int i = 0; i < 3; i++) apex_w[i] += cam_pos[i];
     auto dot = [](const float a[3], const float b[3]) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
 
+    static const bool log = getenv("GCN_CULLLOG") != nullptr;
+    static uint32_t calls = 0;
+    const bool show = log && calls++ % 600 == 0;
+    if (show)
+        fprintf(stderr, "[prime] cull %08X: camera right %.2f %.2f %.2f fwd %.2f %.2f %.2f up %.2f %.2f %.2f at %.2f %.2f %.2f\n",
+                c->lr, right[0], right[1], right[2], fwd[0], fwd[1], fwd[2], up[0], up[1], up[2], cam_pos[0], cam_pos[1],
+                cam_pos[2]);
+
     // Normals in the head's frame, inward: left, right, bottom, top, near, far.
     const float sides[6][3] = {{1, 0, -L}, {-1, 0, -R}, {0, 1, -D}, {0, -1, -U}, {0, 0, -1}, {0, 0, 1}};
     for (uint32_t p = 0; p < count; p++) {
         const uint32_t at = frustum + 4 + 16 * p;
-        const float n[3] = {rd_f(at), rd_f(at + 4), rd_f(at + 8)}, d = rd_f(at + 12);
+        const float n[3] = {-rd_f(at), -rd_f(at + 4), -rd_f(at + 8)}, d = -rd_f(at + 12);
         const float f = dot(n, fwd), r = dot(n, right), u = dot(n, up);
         const int which = f > 0.95f ? 4 : f < -0.95f ? 5 : fabsf(r) > fabsf(u) ? (r > 0 ? 0 : 1) : (u > 0 ? 2 : 3);
         float nh[3], ne[3], nw[3];
@@ -494,15 +505,16 @@ void cull_to_eyes(CPU* c) {
         // The far plane keeps the game's distance, measured from the eyes; every other
         // plane passes through the eyes.
         const float far = which == 5 ? -(d - dot(n, cam_pos)) : 0.0f;
-        wr_f(at, nw[0]);
-        wr_f(at + 4, nw[1]);
-        wr_f(at + 8, nw[2]);
-        wr_f(at + 12, dot(nw, apex_w) - slack - far);
+        if (show)
+            fprintf(stderr, "[prime]   plane %u (%d): game %.3f %.3f %.3f %.2f -> %.3f %.3f %.3f %.2f\n", p, which, n[0], n[1],
+                    n[2], d, nw[0], nw[1], nw[2], dot(nw, apex_w) - slack - far);
+        wr_f(at, -nw[0]);
+        wr_f(at + 4, -nw[1]);
+        wr_f(at + 8, -nw[2]);
+        wr_f(at + 12, -(dot(nw, apex_w) - slack - far));
     }
 
-    static const bool log = getenv("GCN_CULLLOG") != nullptr;
-    static uint32_t calls = 0;
-    if (log && calls++ % 600 == 0)
+    if (show)
         fprintf(stderr, "[prime] culling to the eyes: %u planes, half-fields %.1f left %.1f right %.1f down %.1f up\n",
                 count, atanf(L) * 57.2958f, atanf(R) * 57.2958f, atanf(D) * 57.2958f, atanf(U) * 57.2958f);
 }
