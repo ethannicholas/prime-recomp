@@ -6,5 +6,5 @@
 # The work is gcn-recomp's (tools/package-apk.ps1); this only says which game.
 param([switch]$Install)
 Set-Location $PSScriptRoot
-& "$PSScriptRoot\gcn-recomp\tools\package-apk.ps1" -Name prime -Package com.example.prime `
+& "$PSScriptRoot\gcn-recomp\tools\package-apk.ps1" -Name prime -Package com.ethannicholas.prime `
     -Title 'Metroid Prime' -Install:$Install
