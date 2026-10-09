@@ -154,11 +154,14 @@ constexpr uint32_t kActorXf = 0x34;
 constexpr float kCannonFromXf[3] = {0.0f, 0.0f, -0.38f};
 constexpr float kGunAhead = 0.05f;
 
+constexpr int kMaxSmoothing = 16;
+
 struct GunConfig {
     float scale = 1.0f;            // foreground_scale
     float offset[3] = {};          // where mXf's origin is seen, in units in the controller's frame
     float pitch_rad = 0.0f;        // gun_pitch_deg: the cannon's tilt against the controller
     bool on = true;                // gun_follows_hand
+    int smoothing = 3;             // gun_smoothing: game frames the hand is averaged over
     bool loaded = false;
 };
 GunConfig g_gun;
@@ -171,6 +174,8 @@ void config_loaded(const VrConfig& c) {
     for (int i = 0; i < 3; i++) g_gun.offset[i] = u * nudge[i] - g_gun.scale * kCannonFromXf[i];
     g_gun.pitch_rad = c.get("gun_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
     g_gun.on = c.get("gun_follows_hand", 1.0f) != 0.0f;
+    const int n = (int)c.get("gun_smoothing", 3.0f);
+    g_gun.smoothing = n < 1 ? 1 : n > kMaxSmoothing ? kMaxSmoothing : n;
     g_gun.loaded = true;
 }
 
@@ -205,6 +210,33 @@ void log_rest(uint32_t gun, const float cam[12]) {
 // GCN_GUN_HAND="x y z yaw pitch": a controller held still, for looking at the result without
 // a headset -- metres in the eyes' frame, degrees left and up. The flat picture shows the
 // cannon where the eye sees it, at twice the distance and size.
+// The hand averaged over the last g_gun.smoothing game frames, to take the tracking's jitter
+// out of the cannon. Positions are averaged as they are; orientations as quaternions, each
+// turned to agree in sign with the newest and the sum renormalised, which is close enough
+// for the small turns between neighbouring frames. A gap in tracking starts it afresh.
+void smooth_hand(vr::HandPose* hand, bool tracked) {
+    static vr::HandPose history[kMaxSmoothing];
+    static int count = 0, next = 0;
+    if (!tracked) {
+        count = 0;
+        return;
+    }
+    history[next] = *hand;
+    next = (next + 1) % kMaxSmoothing;
+    if (count < g_gun.smoothing) count++;
+    vr::HandPose avg{};
+    for (int k = 0; k < count; k++) {
+        const vr::HandPose& h = history[(next - 1 - k + kMaxSmoothing) % kMaxSmoothing];
+        const float d = h.rot[0] * hand->rot[0] + h.rot[1] * hand->rot[1] + h.rot[2] * hand->rot[2] + h.rot[3] * hand->rot[3];
+        const float sign = d < 0.0f ? -1.0f : 1.0f;
+        for (int i = 0; i < 3; i++) avg.pos[i] += h.pos[i] / count;
+        for (int i = 0; i < 4; i++) avg.rot[i] += sign * h.rot[i];
+    }
+    const float len = sqrtf(avg.rot[0] * avg.rot[0] + avg.rot[1] * avg.rot[1] + avg.rot[2] * avg.rot[2] + avg.rot[3] * avg.rot[3]);
+    for (int i = 0; i < 4; i++) avg.rot[i] /= len;
+    *hand = avg;
+}
+
 bool stand_in_hand(vr::HandPose* out) {
     static const char* env = getenv("GCN_GUN_HAND");
     static vr::HandPose pose;
@@ -243,7 +275,9 @@ void aim_gun(uint32_t gun) {
     read_xf(camera + kActorXf, cam);
 
     vr::HandPose hand;
-    if (!g_gun.on || !(vr::hand_pose(vr::kRightHand, &hand) || stand_in_hand(&hand))) {
+    const bool tracked = g_gun.on && (vr::hand_pose(vr::kRightHand, &hand) || stand_in_hand(&hand));
+    smooth_hand(&hand, tracked);
+    if (!tracked) {
         if (log) log_rest(gun, cam);
         return;
     }

@@ -190,6 +190,9 @@ was fixed the same day (below) and checked on the desktop, not yet in the headse
   visible cannon's centre 5 cm ahead of the controller's aim point. `gun_x`, `gun_y`, `gun_z` (metres, the
   controller's frame) and `gun_pitch_deg` in `vr.txt` move it from there; `gun_follows_hand 0`
   turns it off.
+- **Smoothing.** Placed straight from the controller, the cannon shook with the tracking. The
+  hand is averaged over the last `gun_smoothing` game frames (default 3, judged in the
+  headset; 1 is off), which costs about a frame of lag.
 - **On the desktop**, `GCN_GUN_HAND="x y z yaw pitch"` holds a controller still (with
   `GCN_STEREOLOG=1`, which is what finds the camera there), and `GCN_GUNLOG=1` prints where the
   game itself puts `mXf`. The desktop reads no `vr.txt`, so it uses the defaults the headset
