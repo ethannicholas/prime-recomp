@@ -564,6 +564,15 @@ headset it should be about 60 rather than 41, with little margin; `theater_scale
 draw calls themselves -- 7,000 a pass, each with its own colours -- and the pair doubles
 them.
 
+**The map's lag.** Turning the map, its sound started at once and the picture half a second
+to a second later. The sound follows the guest; the picture was behind it by every frame
+queued between the guest and the screen, and with the renderer the slow stage every queue
+was full: eight frames in the render queue, two in the transform's, and the front end's
+bounded only at 8 MB, dozens of map frames. The queues now hold one frame each
+(`docs/graphics.md`, "Threads"): `GCN_STALLS` shows the guest 3 frames ahead of the screen
+in the map screen at worst (6 with two each; frames-in-flight was not measured before), at
+the same frame rate, and frames are unchanged.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
