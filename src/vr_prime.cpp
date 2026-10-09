@@ -749,8 +749,7 @@ void scan_ortho(CPU* c) {
             float tan_half = 0.0f;
             if (vr::eye_views(ev) || stand_in_eyes(ev))
                 for (int e = 0; e < 2; e++) tan_half = fmaxf(tan_half, fmaxf(fabsf(ev[e].tan_up), fabsf(ev[e].tan_down)));
-            fprintf(stderr, "[prime] scan window at %.0f %.0f (zone %.0f %.0f; frame %.2f x %.2f tall at %.2f, height %.2f, pitch %.1f; eyes tan up %.3f down %.3f)
-",
+            fprintf(stderr, "[prime] scan window at %.0f %.0f (zone %.0f %.0f; frame %.2f x %.2f tall at %.2f, height %.2f, pitch %.1f; eyes tan up %.3f down %.3f)\n",
                     p[0], p[1], z[0], z[1], g_hud_frame.scale, tan_half, g_hud_frame.dist, g_hud_frame.height,
                     g_hud_frame.pitch_rad * 180.0f / 3.14159265f, ev[0].tan_up, ev[0].tan_down);
         }
