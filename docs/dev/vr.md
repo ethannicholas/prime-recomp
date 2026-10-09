@@ -801,12 +801,18 @@ bands in an eye": a HUD layer and a draw filter for the eyes).
   not (`kHelmetTextures` in `src/vr_prime.cpp`; `GCN_TEXLOG` prints the hashes). The arc
   and the corner brackets go; `hide_helmet 0` in `vr.txt` keeps them. The side struts with
   the lamps are not in that list yet: they were not asked about.
-- **The HUD at arm's length.** The HUD proper -- the energy bar, the radar, the selectors
-  -- is modelled 16-21 units out in view space, in the band below 1/512, and at the
-  foreground's half scale stood eight to ten metres off, a billboard. The band now has a
-  scale of its own (`hud_band 1/512`, `hud_band_scale 0.1` in Prime's defaults, both in
+- **The HUD at arm's length.** The HUD is modelled 16-21 units out in view space and at
+  the foreground's half scale stood eight to ten metres off, a billboard. It has a scale of
+  its own now (`hud_band 0.02`, `hud_band_scale 0.1` in Prime's defaults, both in
   `vr.txt`): a tenth of its distance, 1.6-2.1 m, the same angular size, the cannon where it
-  was. Smaller is nearer.
+  was. Smaller is nearer. The first attempt put the band at 1/512 and moved only the map
+  and two scraps: the HUD proper -- the energy bar, the radar, the selectors, the visor's
+  outline (draws 96-154 of frame 2697, textures 1864-1879: the digits, the font, the
+  radar, the icons) -- is in a band of its own, 1/512 to 1/64, and only the map and the
+  scraps are below 1/512. Found by rendering the frame with the head 60 cm to the side
+  (`--eye-pos`, new): what is near moves, and the HUD had not; then the eye's draw log
+  (`GCN_DRAWLOG` now names the layer the eye gave each draw) said which band it was in. A
+  single viewpoint cannot show the change at all, since the scale is about the camera.
 - **The scan window sat above where the head looked**, its bottom edge on the gaze. The
   window is an orthographic draw, so the eyes paint it on the HUD frame, which is
   `hud_scale` of the *headset's* vertical field tall; the window had been placed through

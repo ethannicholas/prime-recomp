@@ -871,10 +871,11 @@ void config_defaults(VrConfig& c) {
     // at the foreground's half scale stood eight to ten metres away, a billboard rather
     // than a visor. Drawn at a tenth of its distance it reads at arm's length, the same
     // angular size; hud_band_scale in vr.txt moves it (smaller is nearer).
-    // The band's far plane is 1/512 of the buffer, which as the float GX holds it comes
-    // out a hair above 1/512 (32768 of 16777215), so the test needs slack: 1/256 takes the
-    // whole HUD and nothing else, the cannon's band starting at 1/32.
-    c.hud_band = 1.0f / 256.0f;
+    // Two bands hold it: 0-1/512 (the map, a few scraps) and 1/512-1/64 (the energy bar,
+    // the radar, the selectors, the visor's outline), found with the eye's draw log
+    // (GCN_DRAWLOG in an eye names each draw's layer). 1/64 as the float GX holds it comes
+    // out a hair above 1/64, so the bound has slack; the cannon's band starts at 1/32.
+    c.hud_band = 0.02f;
     c.hud_band_scale = 0.1f;
     // Leaving stereo is a cut, not a fold. Every exit -- the pause screen's blur, the ball,
     // a cinematic, the world's name between worlds -- is noticed only once the game is
@@ -886,7 +887,7 @@ void config_defaults(VrConfig& c) {
     c.theater_stereo = true;
     // Its HUD layer, the band below 1/512 (the visor frame, the map's own frame), goes on
     // the panel itself; the map's rooms, drawn with no band, keep their depth behind it.
-    c.panel_band = 1.0f / 256.0f;  // with the same slack as hud_band
+    c.panel_band = 0.02f;  // both HUD bands, with the same slack as hud_band
 }
 
 const bool installed = [] {
