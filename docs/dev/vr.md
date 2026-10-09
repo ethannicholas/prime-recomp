@@ -415,6 +415,34 @@ In stereo the game now culls to what the eyes see instead.
   head looks; `GCN_CULLLOG=1` prints, every 600 frustums, the camera and each plane as the game built it
   and as rebuilt (both inward), and the field culled to.
 
+## The Chozo Ruins (2026-10-09)
+
+Walking back into the main plaza of the Chozo Ruins was very rough in the headset, before
+the culling change as well as after. The run's input log (the headset's
+`inputs/20261009-104850`, 6,200 frames from the save) replays on the device tools; copied
+to `/data/local/tmp/prime/chozo` and run as `GCN_REPLAY=chozo`. Measured with
+`prime_egl --eye --eyes=2 --eye-size=2352x2464 --msaa=4 --fast`, `GCN_EYE_GPU=1` and
+`GCN_FRAMETIME=1`, matched frame by frame. The heaviest stretch is frames 2400-3600, about
+800 draws and 70,000-100,000 vertices a frame.
+
+- **The render thread was 10-12 ms a stereo frame**, and 5-7 ms of it was the vertex upload,
+  `glBufferData` of twelve megabytes: each vertex had room for eight texture coordinates,
+  and Prime's use about two (in this room 0-2 for 90% of vertices, never more than 5). The
+  renderer now uploads only what each draw uses (see `gcn-recomp/docs/graphics.md`), and
+  the upload is about 0.5 ms; the render thread about 4-5 ms. Frames byte-identical.
+- **The GPU is 10-12 ms** a frame for both eyes, and did not move with the vertices: it is
+  not vertex fetch. With the compositor that is close to the 13.9 ms of a 72 Hz frame.
+  `eye_scale` is the lever there.
+- **The pace of the pipeline, unpaced, is 12-14 ms a frame here**, and did not move with
+  the render thread either: it is the guest thread and the front end, the game's own work.
+  `prime_bench` (no renderer) manages 74-98 fps over the same frames.
+- **Culling to the eyes costs little**: 5-10% more draws and about 0.1-0.4 ms more of eye
+  time against `cull_to_eyes 0`.
+
+The flat pass looked like a second culprit at first, 5-8 ms a frame. It was not: its
+`[eye-rt]` time includes the batch's texture and vertex uploads, and `GCN_EYELOG=1` showed
+the trim leaving out all 852 of the scene's draws in a frame of the plaza.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
