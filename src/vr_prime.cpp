@@ -145,13 +145,13 @@ constexpr uint8_t kGunLockedOn = 0x04;
 constexpr uint32_t kActorXf = 0x34;
 
 // Where the cannon is, from mXf. At rest mXf's origin is 0.25 right, 0.30 ahead and 0.35
-// below the camera, turned with it (GCN_GUNLOG), but the cannon model hangs well forward of
-// that: in a frame of play on the frigate (GCN_DRAWLOG=9600 on the new-game route, draws
-// 4-7) its box centre is (1.03, -0.27, -3.24) in view space and it is 0.86 long, so
-// (0.78, 0.08, -2.94) from mXf in the gun's own frame (x right, y up, z back). Seen at
-// foreground_scale that is scaled too, so mXf's origin is put that much behind the hand,
-// and the cannon's centre is seen kGunAhead in front of the controller's aim point.
-constexpr float kCannonFromXf[3] = {0.78f, 0.08f, -2.94f};
+// below the camera, turned with it (GCN_GUNLOG), and the cannon is drawn in its own depth
+// band, 1/32-1/8 (draws 783-792 of frame 9600 on the new-game route, GCN_DRAWLOG). Its body
+// spans 0.37-1.00 ahead of the camera, so its centre is 0.38 in front of mXf's origin in the
+// gun's own frame (x right, y up, z back). Seen at foreground_scale that is scaled too, so
+// mXf's origin is put that much behind the hand, and the cannon's centre is seen kGunAhead
+// in front of the controller's aim point.
+constexpr float kCannonFromXf[3] = {0.0f, 0.0f, -0.38f};
 constexpr float kGunAhead = 0.05f;
 
 struct GunConfig {
@@ -159,6 +159,7 @@ struct GunConfig {
     float offset[3] = {};          // where mXf's origin is seen, in units in the controller's frame
     float pitch_rad = 0.0f;        // gun_pitch_deg: the cannon's tilt against the controller
     bool on = true;                // gun_follows_hand
+    bool loaded = false;
 };
 GunConfig g_gun;
 
@@ -170,6 +171,7 @@ void config_loaded(const VrConfig& c) {
     for (int i = 0; i < 3; i++) g_gun.offset[i] = u * nudge[i] - g_gun.scale * kCannonFromXf[i];
     g_gun.pitch_rad = c.get("gun_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
     g_gun.on = c.get("gun_follows_hand", 1.0f) != 0.0f;
+    g_gun.loaded = true;
 }
 
 inline float rd_f(uint32_t a) { const uint32_t u = mem_r32(a); float f; memcpy(&f, &u, 4); return f; }
@@ -223,8 +225,16 @@ bool stand_in_hand(vr::HandPose* out) {
     return ok;
 }
 
+void config_defaults(VrConfig& c);
+
 void aim_gun(uint32_t gun) {
     static const bool log = getenv("GCN_GUNLOG") != nullptr;
+    // The desktop reads no vr.txt; it gets the defaults the headset would start from.
+    if (!g_gun.loaded) {
+        VrConfig d;
+        config_defaults(d);
+        config_loaded(d);
+    }
     const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
     if (!pair) return;
     const uint32_t camera = mem_r32(pair);
@@ -297,12 +307,11 @@ void config_defaults(VrConfig& c) {
     c.far_m = 1000.0f;
     // Prime gives each layer its own band of the depth buffer through the viewport's z
     // range (CGraphics::SetDepthRange). In one frame of play on the frigate: the sky in
-    // 0.999-1, the world in 0.125-1, and nearer layers below that, the visor frame, the arm
-    // cannon and the HUD in 0-1/512. The sky is modelled about 58 units out around the
-    // camera, so it is drawn at infinity instead. The arm cannon and the visor are modelled
-    // about three units out (the cannon is a unit long, three ahead and one to the right)
-    // and in stereo read as twice their size, so everything nearer than the world is drawn
-    // at half the distance and half the size, at the same angular size.
+    // 0.999-1, the world in 0.125-1, the arm cannon in 1/32-1/8, and the visor frame and
+    // the HUD in 0-1/512. The sky is modelled about 58 units out around the camera, so it
+    // is drawn at infinity instead. The cannon is modelled 0.4-1.0 ahead and read as twice
+    // its size in stereo, so everything nearer than the world is drawn at half the distance
+    // and half the size, at the same angular size.
     // See docs/dev/vr.md.
     c.background_band = 0.99f;
     c.foreground_band = 0.5f;

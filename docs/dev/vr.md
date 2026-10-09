@@ -76,18 +76,22 @@ written out):
 Played to the first room. Three faults, all addressed the same day:
 
 - **The arm cannon read as about twice its size.** Not the eye separation: the cannon is
-  modelled a unit long three units in front of the camera and a unit to the right (draws 4-7
-  of the first frame of play on the frigate, `GCN_DRAWLOG`), and the visor frame hangs 2.6-4.6
-  units out. A flat picture shows only their angular size; two eyes see the distance. The
-  world was not reported as wrong, so `units_per_metre` stays 1 and those layers are scaled
-  towards the eye instead: same angular size, half the distance and half the size
+  modelled about 0.4-1.0 in front of the camera, and the visor frame hangs 2.6-4.6 units
+  out. A flat picture shows only their angular size; two eyes see the distance. The world was
+  not reported as wrong, so `units_per_metre` stays 1 and those layers are scaled towards the
+  eye instead: same angular size, half the distance and half the size
   (`foreground_scale 0.5`). They are recognised by the depth band Prime confines them to,
   below.
+
+  These notes first said the cannon was modelled a unit long, three units ahead and one to
+  the right, as draws 4-7. Those draws are part of the visor: when the cannon was moved to
+  the controller (below), draws 4-7 stayed put, and the draws that moved were 783-792, in
+  the 1/32-1/8 band. The scale was judged by eye in the headset and stands.
 - **The planet stood in front of nearer things.** Prime gives each layer its own slice of
   the depth buffer through the viewport's z range (`CGraphics::SetDepthRange`); the bands seen
-  in one frame of play are sky 0.999-1 (10 draws), world 0.125-1 (740), layers at 1/32-1/8
-  (10) and 1/512-1/64 (54) not yet identified, and 0-1/512 (181), which holds the visor
-  frame, the arm cannon and the HUD. In the intro cinematic a 1/64-1/32 band appears as well.
+  in one frame of play are sky 0.999-1 (10 draws), world 0.125-1 (740), the arm cannon at
+  1/32-1/8 (10), 1/512-1/64 (54) not yet identified, and 0-1/512 (181), which holds the visor
+  frame and the HUD. In the intro cinematic a 1/64-1/32 band appears as well.
   The eye path
   ignored the viewport's z, so the sky, modelled about 58 units out, was depth-tested there
   and hid everything further away. The eye now honours the bands, and draws the sky at
@@ -161,8 +165,9 @@ route:
 
 ## The arm cannon in the right hand (2026-10-09)
 
-In stereo the cannon follows the right controller, and so do the shots. Built and checked on
-the desktop with a stand-in controller; not yet tried in the headset.
+In stereo the cannon follows the right controller, and so do the shots. The first build put
+it behind the viewer and to the left, though it turned with the controller; the placement
+was fixed the same day (below) and checked on the desktop, not yet in the headset.
 
 - **The frontend publishes the controllers.** `vr::hand_pose` (`gcn-recomp/runtime/vr_game.h`)
   gives each controller's aim pose in the eyes' frame, converted the way the eyes are. It is
@@ -178,23 +183,28 @@ the desktop with a stand-in controller; not yet tried in the headset.
   from the muzzle (`UpdateNormalShotCycle`, `FireSecondary`), not along the gun or at the
   cursor as the decompilation's older `FirePrimary` does. The hook sets that rotation too,
   except while locked on, so lock-on still lands.
-- **Where it sits.** At rest `mXf` is 0.25 right, 0.30 ahead and 0.35 below the eye, but the
-  cannon model hangs about three units in front of it (draws 4-7 of frame 9600 on the
-  new-game route). The renderer draws the near band at `foreground_scale`. So `mXf` is put at
-  `(hand + offset) / foreground_scale`, with the offset chosen to put the visible cannon's
-  centre 5 cm ahead of the controller's aim point. `gun_x`, `gun_y`, `gun_z` (metres, the
+- **Where it sits.** At rest `mXf` is 0.25 right, 0.30 ahead and 0.35 below the eye, and the
+  cannon's body is 0.37-1.00 ahead (draws 783-792 of frame 9600 on the new-game route), its
+  centre 0.38 in front of `mXf`. The renderer draws the near bands at `foreground_scale`. So
+  `mXf` is put at `(hand + offset) / foreground_scale`, with the offset chosen to put the
+  visible cannon's centre 5 cm ahead of the controller's aim point. `gun_x`, `gun_y`, `gun_z` (metres, the
   controller's frame) and `gun_pitch_deg` in `vr.txt` move it from there; `gun_follows_hand 0`
   turns it off.
 - **On the desktop**, `GCN_GUN_HAND="x y z yaw pitch"` holds a controller still (with
   `GCN_STEREOLOG=1`, which is what finds the camera there), and `GCN_GUNLOG=1` prints where the
-  game itself puts `mXf`. With `0.25 -0.3 -0.35 25 10` the cannon turns up and to the left,
-  close and large in the flat picture.
+  game itself puts `mXf`. The desktop reads no `vr.txt`, so it uses the defaults the headset
+  starts from; the flat picture shows the cannon at twice the distance and size it is seen at.
+
+  The first placement took draws 4-7 for the cannon and put `mXf` 2.94 behind it, which left
+  the cannon 1.5 m behind the viewer. The desktop missed it because it then ran without the
+  headset's configuration (a scale of 1 and no offset), so it showed only the turn. With the
+  defaults applied, a draw log of the stand-in hand showed draws 783-792 behind the camera
+  and to the left, as in the headset, and draws 4-7 unmoved.
 
 Expected rough edges, to judge in the headset:
 
 - In the world the gun is at twice the distance it is seen at, so shots start about that far
-  out along the line from the eye to the muzzle. That is no further than the game's own
-  cannon, which is modelled three units out.
+  out along the line from the eye to the muzzle: about a metre, against the game's own 0.4-1.0.
 - The camera's transform is read during the gun's update. If the camera moves later in the
   frame, the cannon lags a frame behind a stick turn, as the game's own does.
 - The aim pose on a Touch controller points along the ring, tilted from the grip;
