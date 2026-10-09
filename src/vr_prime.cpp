@@ -371,6 +371,12 @@ void config_defaults(VrConfig& c) {
     // already drawing something that looks wrong in stereo, so the fold would only show
     // more of it. Entering keeps transition_s.
     c.transition_out_s = 0.0f;
+    // The menus, the map and the ball are drawn by the game as 3D scenes, so the panel
+    // shows them as a stereo pair, a window into the room rather than a picture of it.
+    c.theater_stereo = true;
+    // Its HUD layer, the band below 1/512 (the visor frame, the map's own frame), goes on
+    // the panel itself; the map's rooms, drawn with no band, keep their depth behind it.
+    c.panel_band = 1.0f / 512.0f;
 }
 
 const bool installed = [] {

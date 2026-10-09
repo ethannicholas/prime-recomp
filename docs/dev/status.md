@@ -148,8 +148,9 @@ play, approximately.
   benchmark ran on it at 164% of the game's 60 fps over the menus. Stereo is chosen from
   the game's camera manager (first-person camera current, no cinematic camera) and whether
   the game draws its world that frame (not on the pause and map screens, nor between
-  worlds), with the left thumbstick click as an override; leaving stereo is a cut. See
-  `vr.md`.
+  worlds), with the left thumbstick click as an override; leaving stereo is a cut. The
+  theater panel is a stereo pair, a window into the menus, the map and the ball rather
+  than a picture of them (not yet seen in the headset). See `vr.md`.
 
 ## Next milestones
 

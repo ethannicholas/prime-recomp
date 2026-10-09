@@ -337,26 +337,41 @@ it, so for Prime the way back snaps: `transition_out_s 0` in the defaults
 (`config_defaults` in `src/vr_prime.cpp`; a negative value, the shared default, keeps
 `transition_s` both ways). Entering stereo still folds out over `transition_s`.
 
-## Still to look at
+## The theater panel as a stereo pair (2026-10-09)
 
-- **A stereo panel for the 2D views.** The menus, the map and the morph ball are shown flat
-  on the theater panel. They could be shown like a 3D film instead: the game's own framing,
-  but each eye's image rendered from a viewpoint half an interpupillary distance to its
-  side, so the ball sits in its room at its distance and the map's rooms have depth. The
-  vertices reach the renderer in the game camera's view space with each draw's own
-  projection, so the change is per draw: translate the view by ∓δ (δ = half the IPD in
-  game units) and shift the projection's x-from-z term by ±P00·δ/D so that things D game
-  units out have no parallax (D = the panel's distance, so the screen is the window);
-  orthographic draws, the 2D elements, are left alone and sit on the screen. Two ways to
-  present it: the eye path at morph 0 with that per-eye change in `morph_chain`, through the
-  projection layer, which costs two full eye passes; or the flat pass run twice with the
-  shear, into two theater swapchains, submitted as two `XrCompositionLayerQuad`s with
-  `eyeVisibility` LEFT and RIGHT -- about twice theater's 1.4 ms, and it keeps the quad's
-  reprojection, so it is the one to try. Two things to decide in the headset: the near
-  layers (the visor frame at 2.6-4.6 units, the ball's HUD) would stand in front of the
-  screen, so the foreground band may want pinning to the panel or the parallax clamping to
-  the IPD; and the cinematics, which are shown in theater for cost, would pay the second
-  pass too.
+The menus, the map, the ball and the cinematics are drawn by the game as 3D scenes, so
+theater shows them like a 3D film rather than a photograph: `theater_stereo 1` in Prime's
+defaults has the flat frame drawn twice a game frame, each perspective draw seen from half
+the viewer's eye separation to one side of the game's camera, and the two images hung on
+the same panel as left- and right-eye quad layers. The mechanism is in
+`gcn-recomp/docs/graphics.md` ("The theater panel as a stereo pair"): the panel is a
+window, so what the game's frustum shows as wide as the panel sits on it, nearer things
+stand in front, and a point at infinity has the eyes' full separation. Not yet seen in the
+headset; checked on the desktop (`GCN_THEATER_STEREO=0.064`, dumps in `_l`/`_r` pairs,
+the shift between them measured per block of the frame, in pixels of 1280, where the
+eyes' separation on the 3.2 m panel is 25.6):
+
+- **Intro cinematic** (frame 5000): the planet and the stars at 25, the ship's hull
+  sweeping past at -14 to -23, in front of the panel. As a film would have it.
+- **Play** (frame 10000, which the headset shows in stereo, so this is the manual
+  override): the hangar at 21-25, the arm cannon at -40 and beyond, well in front.
+- **Pause screen** (10750): the frame and the lists at 22-23, Samus at 9-11. The draw log
+  says why: the GUI is modelled 17-21 units out, Samus 3.2-3.9, all in the full depth band.
+  So the frame reads far and large, with Samus standing in front of it; whether that is
+  right is for the headset, and `theater_depth` (below) is the dial.
+- **Map** (11750): the map's own frame, legend and text at 0, on the panel; the rooms at
+  23-24, behind it. The game draws the map's GUI in its HUD band (0 to 1/512) and the rooms
+  with no band at all, so `panel_band 1/512` in the defaults puts the HUD layer on the
+  panel, like subtitles, and leaves the rooms their depth. The pause screen's GUI is not in
+  that band, so it keeps the game's own depth.
+
+`theater_depth` scales the separation (1 is true to the game's scale, less flattens towards
+the panel), for judging in the headset. What the first session should look at: whether the
+pause frame's distance and size feel right, and the cost -- a second flat pass per frame,
+on the Quest about 1.4 ms more of render thread in the cinematic (`prime_egl` with
+`GCN_THEATER_STEREO=0.064` measures it).
+
+## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
   with Blue Storm's countdown rig (`PixelState::view_space`); how the renderer's HUD frame
