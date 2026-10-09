@@ -800,7 +800,17 @@ bands in an eye": a HUD layer and a draw filter for the eyes).
   to look at them) -- named by content hash, which is the same in every run where an id is
   not (`kHelmetTextures` in `src/vr_prime.cpp`; `GCN_TEXLOG` prints the hashes). The arc
   and the corner brackets go; `hide_helmet 0` in `vr.txt` keeps them. The side struts with
-  the lamps are not in that list yet: they were not asked about.
+  the lamps are not in that list yet: they were not asked about. The helmet's untextured
+  parts -- a strip along the top, one along the bottom, a small block by the missile count
+  (draws 414-420 of that frame, in the map's band) -- have nothing to name them by, so the
+  filter hides the whole object: every draw sharing a position matrix with a named one
+  (`EyeHideObject`). They bob with the walk as the helmet does, which is how they were
+  told from the HUD proper, which is head-locked.
+- **The scan visor's tint is left out of the eyes.** Entering the scan visor the game lays
+  a translucent grey quad over the whole screen (draw 72 of frame 2500: orthographic,
+  exactly 640x448, no texture, one TEV stage, blend mode 0x59, in the 1/64-1/32 band with
+  the window's frame), which on the HUD frame was a grey rectangle hanging in the room.
+  `hide_scan_tint 0` keeps it.
 - **The HUD at arm's length.** The HUD is modelled 16-21 units out in view space and at
   the foreground's half scale stood eight to ten metres off, a billboard. It has a scale of
   its own now (`hud_band 0.02`, `hud_band_scale 0.1` in Prime's defaults, both in

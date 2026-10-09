@@ -196,6 +196,7 @@ struct HudFrame { float dist, scale, height, pitch_rad; };
 HudFrame g_hud_frame = {4.0f, 0.5f, 0.0f, 0.0f};
 bool g_hide_helmet = true;      // hide_helmet
 bool g_hide_flat_warps = true;  // hide_flat_warps
+bool g_hide_scan_tint = true;   // hide_scan_tint
 bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
 float g_gaze_pitch_rad = 0.0f;    // scan_gaze_pitch_deg: and this much further up
 
@@ -216,6 +217,7 @@ void config_loaded(const VrConfig& c) {
     g_hud_frame = {c.hud_distance_m * u, c.hud_scale, c.hud_height_m * u, c.hud_pitch_deg * 3.14159265f / 180.0f};
     g_hide_helmet = c.get("hide_helmet", 1.0f) != 0.0f;
     g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
+    g_hide_scan_tint = c.get("hide_scan_tint", 1.0f) != 0.0f;
     g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
     g_gaze_pitch_rad = c.get("scan_gaze_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
 }
@@ -848,17 +850,35 @@ constexpr uint64_t kHelmetTextures[] = {
     0x676e9b2ec4da4750ull, 0x1aae04f0d8f5cbe1ull, 0x4c43c6505f2cef01ull,
 };
 
-bool eye_filter(const gx::PixelState&, const gx::EyeDrawFacts& f) {
+// The scan visor's tint. Entering the scan visor the game lays a translucent grey quad
+// over the whole screen (draw 72 of frame 2500 of the long session: orthographic,
+// exactly the screen's 640x448, no texture, one TEV stage, blend mode 0x59, in the band
+// 1/64-1/32 with the scan window's frame). On the HUD frame that is a grey rectangle
+// hanging in the room, smaller than the view. hide_scan_tint 0 in vr.txt keeps it.
+bool is_scan_tint(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
+    if (!f.ortho || f.samples_copy || f.indirect) return false;
+    for (int i = 0; i < 8; i++)
+        if (f.tex_hash[i]) return false;
+    const uint32_t stages = ((st.bp[0x00] >> 10) & 15) + 1;
+    return stages == 1 && (st.bp[0x41] & 0xFFFF) == 0x59 && f.band_lo >= 0.01f && f.band_hi <= 0.04f;
+}
+
+int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
-    if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return true;
+    if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return gx::EyeHideDraw;
+    if (g_hide_scan_tint && is_scan_tint(st, f)) return gx::EyeHideDraw;
     if (g_hide_helmet) {
+        // The whole model goes with its textured materials: the untextured strips along
+        // the top and bottom and the small block by the missile count are drawn with the
+        // same position matrix (they bob with the walk as the helmet does), and have
+        // nothing else to name them by.
         for (int i = 0; i < 8; i++) {
             if (!f.tex_hash[i]) continue;
             for (uint64_t h : kHelmetTextures)
-                if (h && h == f.tex_hash[i]) return true;
+                if (h && h == f.tex_hash[i]) return gx::EyeHideObject;
         }
     }
-    return false;
+    return gx::EyeKeep;
 }
 
 void config_defaults(VrConfig& c) {
