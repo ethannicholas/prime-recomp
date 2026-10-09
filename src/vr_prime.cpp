@@ -190,6 +190,12 @@ struct CullConfig {
 };
 CullConfig g_cull;
 bool g_scan_on = true;  // scan_follows_head
+// The frame the eyes paint the game's 2D elements on (gx::render_hud_frame), as the
+// headset frontend builds it from vr.txt: the scan window is placed through it.
+struct HudFrame { float dist, scale, height, pitch_rad; };
+HudFrame g_hud_frame = {4.0f, 0.5f, 0.0f, 0.0f};
+bool g_hide_helmet = true;      // hide_helmet
+bool g_hide_flat_warps = true;  // hide_flat_warps
 
 // gun_x, gun_y and gun_z move the cannon from there, in metres in the controller's frame.
 void config_loaded(const VrConfig& c) {
@@ -205,6 +211,9 @@ void config_loaded(const VrConfig& c) {
     g_cull.margin_rad = c.get("cull_margin_deg", 10.0f) * 3.14159265f / 180.0f;
     g_cull.on = c.get("cull_to_eyes", 1.0f) != 0.0f;
     g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
+    g_hud_frame = {c.hud_distance_m * u, c.hud_scale, c.hud_height_m * u, c.hud_pitch_deg * 3.14159265f / 180.0f};
+    g_hide_helmet = c.get("hide_helmet", 1.0f) != 0.0f;
+    g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
 }
 
 inline float rd_f(uint32_t a) { const uint32_t u = mem_r32(a); float f; memcpy(&f, &u, 4); return f; }
@@ -575,11 +584,25 @@ constexpr float kWindowHalfW = 85.0f, kWindowHalfH = 77.0f;
 extern "C" void fn_80379B4C(CPU* c);  // GXSetTexCopySrc
 extern "C" void fn_8030CFA4(CPU* c);  // CGraphics::SetOrtho(left, right, top, bottom, near, far)
 
-// Where the head looks, as a point on the game's screen: the eyes' mean forward direction
-// in the camera's frame, through the first-person camera's projection, in pixels of the
-// viewport with y up (the convention of CPlayer's screen tests), kept far enough from the
-// edges for the window to fit. False when the scan is the game's own.
-bool head_screen_point(float out[2]) {
+// Where the head looks, as a point on the game's screen, in pixels of the viewport with y
+// up (the convention of CPlayer's screen tests), kept far enough from the edges for the
+// window to fit. False when the scan is the game's own.
+//
+// Two mappings, because the eyes draw the game's two kinds of draw differently:
+//  - `on_hud_frame` false: the eyes' mean forward direction in the camera's frame, through
+//    the first-person camera's projection. Where a world object the head looks at lands on
+//    the game's screen, which is what the scan zone tests and what the window's copy should
+//    be taken around.
+//  - `on_hud_frame` true: the same direction, through the frame the eyes paint the game's
+//    2D elements on (gx::render_hud_frame: `hud_scale` of the headset's field of view tall,
+//    `hud_distance_m` ahead, lifted and tilted by `hud_height_m` and `hud_pitch_deg`). The
+//    window is an orthographic draw and lands on that frame, whose angular size is the
+//    headset's and not the game camera's 55 degrees, so a window placed through the camera
+//    sat off the gaze by the ratio of the two -- above it on a Quest 3, whose field is the
+//    larger. Through the frame, the window is centred where the eyes look by construction.
+//    The frame's height takes the larger of the eyes' up and down tangents, as the
+//    frontend does.
+bool head_screen_point(float out[2], bool on_hud_frame = false) {
     ensure_config();
     if (!g_scan_on) return false;
     vr::EyeView ev[2];
@@ -595,19 +618,41 @@ bool head_screen_point(float out[2]) {
         qrot(ev[e].rot, ahead, f);
         for (int i = 0; i < 3; i++) d[i] += f[i];
     }
-    const float t = tanf(rd_f(camera + kCameraFov) * 0.5f * 3.14159265f / 180.0f);
-    const float aspect = rd_f(camera + kCameraAspect);
-    if (!(t > 0.0f) || !(aspect > 0.0f)) return false;
     const float W = (float)(int32_t)mem_r32(kViewport + 8), H = (float)(int32_t)mem_r32(kViewport + 12);
     if (!(W > 0.0f) || !(H > 0.0f)) return false;
     // Normalised device coordinates; a head turned past the edge of the view pins to it.
     float nx, ny;
-    if (d[2] < -1e-3f) {
-        nx = d[0] / -d[2] / (aspect * t);
-        ny = d[1] / -d[2] / t;
+    if (on_hud_frame) {
+        float tan_half = 0.0f;
+        for (int e = 0; e < 2; e++) tan_half = fmaxf(tan_half, fmaxf(fabsf(ev[e].tan_up), fabsf(ev[e].tan_down)));
+        const HudFrame& f = g_hud_frame;
+        const float half_h = f.dist * tan_half * f.scale, half_w = half_h * 4.0f / 3.0f;
+        if (!(half_h > 0.0f)) return false;
+        // The frame: centre C, its up leaned back by the pitch, its normal with it. The
+        // gaze ray from the camera meets its plane at t.
+        const float c = cosf(f.pitch_rad), sn = sinf(f.pitch_rad);
+        const float C[3] = {0.0f, f.height, -f.dist}, up[3] = {0.0f, c, -sn}, n[3] = {0.0f, sn, c};
+        const float nd = n[0] * d[0] + n[1] * d[1] + n[2] * d[2];
+        if (nd > -1e-4f) {
+            nx = d[0] * 1e3f;
+            ny = d[1] * 1e3f;
+        } else {
+            const float tt = (n[0] * C[0] + n[1] * C[1] + n[2] * C[2]) / nd;
+            const float P[3] = {tt * d[0] - C[0], tt * d[1] - C[1], tt * d[2] - C[2]};
+            nx = P[0] / half_w;
+            ny = (P[0] * up[0] + P[1] * up[1] + P[2] * up[2]) / half_h;
+        }
     } else {
-        nx = d[0] * 1e3f;
-        ny = d[1] * 1e3f;
+        const float t = tanf(rd_f(camera + kCameraFov) * 0.5f * 3.14159265f / 180.0f);
+        const float aspect = rd_f(camera + kCameraAspect);
+        if (!(t > 0.0f) || !(aspect > 0.0f)) return false;
+        if (d[2] < -1e-3f) {
+            nx = d[0] / -d[2] / (aspect * t);
+            ny = d[1] / -d[2] / t;
+        } else {
+            nx = d[0] * 1e3f;
+            ny = d[1] * 1e3f;
+        }
     }
     const float lim_x = 1.0f - 2.0f * kWindowHalfW / W, lim_y = 1.0f - 2.0f * kWindowHalfH / H;
     nx = fmaxf(-lim_x, fminf(lim_x, nx));
@@ -688,7 +733,7 @@ void scan_copy_src(CPU* c) {
 // return and the next instruction's use of a saved one.
 void scan_ortho(CPU* c) {
     float p[2];
-    if (!head_screen_point(p)) return;
+    if (!head_screen_point(p, true)) return;
     const int32_t left = (int32_t)mem_r32(kViewport), top = (int32_t)mem_r32(kViewport + 4);
     const int32_t W = (int32_t)mem_r32(kViewport + 8), H = (int32_t)mem_r32(kViewport + 12);
     const float ox = p[0] - 0.5f * W, oy = p[1] - 0.5f * H;
@@ -734,6 +779,46 @@ void map_pad(PadState& p) {
     p.trig_r = 0;
 }
 
+// ---------------------------------------------------------------------------
+// What the eyes leave out (vr::GameHooks::eye_filter).
+//
+// The helmet. Prime draws the inside of Samus's helmet as geometry in the HUD's depth band:
+// the dark frame across the top with its three blue lamps, the brackets at the bottom
+// corners. On a television it is the picture's edge; in a headset it is a frame hanging
+// in the middle of the view with the room visible round it, and the HUD proper -- the
+// energy bar, the radar, the visor and beam selectors -- reads better without it. Its
+// draws are told by their textures, the eleven materials of the helmet model, named by
+// content hash (TexData::hash, printed by GCN_TEXLOG and GCN_DRAWLOG), which is the same in
+// every run where a texture id is not. hide_helmet 0 in vr.txt keeps it.
+//
+// Flat warps. A charged shot ripples the scene behind it: the game copies a square of the
+// frame around the shot and draws it back over the same square, orthographically, through
+// an indirect texture (GCN_DRAWLOG: a 192x192 copy at the screen's centre, then one
+// six-vertex ortho draw with the copy in one texmap and the warp in another). The eyes
+// paint an orthographic draw on the HUD frame, so in stereo that was a distorted square
+// of the flat view pasted in the air in front of the shot. There is no depth to give it,
+// so it is left out: an ortho draw with an indirect stage sampling a copy of part of the
+// frame. The scan visor's window is also an ortho draw of a partial copy, but with no
+// indirect stage. hide_flat_warps 0 in vr.txt keeps them.
+constexpr uint64_t kHelmetTextures[] = {
+    0x34ffe8714164577full, 0xd121d9738b265065ull, 0xe30eeb56d6384648ull, 0x2ce6f2dc1af5676bull,
+    0xe3572b518ab343f7ull, 0x7565fd36059507f5ull, 0xa096affd391ad7e0ull, 0xdb4007eee5dd3abfull,
+    0x676e9b2ec4da4750ull, 0x1aae04f0d8f5cbe1ull, 0x4c43c6505f2cef01ull,
+};
+
+bool eye_filter(const gx::PixelState&, const gx::EyeDrawFacts& f) {
+    ensure_config();
+    if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return true;
+    if (g_hide_helmet) {
+        for (int i = 0; i < 8; i++) {
+            if (!f.tex_hash[i]) continue;
+            for (uint64_t h : kHelmetTextures)
+                if (h && h == f.tex_hash[i]) return true;
+        }
+    }
+    return false;
+}
+
 void config_defaults(VrConfig& c) {
     // Prime's world units are taken to be metres. A guess, to be judged from inside the
     // headset like Blue Storm's 50 was.
@@ -755,9 +840,19 @@ void config_defaults(VrConfig& c) {
     // MSAA took 8 ms there (docs/dev/vr.md, "The Chozo Ruins").
     c.eye_scale = 1.2f;
     c.msaa = 2;
+    // The EFB the eyes' copies are made from, at twice the hardware's resolution: the scan
+    // visor's window magnifies a copy of it, and the acid's fog reads depth copies of it.
+    // Measured free in the heaviest room (docs/dev/vr.md): the flat pass is still small.
+    c.stereo_scale = 2;
     c.background_band = 0.99f;
     c.foreground_band = 0.5f;
     c.foreground_scale = 0.5f;
+    // The HUD -- the band below 1/512 -- is modelled 16-21 units out in view space, which
+    // at the foreground's half scale stood eight to ten metres away, a billboard rather
+    // than a visor. Drawn at a tenth of its distance it reads at arm's length, the same
+    // angular size; hud_band_scale in vr.txt moves it (smaller is nearer).
+    c.hud_band = 1.0f / 512.0f;
+    c.hud_band_scale = 0.1f;
     // Leaving stereo is a cut, not a fold. Every exit -- the pause screen's blur, the ball,
     // a cinematic, the world's name between worlds -- is noticed only once the game is
     // already drawing something that looks wrong in stereo, so the fold would only show
@@ -777,6 +872,7 @@ const bool installed = [] {
     h.config_loaded = config_loaded;
     h.wants_stereo = wants_stereo;
     h.map_pad = map_pad;
+    h.eye_filter = eye_filter;
     vr::set_game_hooks(h);
     return true;
 }();

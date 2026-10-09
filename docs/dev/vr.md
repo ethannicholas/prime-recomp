@@ -784,6 +784,73 @@ adb uninstall com.example.prime
 
 (`package-apk.ps1 -Install` pushes the disc image on its own, but not the card.)
 
+## The helmet, the HUD's distance, the scan window, the charge shot's warp (2026-10-09)
+
+Four things from a headset session, each replayed in the harness (`inputs/20261009-165000`,
+a couple of charged shots; `20261009-163518`, fifteen minutes with the scan visor and the
+acid), and the renderer given what it needed in gcn-recomp (`docs/graphics.md`, "Depth
+bands in an eye": a HUD layer and a draw filter for the eyes).
+
+- **The helmet is left out of the eyes.** Prime draws the inside of Samus's helmet as
+  geometry in the HUD's band: the dark arc across the top with its three blue lamps, the
+  brackets at the bottom corners, and the struts with the yellow lamps either side. On a
+  television it is the picture's edge; in a headset it hung in the middle of the view. Its
+  draws are known by their textures -- the helmet model's materials, draws 419-439 of frame
+  2697 of the charge-shot session, textures 1881-1891 (`GCN_DRAWLOG`, then `GCN_TEXDUMP`
+  to look at them) -- named by content hash, which is the same in every run where an id is
+  not (`kHelmetTextures` in `src/vr_prime.cpp`; `GCN_TEXLOG` prints the hashes). The arc
+  and the corner brackets go; `hide_helmet 0` in `vr.txt` keeps them. The side struts with
+  the lamps are not in that list yet: they were not asked about.
+- **The HUD at arm's length.** The HUD proper -- the energy bar, the radar, the selectors
+  -- is modelled 16-21 units out in view space, in the band below 1/512, and at the
+  foreground's half scale stood eight to ten metres off, a billboard. The band now has a
+  scale of its own (`hud_band 1/512`, `hud_band_scale 0.1` in Prime's defaults, both in
+  `vr.txt`): a tenth of its distance, 1.6-2.1 m, the same angular size, the cannon where it
+  was. Smaller is nearer.
+- **The scan window sat above where the head looked**, its bottom edge on the gaze. The
+  window is an orthographic draw, so the eyes paint it on the HUD frame, which is
+  `hud_scale` of the *headset's* vertical field tall; the window had been placed through
+  the game camera's 55-degree projection, and the two agree only when the frame happens to
+  match the camera. Now the window's point is found through the frame itself (its distance,
+  scale, height and pitch from `vr.txt`, the field from the eyes' tangents, the same way the
+  frontend sizes it -- `head_screen_point(..., true)`), while the scan zone and the window's
+  copy keep the camera's projection, since those are about where objects land on the game's
+  screen. Checked in the harness with a Quest-like field (`--eye-fov=43,52`, new) and the
+  eye pitched 15 degrees down: the previous build's window had its bottom on the gaze, the
+  new one is centred on it.
+
+  Two harness findings on the way: `prime_egl` only asked the game's `wants_stereo` hook
+  when `GCN_STEREOLOG` was set, and that hook is where the camera manager is found, so the
+  scan patches had nothing to work from in the harness (fixed: asked every frame, as the
+  app asks); and Android's `grep` has no `\|`, so a device-side search with it finds
+  nothing -- use `grep -E`.
+- **The charged shot's warp is left out of the eyes.** The game copies a 192x192 square of
+  the frame around the shot and draws it back over the same square orthographically through
+  an indirect texture (draw 74 of frame 2697: `t7` the copy, `t1` the warp). On the HUD
+  frame that was a distorted square of the flat view pasted in the air. There is no depth
+  to give it, so the eye filter drops any ortho draw with an indirect stage sampling a copy
+  of part of the frame; the scan visor's window is an ortho draw of a partial copy too, but
+  has no indirect stage. `hide_flat_warps 0` keeps them.
+
+- **The scan window's copy at twice the texels.** `stereo_scale 2` is now Prime's default:
+  the EFB the eyes' copies come from is 1280x896 instead of 640x448, so the window's
+  magnified copy has four times the source pixels. Measured in the beetle room
+  (`vr.txt` with `stereo_scale 2` beside `prime_egl`, `GCN_EYE_GPU=1`): the GPU 8.1-8.7 ms
+  a stereo frame either way, the render thread the same -- the flat pass is still a small
+  target. It also thins the acid's lines (below).
+
+**The acid's static, as far as it got.** Frame 23000 of the long session (the ball in the
+acid, `GCN_DRAWLOG=23000 GCN_DRAWLOG_VERBOSE=1`): the lines are made by draws 101 and 102,
+which sample the depth copy (`t7`, read back as IA8) straight into TEV stages whose alpha
+combiner is in *compare* mode (`aenv` bias 3) -- the 16-bit depth from two bytes against
+the volume's own -- with no indirect stage at all, so the texel-centre snap for indirect
+lookups does not reach them. At internal scale 1 two bright lines cross the pool and dotted
+diagonals run up the wall; at scale 2 one faint line. The shader's compare is integer
+(`shadergen.cpp`, `mode` 2 and 3), so the next place to look is what reaches it: the
+copy's bytes (`z * 16777215 + 0.5` of a float depth, where the hardware's is the
+rasteriser's own 24-bit value) and the swap table that routes the copy's I and A into the
+compare's G and R.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
