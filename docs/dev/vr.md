@@ -680,13 +680,20 @@ Next, in order:
    two-layer array, and the app's eye swapchain one with `arraySize 2`; the shader cache
    rebuilds once. The eye grabs (a visor effect's whole-frame copy) need the per-eye
    path, so a frame that grabs falls back to it.
-2. **The clock when the guest is slow.** Under the virtual clock a guest that cannot keep
-   real time runs the game in slow motion and starves the sound, which is what the
-   dropouts are. The hardware would drop frames instead: its DSP keeps real time and
-   the game's own `UpdateTicks` takes a longer step. A catch-up -- virtual time jumping
-   forward when the host falls more than a frame behind, with each jump written to the
-   input log so a replay makes the same one at the same tick -- would keep the sound and
-   the game's speed and still replay exactly. Not done; a design change in gcn-recomp.
+2. ~~The clock when the guest is slow.~~ Done the same day, in gcn-recomp ("The clock"
+   in its `docs/diagnostics.md`). Under the virtual clock a guest that cannot keep real
+   time ran the game in slow motion and starved the sound, which is what the dropouts
+   were; the hardware would drop frames instead, its DSP keeping real time and the
+   game's own `UpdateTicks` taking a longer step. Now virtual time jumps to the host's
+   once it is 4 ms behind, each jump written to the input log at its back-edge count,
+   and a replay makes exactly those jumps and none of its own. Checked on the headset
+   with the harness: the session's log replays byte-identically as before; a run paced
+   at twice real time (`GCN_TIMESCALE=2`, so the host falls behind in this room) made
+   811 jumps, replaying its log (`GCN_INPUT_LOG` records one) reproduces its frames
+   exactly, and the original log over the same frames does not. Logs are version 3
+   (`jump` lines); older ones replay as they did. Not yet heard in the headset: what to
+   listen for is that a heavy room drops frames with the sound whole, rather than slowing
+   down and crackling.
 3. The guest's skinning store path (`PSMTXROMultS16VecArrayGathered`, a bit-exact HLE
    in `src/`) and the gather-pipe path, each about a tenth of the guest thread.
 
