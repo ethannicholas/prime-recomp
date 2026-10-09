@@ -573,6 +573,26 @@ bounded only at 8 MB, dozens of map frames. The queues now hold one frame each
 in the map screen at worst (6 with two each; frames-in-flight was not measured before), at
 the same frame rate, and frames are unchanged.
 
+## Loading, the acid's fog, and black HUD text (2026-10-09)
+
+- **"Not responding" at start.** After a change to the shaders the app rebuilt all 6,000
+  cached programs before starting the game -- 25 s -- on its main thread, answering neither
+  Android nor the runtime: the runtime's waiting room, then Android's dialog. The cache is
+  now built in slices between frames with a progress bar on the panel
+  (`gcn-recomp/android/openxr_main.cpp`, `build_shaders_responsively`).
+- **Static on the acid.** Yellow lines across the water in the Chozo Ruins' acid rooms, and
+  specks along the waterline, in the flat view as well as the eyes. Not the water surface
+  (`GCN_DRAW_SKIP` of it left them) but a fog volume after it: two depth copies of the lower
+  half of the screen, read as IA8 indirect textures to index a ramp. The copies were in the
+  wrong layout for that; fixed in gcn-recomp (`docs/graphics.md`, "Texture lifetimes and
+  EFB copies"). At internal scale 2 the frame is clean; at 1, which stereo uses for its
+  copies, faint lines remain every few dozen rows, and so do the specks. Open.
+- **Black HUD text.** The energy digits, the warning ("Damage") and the map's room title
+  became black rectangles as a session went on. Reproduced by replaying
+  `inputs/20261009-140323` in stereo: the room title from frame 4200 and every "Damage" from
+  5700. The renderer had deleted textures the front end still held as sent; the front end
+  now decides alone when a texture dies, and the same replay draws all of them.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
