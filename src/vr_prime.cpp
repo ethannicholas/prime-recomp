@@ -535,6 +535,11 @@ void config_defaults(VrConfig& c) {
     // its size in stereo, so everything nearer than the world is drawn at half the distance
     // and half the size, at the same angular size.
     // See docs/dev/vr.md.
+    // The eyes' targets. At the frontend's 1.4x with 4x MSAA the GPU took 16-17 ms a frame
+    // where the Chozo Ruins' plaza is busiest, more than a 72 Hz frame has; 1.2x with 2x
+    // MSAA took 8 ms there (docs/dev/vr.md, "The Chozo Ruins").
+    c.eye_scale = 1.2f;
+    c.msaa = 2;
     c.background_band = 0.99f;
     c.foreground_band = 0.5f;
     c.foreground_scale = 0.5f;

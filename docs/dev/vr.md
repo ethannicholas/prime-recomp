@@ -439,6 +439,40 @@ to `/data/local/tmp/prime/chozo` and run as `GCN_REPLAY=chozo`. Measured with
 - **Culling to the eyes costs little**: 5-10% more draws and about 0.1-0.4 ms more of eye
   time against `cull_to_eyes 0`.
 
+**The averages hid it.** That first look replayed a run that only walked through, and it
+read the GPU from the eye timers' averages; the viewer saw a single-digit slideshow there.
+A second run (`inputs/20261009-114624`, spinning around in the plaza) is far heavier --
+up to 110,000 vertices, 16,000 GX draws and 1,500 draw calls an eye a frame -- and on it
+the GPU is the limit: `gpu_busy_percentage` sat at 99% at the GPU's top clock (690 MHz)
+through the heavy stretch, and the eyes took 14-18 ms a frame, more than a 72 Hz frame has
+before the compositor takes its share. The app had also never asked for performance
+levels, and the compositor's `VrApi FPS=` lines showed it at the runtime's default levels,
+the GPU at 492-640 MHz. Two things not reproduced by the harness: the head (the input log
+carries the pad, not the pose, so the harness holds the head still) and those clocks.
+
+The GPU's time over frames 3600-4800 of that run, at 690 MHz, by eye size (multiples of the
+runtime's 1680x1760) and MSAA:
+
+| Eye scale | 4x MSAA | 2x MSAA | none |
+|---|---|---|---|
+| 1.4 | 16.5 ms | 10.9 ms | 8.3 ms |
+| 1.3 | 13.1 ms | | |
+| 1.2 | 12.0 ms | 8.0 ms | |
+| 1.1 | 10.2 ms | | |
+| 1.0 | 8.7 ms | | |
+| 0.35 | | | 8.0 ms |
+
+About 8 ms is the geometry, whatever the size: a tiled GPU bins every draw, and each eye's
+1,500 draws are replayed for each tile. Multisampling at size is the rest: more samples
+mean more tiles to replay them into. So Prime now defaults to `eye_scale 1.2` and `msaa 2`
+(both still in vr.txt), and the frontend asks for the boost levels (`perf_boost`, default
+on). The geometry floor is what multiview would halve.
+
+The app now logs every second (`adb logcat -s prime`): game frames, the longest wait
+between them, and the render thread's time per stereo frame; read them beside the
+compositor's `VrApi FPS=` lines. Raise the log buffer first (`adb logcat -G 64M`) or a
+session scrolls out of it.
+
 The flat pass looked like a second culprit at first, 5-8 ms a frame. It was not: its
 `[eye-rt]` time includes the batch's texture and vertex uploads, and `GCN_EYELOG=1` showed
 the trim leaving out all 852 of the scene's draws in a frame of the plaza.
