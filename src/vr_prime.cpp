@@ -734,6 +734,27 @@ void scan_copy_src(CPU* c) {
 void scan_ortho(CPU* c) {
     float p[2];
     if (!head_screen_point(p, true)) return;
+    // GCN_SCANLOG=1: the window's point beside the zone's, with the eyes' field and the
+    // frame they were mapped through, whenever the window moves by more than a few pixels.
+    // Read from a headset session (gcn_env.txt in the app's files directory turns it on)
+    // this says what the headset is actually giving the placement to work with.
+    static const bool log = getenv("GCN_SCANLOG") != nullptr;
+    if (log) {
+        static float last[2] = {-1e9f, -1e9f};
+        if (fabsf(p[0] - last[0]) > 4.0f || fabsf(p[1] - last[1]) > 4.0f) {
+            last[0] = p[0]; last[1] = p[1];
+            float z[2] = {0, 0};
+            head_screen_point(z, false);
+            vr::EyeView ev[2];
+            float tan_half = 0.0f;
+            if (vr::eye_views(ev) || stand_in_eyes(ev))
+                for (int e = 0; e < 2; e++) tan_half = fmaxf(tan_half, fmaxf(fabsf(ev[e].tan_up), fabsf(ev[e].tan_down)));
+            fprintf(stderr, "[prime] scan window at %.0f %.0f (zone %.0f %.0f; frame %.2f x %.2f tall at %.2f, height %.2f, pitch %.1f; eyes tan up %.3f down %.3f)
+",
+                    p[0], p[1], z[0], z[1], g_hud_frame.scale, tan_half, g_hud_frame.dist, g_hud_frame.height,
+                    g_hud_frame.pitch_rad * 180.0f / 3.14159265f, ev[0].tan_up, ev[0].tan_down);
+        }
+    }
     const int32_t left = (int32_t)mem_r32(kViewport), top = (int32_t)mem_r32(kViewport + 4);
     const int32_t W = (int32_t)mem_r32(kViewport + 8), H = (int32_t)mem_r32(kViewport + 12);
     const float ox = p[0] - 0.5f * W, oy = p[1] - 0.5f * H;
@@ -851,7 +872,10 @@ void config_defaults(VrConfig& c) {
     // at the foreground's half scale stood eight to ten metres away, a billboard rather
     // than a visor. Drawn at a tenth of its distance it reads at arm's length, the same
     // angular size; hud_band_scale in vr.txt moves it (smaller is nearer).
-    c.hud_band = 1.0f / 512.0f;
+    // The band's far plane is 1/512 of the buffer, which as the float GX holds it comes
+    // out a hair above 1/512 (32768 of 16777215), so the test needs slack: 1/256 takes the
+    // whole HUD and nothing else, the cannon's band starting at 1/32.
+    c.hud_band = 1.0f / 256.0f;
     c.hud_band_scale = 0.1f;
     // Leaving stereo is a cut, not a fold. Every exit -- the pause screen's blur, the ball,
     // a cinematic, the world's name between worlds -- is noticed only once the game is
@@ -863,7 +887,7 @@ void config_defaults(VrConfig& c) {
     c.theater_stereo = true;
     // Its HUD layer, the band below 1/512 (the visor frame, the map's own frame), goes on
     // the panel itself; the map's rooms, drawn with no band, keep their depth behind it.
-    c.panel_band = 1.0f / 512.0f;
+    c.panel_band = 1.0f / 256.0f;  // with the same slack as hud_band
 }
 
 const bool installed = [] {
