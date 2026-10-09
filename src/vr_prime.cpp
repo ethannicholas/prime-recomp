@@ -182,6 +182,13 @@ struct GunConfig {
 };
 GunConfig g_gun;
 
+// Culling to the eyes, below.
+struct CullConfig {
+    float margin_rad = 10.0f * 3.14159265f / 180.0f;  // cull_margin_deg
+    bool on = true;                                    // cull_to_eyes
+};
+CullConfig g_cull;
+
 // gun_x, gun_y and gun_z move the cannon from there, in metres in the controller's frame.
 void config_loaded(const VrConfig& c) {
     g_gun.scale = c.foreground_scale > 0.0f ? c.foreground_scale : 1.0f;
@@ -193,6 +200,8 @@ void config_loaded(const VrConfig& c) {
     const int n = (int)c.get("gun_smoothing", 3.0f);
     g_gun.smoothing = n < 1 ? 1 : n > kMaxSmoothing ? kMaxSmoothing : n;
     g_gun.loaded = true;
+    g_cull.margin_rad = c.get("cull_margin_deg", 10.0f) * 3.14159265f / 180.0f;
+    g_cull.on = c.get("cull_to_eyes", 1.0f) != 0.0f;
 }
 
 inline float rd_f(uint32_t a) { const uint32_t u = mem_r32(a); float f; memcpy(&f, &u, 4); return f; }
@@ -275,14 +284,17 @@ bool stand_in_hand(vr::HandPose* out) {
 
 void config_defaults(VrConfig& c);
 
+// The desktop reads no vr.txt; it gets the defaults the headset would start from.
+void ensure_config() {
+    if (g_gun.loaded) return;
+    VrConfig d;
+    config_defaults(d);
+    config_loaded(d);
+}
+
 void aim_gun(uint32_t gun) {
     static const bool log = getenv("GCN_GUNLOG") != nullptr;
-    // The desktop reads no vr.txt; it gets the defaults the headset would start from.
-    if (!g_gun.loaded) {
-        VrConfig d;
-        config_defaults(d);
-        config_loaded(d);
-    }
+    ensure_config();
     const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
     if (!pair) return;
     const uint32_t camera = mem_r32(pair);
@@ -347,6 +359,154 @@ void aim_gun(uint32_t gun) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Culling against what the eyes see.
+//
+// Prime culls the world, its actors and their particles against the camera's own frustum,
+// and tightly, so turning the head in the headset shows things missing at the edges. Every
+// frustum it culls the frame with comes from one constructor,
+// __ct__14CFrustumPlanesFRC12CTransform4ffffbf (0x80345CEC), given the camera's transform
+// in r4; the patches in recomp/patches.txt route three of its calls through this --
+// CStateManager::SetupViewForDraw (DrawWorld's frustum, and the renderer's clipping planes
+// for the area geometry), CStateManager::PreRender (each actor's PreRender) and
+// CStateManager::ResetViewAfterDraw (the planes put back after the world). Its other callers
+// are a light's view for shadows and the HUD's markers, left as they are.
+//
+// CFrustumPlanes: a count at +0, then that many planes of four floats (n, d), a point
+// inside when n.p > d. The count is 5 or 6: four sides, the near plane and maybe a far one.
+// Each plane the game built is replaced by its counterpart around the eyes, in the same
+// slot. The counterpart is one frustum around both eyes: the head's orientation (the left
+// eye's), wide enough for both fields, its apex between the eyes and each plane moved out by
+// half their separation, which contains each eye's own frustum. The game culls a frame or
+// two before the frame is shown, and the head can turn in between, so each side is widened
+// by cull_margin_deg as well.
+
+extern "C" void fn_80345CEC(CPU* c);  // __ct__14CFrustumPlanesFRC12CTransform4ffffbf
+
+
+// `v` turned by the unit quaternion `q`, or by its inverse.
+void qrot(const float q[4], const float v[3], float out[3], bool inverse = false) {
+    const float x = inverse ? -q[0] : q[0], y = inverse ? -q[1] : q[1], z = inverse ? -q[2] : q[2], w = q[3];
+    const float t[3] = {2 * (y * v[2] - z * v[1]), 2 * (z * v[0] - x * v[2]), 2 * (x * v[1] - y * v[0])};
+    out[0] = v[0] + w * t[0] + (y * t[2] - z * t[1]);
+    out[1] = v[1] + w * t[1] + (z * t[0] - x * t[2]);
+    out[2] = v[2] + w * t[2] + (x * t[1] - y * t[0]);
+}
+
+// GCN_CULL_HEAD="yaw pitch": eyes held still, for looking at the result without a headset
+// -- degrees left and up, a Quest-like field, 64 mm apart. The flat picture then shows the
+// world culled to where that head looks.
+bool stand_in_eyes(vr::EyeView out[2]) {
+    static const char* env = getenv("GCN_CULL_HEAD");
+    static vr::EyeView eyes[2];
+    static const bool ok = [] {
+        float yaw, pitch;
+        if (!env || sscanf(env, "%f %f", &yaw, &pitch) != 2) return false;
+        const float h = 3.14159265f / 360.0f;
+        const float cy = cosf(yaw * h), sy = sinf(yaw * h), cp = cosf(pitch * h), sp = sinf(pitch * h);
+        for (int e = 0; e < 2; e++) {
+            vr::EyeView& v = eyes[e];
+            v.rot[0] = cy * sp;
+            v.rot[1] = sy * cp;
+            v.rot[2] = -sy * sp;
+            v.rot[3] = cy * cp;
+            const float side[3] = {e ? 0.032f : -0.032f, 0.0f, 0.0f};
+            qrot(v.rot, side, v.pos);
+            v.tan_left = -1.19f;  // 50 degrees
+            v.tan_right = 1.19f;
+            v.tan_up = 1.0f;
+            v.tan_down = -1.0f;
+        }
+        return true;
+    }();
+    if (ok) memcpy(out, eyes, sizeof(eyes));
+    return ok;
+}
+
+void cull_to_eyes(CPU* c) {
+    const uint32_t frustum = c->r[3], xf = c->r[4];
+    fn_80345CEC(c);
+    ensure_config();
+    vr::EyeView ev[2];
+    if (!g_cull.on || !(vr::eye_views(ev) || stand_in_eyes(ev))) return;
+    const uint32_t count = mem_r32(frustum);
+    if (count > 6) return;
+
+    // The eyes' field in the head's frame (the left eye's orientation): each eye's corner
+    // rays turned into it, so that eyes which are not parallel are covered too.
+    const float* qh = ev[0].rot;
+    float lo_x = 0, hi_x = 0, lo_y = 0, hi_y = 0;
+    bool first = true;
+    for (int e = 0; e < 2; e++)
+        for (int k = 0; k < 4; k++) {
+            const float d[3] = {k & 1 ? ev[e].tan_right : ev[e].tan_left, k & 2 ? ev[e].tan_up : ev[e].tan_down, -1};
+            float w[3], h[3];
+            qrot(ev[e].rot, d, w);
+            qrot(qh, w, h, true);
+            if (-h[2] < 1e-3f) return;  // an eye looking sideways off the head: leave the game's
+            const float tx = h[0] / -h[2], ty = h[1] / -h[2];
+            if (first || tx < lo_x) lo_x = tx;
+            if (first || tx > hi_x) hi_x = tx;
+            if (first || ty < lo_y) lo_y = ty;
+            if (first || ty > hi_y) hi_y = ty;
+            first = false;
+        }
+    // Each side widened by the margin, short of a right angle.
+    const float limit = 85.0f * 3.14159265f / 180.0f;
+    auto widen = [&](float t) { return tanf(fminf(atanf(t) + g_cull.margin_rad, limit)); };
+    const float L = widen(-lo_x), R = widen(hi_x), D = widen(-lo_y), U = widen(hi_y);
+
+    float apex[3], slack = 0;
+    for (int i = 0; i < 3; i++) {
+        apex[i] = 0.5f * (ev[0].pos[i] + ev[1].pos[i]);
+        const float s = 0.5f * (ev[0].pos[i] - ev[1].pos[i]);
+        slack += s * s;
+    }
+    slack = sqrtf(slack);
+
+    float cam[12];
+    read_xf(xf, cam);
+    const float cam_pos[3] = {cam[3], cam[7], cam[11]};
+    const float right[3] = {cam[0], cam[4], cam[8]}, fwd[3] = {cam[1], cam[5], cam[9]}, up[3] = {cam[2], cam[6], cam[10]};
+    // The eyes' frame to the world: x right, y up, z back about the camera.
+    auto to_world = [&](const float v[3], float out[3]) {
+        float cv[3];
+        eye_to_camera(v, cv);
+        rotate(cam, cv, out);
+    };
+    float apex_w[3];
+    to_world(apex, apex_w);
+    for (int i = 0; i < 3; i++) apex_w[i] += cam_pos[i];
+    auto dot = [](const float a[3], const float b[3]) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
+
+    // Normals in the head's frame, inward: left, right, bottom, top, near, far.
+    const float sides[6][3] = {{1, 0, -L}, {-1, 0, -R}, {0, 1, -D}, {0, -1, -U}, {0, 0, -1}, {0, 0, 1}};
+    for (uint32_t p = 0; p < count; p++) {
+        const uint32_t at = frustum + 4 + 16 * p;
+        const float n[3] = {rd_f(at), rd_f(at + 4), rd_f(at + 8)}, d = rd_f(at + 12);
+        const float f = dot(n, fwd), r = dot(n, right), u = dot(n, up);
+        const int which = f > 0.95f ? 4 : f < -0.95f ? 5 : fabsf(r) > fabsf(u) ? (r > 0 ? 0 : 1) : (u > 0 ? 2 : 3);
+        float nh[3], ne[3], nw[3];
+        const float len = sqrtf(dot(sides[which], sides[which]));
+        for (int i = 0; i < 3; i++) nh[i] = sides[which][i] / len;
+        qrot(qh, nh, ne);
+        to_world(ne, nw);
+        // The far plane keeps the game's distance, measured from the eyes; every other
+        // plane passes through the eyes.
+        const float far = which == 5 ? -(d - dot(n, cam_pos)) : 0.0f;
+        wr_f(at, nw[0]);
+        wr_f(at + 4, nw[1]);
+        wr_f(at + 8, nw[2]);
+        wr_f(at + 12, dot(nw, apex_w) - slack - far);
+    }
+
+    static const bool log = getenv("GCN_CULLLOG") != nullptr;
+    static uint32_t calls = 0;
+    if (log && calls++ % 600 == 0)
+        fprintf(stderr, "[prime] culling to the eyes: %u planes, half-fields %.1f left %.1f right %.1f down %.1f up\n",
+                count, atanf(L) * 57.2958f, atanf(R) * 57.2958f, atanf(D) * 57.2958f, atanf(U) * 57.2958f);
+}
+
 void config_defaults(VrConfig& c) {
     // Prime's world units are taken to be metres. A guess, to be judged from inside the
     // headset like Blue Storm's 50 was.
@@ -396,3 +556,7 @@ extern "C" void prime_aim_gun(CPU* c) { aim_gun(c->r[28]); }
 // The patches in CMFGame::Draw and CMFGameLoader::Draw (recomp/patches.txt): whether the
 // game draws its world this frame.
 extern "C" void prime_world_drawn(uint32_t drawn) { g_world_drawn.store(drawn, std::memory_order_relaxed); }
+
+// The patches at three calls of the CFrustumPlanes constructor (recomp/patches.txt), in
+// place of the call.
+extern "C" void prime_cull_frustum(CPU* c) { cull_to_eyes(c); }

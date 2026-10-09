@@ -371,6 +371,39 @@ pause frame's distance and size feel right, and the cost -- a second flat pass p
 on the Quest about 1.4 ms more of render thread in the cinematic (`prime_egl` with
 `GCN_THEATER_STEREO=0.064` measures it).
 
+## Culling to the eyes (2026-10-09)
+
+Prime culls against its camera's frustum, tightly, so in the headset turning the head even
+slightly showed things missing at the edges: actors, particles and the area's own geometry.
+In stereo the game now culls to what the eyes see instead.
+
+- **One constructor.** Every frustum the frame is culled with is built by
+  `CFrustumPlanes::CFrustumPlanes(xf, fov, aspect, near, bool, far)` (0x80345CEC): in
+  `CStateManager::SetupViewForDraw` (what `DrawWorld` hands each actor's `AddToRenderer`,
+  and the renderer's clipping planes for the area octree), `PreRender` (each actor's
+  `PreRender`) and `ResetViewAfterDraw`. Patches at those three calls
+  (`recomp/patches.txt`) run the constructor and then `cull_to_eyes` (`src/vr_prime.cpp`),
+  which rebuilds each plane slot for slot: the frustum's count (5, or 6 with a far plane)
+  and the order of its planes stay the game's. Its other callers -- a light's view in
+  `CWorldShadow`, the orbit and targeting markers, the scan indicators -- are left alone;
+  the scan indicators may want the same treatment once the scan visor is looked at.
+  Position-based visibility (the area PVS, which areas are loaded and open) does not
+  depend on where the camera looks and needs nothing.
+- **The frontend publishes the eyes** (`vr::eye_views`, beside `vr::hand_pose`): each eye's
+  pose in the same frame as the controllers and the tangents of its field's edges, while
+  the eyes are drawn. `prime_egl` publishes its own, turned by `--eye-yaw`/`--eye-pitch`.
+- **One frustum for both eyes**: the left eye's orientation, the union of both fields
+  (each eye's corner rays turned into it), its apex between the eyes and every plane moved
+  out by half their separation, which contains each eye's frustum. The far plane keeps the
+  game's distance, measured from the eyes; the near plane passes through them.
+- **The margin.** The guest culls a frame or two before it is shown, against the
+  eyes last published, and the head turns in between: each side is widened by
+  `cull_margin_deg` (vr.txt, default 10, judged nowhere yet; at 200 degrees a second, a
+  quick turn, 10 degrees is 50 ms). `cull_to_eyes 0` turns it all off.
+- **On the desktop**, `GCN_CULL_HEAD="yaw pitch"` (degrees left and up) stands in for a
+  head with a Quest-like field, so the flat picture shows the world culled to where that
+  head looks; `GCN_CULLLOG=1` prints the field culled to every 600 frustums.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
