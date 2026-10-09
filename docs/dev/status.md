@@ -98,6 +98,14 @@ play, approximately.
   the missing-models fix, was that the pending line should be written out before the
   pointers move; it should be discarded, and the models render identically either way
   (bit-identical frame dumps over 200 seconds).
+- ~~Surfaces drawn black after going through a door~~ Fixed 2026-10-09. Reproduced from
+  a headset session's input log on the desktop: after a door in the Chozo Ruins, the next
+  room's walls were black. Their first TEV stage samples a lightmap that the new room had
+  loaded into memory an EFB copy's buffer once occupied. The texture cache still mapped that
+  address to the copy (a GPU texture, never written to RAM), and every lookup kept the copy
+  from expiring, so the walls were drawn with a stale screen copy. The cache now fingerprints
+  a copy's destination and drops the copy when the RAM there changes ("Textures" in
+  `gcn-recomp/docs/diagnostics.md`). Frames before the room change are byte-identical.
 - ~~Crash in water rendering on the Quest, about eighteen minutes in~~ Fixed 2026-10-08,
   not yet re-played to the same spot. SIGSEGV in `UpdatePatchWithNormals`
   (`CFluidPlaneCPU`, under `CScriptWater::Render`) at guest `0xE0004020`. The patch's
