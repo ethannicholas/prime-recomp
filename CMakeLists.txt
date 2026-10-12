@@ -11,6 +11,7 @@ add_subdirectory(gcn-recomp)
 gcn_add_game(
   NAME prime
   TITLE "Metroid Prime"
+  LABEL "Prime Recomp"
   DISC_ID GM8E01
   DOL_SHA1 39a2f928159ad46491e9b1ef0a72613d91e0cc40
   SYMBOLS ${CMAKE_SOURCE_DIR}/analysis/symbols.txt

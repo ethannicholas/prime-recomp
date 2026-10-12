@@ -13,7 +13,12 @@ written for *Wave Race: Blue Storm*.
 
 > **This repository contains no game code or data.** You must supply your own disc image,
 > dumped from a copy of the game that you own. The build process reads the executable out of
-> *your* image and recompiles it locally. Nothing derived from the game is distributed here.
+> *your* image and recompiles it locally. No game code or assets are distributed here; what
+> this repository holds about the game is a table of its function addresses and names.
+
+## License
+
+The code in this repository and in `gcn-recomp` is released under the [MIT License](LICENSE).
 
 ## Legal
 
@@ -187,7 +192,7 @@ time. The memory card and the shader cache live there too, and survive reinstall
 
 ### Playing
 
-The app appears under **Library → Unknown Sources → Metroid Prime**. Menus, cinematics and
+The app appears under **Library → Unknown Sources → Prime Recomp**. Menus, cinematics and
 the morph ball are shown on a flat screen in front of you; first-person play switches to
 stereo 3D by itself. Clicking the left thumbstick switches by hand, until the game next
 changes view. In stereo the arm cannon is in your right hand and fires where it points, and
