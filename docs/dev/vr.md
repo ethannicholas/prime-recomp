@@ -888,6 +888,37 @@ copy's bytes (`z * 16777215 + 0.5` of a float depth, where the hardware's is the
 rasteriser's own 24-bit value) and the swap table that routes the copy's I and A into the
 compare's G and R.
 
+## Ridley's shadow, and a session that never left Magmoor (2026-10-13)
+
+A headset session reported that the theater scene where Ridley flies over the Phendrana
+snow drew no shadow on the ground.
+
+- **The scene is not in the session that was meant to hold it.** The latest pose-logged
+  session (`inputs/20261013-053126`, on the device as `s9`, ~30 minutes, 81736 frames)
+  replayed in full and faithfully -- it consumed its whole input log, took its 81658 clock
+  jumps, answered its 112964 pose reads, and presented exactly 81736 frames, with no early
+  exhaustion. A frame dumped every thousand (`--dump-every`) over the whole run is Magmoor
+  Caverns start to end: a save at Save Station Magmoor A around frame 29000, an elevator's
+  blue transport sphere at 50000, and Burning Trail at the close. No Phendrana, no snow, no
+  cutscene camera (only the first-person 0403 and ball 0404 cameras appear; the last
+  cinematic is at frame 28679). So the replay is sound; the scene simply is not in this
+  log, and nothing newer than `s9` is on the headset. This also lays to rest the worry that
+  a saved-then-quit session replays from the save: the log keeps its own snapshot of the
+  card as it was when the run *started* and restores that to a scratch copy, so a replay
+  re-plays the whole run, the mid-run save included, from the beginning.
+- **The likely cause, from the decomp, not yet seen.** `CProjectedShadow` (what casts a
+  flying actor's shadow, Ridley's among them) draws its caster white into a corner of the
+  frame and copies it as a `GX_CTF_R4` mask, then projects it, reading the mask's *alpha*
+  (`GX_CA_TEXA` on `GX_TEXMAP7`). An R4 copy is read back as 4-bit intensity, the one value
+  in every channel, alpha included. The renderer's copy shader had no R4 case, so an R4
+  copy kept the frame's own alpha instead of the red, and a shadow mask read from it would
+  carry nothing -- an invisible shadow. A one-line R4 case was added to the copy shader
+  (`gcn-recomp/runtime/gx/render_gl.cpp`) and built into the headset app, but this Magmoor
+  session has no projected shadow to confirm it against (its only copies are the depth
+  copies and the display copy), so it is a candidate until a pass through one -- Ridley, or
+  any actor with a ground shadow -- shows it. The change is left uncommitted in the
+  submodule until then.
+
 ## The lava's lines, and the headset's poses as input (2026-10-13)
 
 A Magmoor session (`inputs/20261012-221934`, 3.4 minutes, on the device as `s8`) to look
