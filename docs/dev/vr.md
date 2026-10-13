@@ -587,7 +587,9 @@ the same frame rate, and frames are unchanged.
   half of the screen, read as IA8 indirect textures to index a ramp. The copies were in the
   wrong layout for that; fixed in gcn-recomp (`docs/graphics.md`, "Texture lifetimes and
   EFB copies"). At internal scale 2 the frame is clean; at 1, which stereo uses for its
-  copies, faint lines remained every few dozen rows, and so did the specks.
+  copies, faint lines remained every few dozen rows, and so did the specks. (That fix
+  swapped the bytes the wrong way round and left lines of its own: see 2026-10-13, "The
+  lava's lines".)
 
   **Every few dozen rows is every chunk** (2026-10-09, from the code, not yet from the
   headset): the fog volume is drawn in horizontal chunks of the screen
@@ -878,6 +880,53 @@ diagonals run up the wall; at scale 2 one faint line. The shader's compare is in
 copy's bytes (`z * 16777215 + 0.5` of a float depth, where the hardware's is the
 rasteriser's own 24-bit value) and the swap table that routes the copy's I and A into the
 compare's G and R.
+
+## The lava's lines, and the headset's poses as input (2026-10-13)
+
+A Magmoor session (`inputs/20261012-221934`, 3.4 minutes, on the device as `s8`) to look
+at the yellow lines that appear on the rocks around lava in morph ball, and in the caverns'
+introduction when the camera pulls back to the theater.
+
+- **The lines are the fog volume's ramp read sideways.** Reproduced in the introduction
+  at frames 6400, 6600 and 6800 in the flat view at scale 1 (`--dump-dir`,
+  `GCN_DUMP_RANGE`): one-pixel bright yellow lines, dashed along the diagonals, on the
+  silhouettes of the lava's fog volumes, in a corridor with no lava in view too. Each
+  volume is drawn per screen chunk (`CCubeRenderer::DrawFogVolume`): its far faces,
+  copied as 16-bit depth; its near faces, copied the same; then a quad whose two indirect
+  stages take each copy's two bytes as the column and row of a 256x256 ramp and blend
+  2·(ramp(far) − ramp(near)) in the fog's colour. Skipping one chunk's quad
+  (`GCN_DRAW_SKIP=233-233` at frame 6800) removed its lines and changed under a thousand
+  other pixels: the fog had been all but invisible, the lines its only output. The copies
+  themselves, dumped (`GCN_COPYDUMP`), were right: at the line pixels the two depths
+  differed by a few units, which through the ramp is nothing. The renderer wrote a Z16 copy
+  as (top, middle) where the hardware writes (middle, top); read back as intensity-alpha
+  and indexed by the indirect stage (column from the alpha, row from the intensity), the
+  lookup was transposed -- the row was the middle byte -- and the ramp's last rows, which
+  climb to 255, lit up wherever the middle byte neared 255, along contours of depth. An
+  emulation of the transposed lookup from the dumped copies and ramp saturated 273 pixels
+  of the chunk where the frame had 253. Fixed in gcn-recomp (`docs/graphics.md`, "Copies
+  read back in another format"): the three frames have no lines and the lava has its glow.
+  The 2026-10-09 note on the acid's static had reached the same shader and swapped the
+  bytes the wrong way round, which removed the coarser lines where the top byte changed
+  and left these.
+- **The acid frame's draws 101 and 102 were the morph ball's shadow, not the fog.** The
+  suspicion that a TEV compare mode drew the lines is withdrawn: those draws are
+  `CMorphBallShadow` (three stages, Z equal without write, an alpha compare against an A8
+  id copy on map 7), and the fog volume uses no compare at all.
+- **A headset session's replay parted from the recording.** The log replayed into Samus
+  standing in lava from frame 9300 and dying at 10300, while the log has morph presses
+  from 10197 and steering to the end. The cause: `aim_gun` in `src/vr_prime.cpp` writes the
+  right controller's pose into the gun and aim-assist transforms every frame, and
+  `cull_to_eyes` and the scan hooks read the eyes' views; none of it was in the log.
+  gcn-recomp now logs every guest-side read of a hand or eye pose, in order, and answers
+  them from the log in a replay (logs are version 4; `docs/diagnostics.md`, "Input logging
+  and replay"). Checked in the harness with `--eye`: two replays of a pose-bearing log are
+  byte-identical, and the same log without its poses differs in every frame. The sessions
+  recorded before this (`s6` among them) replay only until aiming matters: `s6` at frame
+  23000 is now a Chozo room, not the acid pool it was. The next session played on this
+  build is the first that will replay exactly.
+- **Seen, not yet addressed:** in the stereo eye dumps of frames 9300-9750 the lava's
+  damage flash is a flat translucent rectangle over the HUD window.
 
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the

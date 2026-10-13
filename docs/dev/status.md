@@ -57,6 +57,12 @@ instead of iterating, which is also what keeps the host from burning a core per 
 Logs recorded before this (version 1 in their header, `routes/new-game` among them) still
 play, approximately.
 
+A headset session has more input than the pad: the game's hooks read the right
+controller's pose for the gun and the eyes' views for culling and the scan visor, and a
+replay without them parted from the recording once aiming mattered (2026-10-13, `vr.md`,
+"The lava's lines, and the headset's poses as input"). Those reads are logged too now
+(version 4 logs); headset sessions recorded before then replay only until the first shot.
+
 ## Known broken
 
 - **Main menu text is doubled and striped.** Each menu entry is drawn as a sharp white copy
