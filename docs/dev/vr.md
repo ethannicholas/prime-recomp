@@ -772,6 +772,13 @@ before the input log records it, so replays carry the result. Prime's (`map_pad`
   the same answer the view decision reads), so the rule needs no new state. The free look
   that R gave is no longer needed now that the scan visor follows the head.
 
+Rearranged on 2026-10-13, after a session: the right trigger alone fires (A is no longer
+a fire button), the right hand's A fires missiles (Y) and B jumps, the left hand's X morphs
+(X) and Y opens the map (Z), and the right grip -- Z until then -- is R, the free look. A
+is itself wherever the game is not drawing its world (the main menu, the pause and map
+screens), since those select with it; the trigger's pause-and-map exception stays. The
+mapping runs before the input log records the pad, so earlier logs replay as they were.
+
 ## The package (2026-10-09)
 
 The app's package is `com.ethannicholas.prime` (it was `com.example.prime`, which showed

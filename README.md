@@ -202,11 +202,13 @@ the scan visor's window follows your head: look at something to scan it, no free
 |---|---|
 | Control stick | Left thumbstick |
 | C stick | Right thumbstick |
-| A / B | A / B (right) |
-| A (fire) | Right trigger as well, except on the pause and map screens, where it is R |
-| X (morph ball) / Y (missile) | Y / X (left) |
-| Z | Right grip |
-| L | Left trigger |
+| A (fire) | Right trigger; on the pause and map screens it is R instead |
+| B (jump) | B (right) |
+| Y (missile) | A (right) while playing; on the menus and the pause and map screens A selects |
+| X (morph ball) | X (left) |
+| Z (map) | Y (left) |
+| R (free look) | Right grip |
+| L (lock-on) | Left trigger |
 | Start | Menu (left) |
 | D-pad (visors) | Hold left grip + left thumbstick |
 | *(flat screen / stereo, by hand)* | Left thumbstick click |

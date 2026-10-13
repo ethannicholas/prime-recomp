@@ -805,22 +805,25 @@ uint32_t orbit_state_for_turning(uint32_t player) {
 // ---------------------------------------------------------------------------
 // The Touch controllers, after the frontend's own mapping (vr::GameHooks::map_pad).
 //
-// The left controller's lower button (X) fires missiles and its upper one (Y) morphs: the
-// frontend maps them the other way. The right trigger is a second A -- firing, as the
-// cannon in that hand suggests -- except on the pause and map screens, where it stays R:
-// the pause screen's tabs and the map's zoom need it, and nothing in first-person play does
-// now that the scan visor follows the head rather than the free look. Those screens are
-// where the game is in play but not drawing its world (prime_world_drawn), which the view
+// The right trigger fires (A), as the cannon in that hand suggests, and the right grip is
+// R, the free look (the frontend hands the grip over as Z). The right hand's A fires
+// missiles (Y) and its B jumps; the left hand's X morphs (X) and its Y opens the map (Z).
+// A is itself wherever the game is not drawing its world -- the main menu, the pause and
+// map screens -- which select with it; and on the pause and map screens the trigger is R
+// rather than A, for the pause screen's tabs and the map's zoom. Those screens are where
+// the game is in play but not drawing its world (prime_world_drawn), which the view
 // decision reads too.
 void map_pad(PadState& p) {
-    const bool x = p.buttons & PAD_X, y = p.buttons & PAD_Y;
-    p.buttons = (uint16_t)((p.buttons & ~(PAD_X | PAD_Y)) | (x ? PAD_Y : 0) | (y ? PAD_X : 0));
-    const bool pause_or_map = g_camera_pair.load(std::memory_order_relaxed) != 0 &&
-                              g_world_drawn.load(std::memory_order_relaxed) == 0;
-    if (pause_or_map) return;
-    if ((p.buttons & PAD_R) || p.trig_r > 127) p.buttons |= PAD_A;
-    p.buttons &= (uint16_t)~PAD_R;
+    const bool a = p.buttons & PAD_A, y = p.buttons & PAD_Y, grip = p.buttons & PAD_Z;
+    const bool trig = (p.buttons & PAD_R) || p.trig_r > 127;
+    const bool in_play = g_camera_pair.load(std::memory_order_relaxed) != 0;
+    const bool world = g_world_drawn.load(std::memory_order_relaxed) != 0;
+    p.buttons &= (uint16_t)~(PAD_A | PAD_Y | PAD_Z | PAD_R);
     p.trig_r = 0;
+    if (y) p.buttons |= PAD_Z;
+    if (grip || (trig && in_play && !world)) { p.buttons |= PAD_R; p.trig_r = 255; }
+    if (trig && !(in_play && !world)) p.buttons |= PAD_A;
+    if (a) p.buttons |= (in_play && world) ? PAD_Y : PAD_A;
 }
 
 // ---------------------------------------------------------------------------
