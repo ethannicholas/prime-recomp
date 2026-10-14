@@ -203,8 +203,8 @@ the scan visor's window follows your head: look at something to scan it, no free
 | Control stick | Left thumbstick |
 | C stick | Right thumbstick |
 | A (fire) | Right trigger; on the pause and map screens it is R instead |
-| B (jump) | B (right) |
-| Y (missile) | A (right) while playing; on the menus and the pause and map screens A selects |
+| B (jump) | A (right) while playing; on the menus and the pause and map screens A selects |
+| Y (missile) | B (right) while playing; on the menus and the pause and map screens B goes back |
 | X (morph ball) | X (left) |
 | Z (map) | Y (left) |
 | R (free look) | Right grip |

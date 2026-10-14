@@ -779,6 +779,10 @@ is itself wherever the game is not drawing its world (the main menu, the pause a
 screens), since those select with it; the trigger's pause-and-map exception stays. The
 mapping runs before the input log records the pad, so earlier logs replay as they were.
 
+Changed on 2026-10-14 at the player's request: the right hand's A jumps (B) and its B fires
+missiles (Y). Off the world (the menus, the pause and map screens) A and B are themselves,
+so A still selects and B still goes back.
+
 ## The package (2026-10-09)
 
 The app's package is `com.ethannicholas.prime` (it was `com.example.prime`, which showed
