@@ -1037,6 +1037,23 @@ universe map); a patch at the entry of `CAutoMapper::Draw` records where it is.
   is the other way round, as above. Which harness mode a pose-bearing log replays in is
   not settled.
 
+## Steam on the visor, across the whole eye (2026-10-14)
+
+Entering a heated room in Magmoor (`inputs/20261014-173803`, on the device as `s11`, first
+person from frame 2139), the game lays hot steam over the visor: four orthographic draws of
+one state over the whole viewport, in the band 1/64-1/32 (draws 114-117 of frame 2280;
+`GCN_DRAW_SKIP=114-117` removes it). The eyes painted orthographic draws on the HUD frame, so
+the steam was an orange rectangle at the HUD's distance and size, its bottom edge plain
+across the cannon. Prime's eye filter now calls such a draw `EyeScreen` (gcn-recomp's
+`docs/graphics.md`): any orthographic draw over the whole viewport that samples no copy of
+the frame and has no indirect stage, so the scan window stays on the frame and the charge
+shot's warps stay hidden. It is drawn across each eye's whole field, fixed to the head. Seen
+in the harness: no edges anywhere, and the steam's texture visibly magnified, which is the
+price of stretching the game's 4:3 picture over the eye's much wider field. Not yet judged
+in the headset. `visor_film_on_head 0` in `vr.txt` puts these draws back on the HUD frame.
+The lava's damage flash noted on 2026-10-13 ("a flat translucent rectangle over the HUD
+window") is probably the same kind of draw and would go across the eye too; not checked.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as

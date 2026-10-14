@@ -222,6 +222,7 @@ HudFrame g_hud_frame = {4.0f, 0.5f, 0.0f, 0.0f};
 bool g_hide_helmet = true;      // hide_helmet
 bool g_hide_flat_warps = true;  // hide_flat_warps
 bool g_hide_scan_tint = true;   // hide_scan_tint
+bool g_visor_film_on_head = true;  // visor_film_on_head
 bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
 float g_gaze_pitch_rad = 0.0f;    // scan_gaze_pitch_deg: and this much further up
 
@@ -243,6 +244,7 @@ void config_loaded(const VrConfig& c) {
     g_hide_helmet = c.get("hide_helmet", 1.0f) != 0.0f;
     g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
     g_hide_scan_tint = c.get("hide_scan_tint", 1.0f) != 0.0f;
+    g_visor_film_on_head = c.get("visor_film_on_head", 1.0f) != 0.0f;
     g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
     g_gaze_pitch_rad = c.get("scan_gaze_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
 }
@@ -893,10 +895,23 @@ bool is_scan_tint(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     return stages == 1 && (st.bp[0x41] & 0xFFFF) == 0x59 && f.band_lo >= 0.01f && f.band_hi <= 0.04f;
 }
 
+// Films on the visor. Steam, heat and the like are drawn over the whole screen as textured
+// quads in the same band as the scan tint (draws 114-117 of frame 2280 of the session
+// 20261014-173803, the hot steam on entering a heated room in Magmoor: orthographic, the
+// whole viewport, four draws of one state). On the HUD frame they were a rectangle hanging
+// at the HUD's distance with its edges in plain view. They are drawn across the whole of
+// each eye instead, fixed to the head (gx::EyeScreen): any orthographic draw over the whole
+// viewport that neither samples a copy of the frame (the scan window does) nor warps
+// through an indirect stage. visor_film_on_head 0 in vr.txt puts them back on the frame.
+bool is_visor_film(const gx::EyeDrawFacts& f) {
+    return f.ortho && !f.samples_copy && !f.indirect && f.vp_w >= 600.0f && f.vp_h >= 420.0f;
+}
+
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
     if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return gx::EyeHideDraw;
     if (g_hide_scan_tint && is_scan_tint(st, f)) return gx::EyeHideDraw;
+    if (g_visor_film_on_head && is_visor_film(f)) return gx::EyeScreen;
     if (g_hide_helmet) {
         // The whole model goes with its textured materials: the untextured strips along
         // the top and bottom and the small block by the missile count are drawn with the
