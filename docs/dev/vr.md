@@ -1009,6 +1009,34 @@ and a replay.
   yellow shape against the camera (6402-6408), one eye being covered by near geometry
   seemed likely, but the dumped pair has the two images alike throughout.
 
+## The map screen goes flat (2026-10-14)
+
+The map screen did not read well on the panel as a stereo pair, so it is now shown flat:
+one image for both eyes. The menus, the pause screen, the ball and cinematics keep their
+pair. gcn-recomp gained a hook for this, `wants_panel_pair`, which Prime answers from the
+automapper (`src/vr_prime.cpp`, "The map screen is flat"). `CAutoMapper` keeps its state
+at +0x1BC and the state it is moving to at +0x1C0 (0 the minimap, 1 the map screen, 2 the
+universe map); a patch at the entry of `CAutoMapper::Draw` records where it is.
+
+- Checked by replaying `s10` in the harness with `--eye` and `GCN_STEREOLOG=1`, which logs
+  the hook's answer: the panel was flat exactly while the map was open, at frames
+  2869-3277, 7223-7318 (opened from the ball) and 12038-12617, and a pair everywhere else.
+- **A stale automapper turned an elevator ride flat.** The first version read whichever
+  automapper had last drawn. Across the elevator into Magmoor (frames 5551-6126) that was
+  the previous world's, freed, and its memory read as the map. A cinematic draws no
+  minimap, so the hook now reads only an automapper that drew in the last four frames.
+- The pause screen keeps its pair: `s9` replayed flat (no `--eye`, where it does replay
+  faithfully) through its pause at 80558-80721 with no change, and its maps at 75878-76277
+  and 80743-80963 flat. The same log in `--eye` crashes at about frame 10150, in the
+  OS's `SelectThread` (a call through a null pointer, returning to 0x80385A28), on the
+  pre-rebase harness as well, so that is older than this change; the live session ran past
+  it. Not yet looked into.
+- `s10` replayed with `GCN_THEATER_STEREO` instead of `--eye` parted from the recording
+  before frame 9200 (Samus in lava), while in `--eye` it stays with it; the likely
+  difference is the eyes' views, which the game reads and only `--eye` publishes. `s9`
+  is the other way round, as above. Which harness mode a pose-bearing log replays in is
+  not settled.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as

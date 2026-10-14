@@ -10,6 +10,9 @@
 # (a model, or the new world's name on black).
 80024888 { void prime_world_drawn(uint32_t); prime_world_drawn(c->r[3] & 0xFFu); } c->r[0] = c->r[3] & 0xFFu; SET_CR0(c->r[0]);
 80023D10 { void prime_world_drawn(uint32_t); prime_world_drawn(0); } { uint32_t ea = (c->r[1] + (uint32_t)-16); ST32(ea, c->r[1]); c->r[1] = ea; }
+# Where the CAutoMapper is (src/vr_prime.cpp, "The map screen is flat"): CAutoMapper::Draw,
+# which runs every frame in play for the HUD's minimap, r3 the automapper.
+80099588 { void prime_automapper(uint32_t); prime_automapper(c->r[3]); } { uint32_t ea = (c->r[1] + (uint32_t)-2240); ST32(ea, c->r[1]); c->r[1] = ea; }
 # In stereo, the game culls to what the eyes see rather than to its own camera's frustum
 # (src/vr_prime.cpp, "Culling against what the eyes see"): the calls of the CFrustumPlanes
 # constructor in CStateManager::ResetViewAfterDraw, SetupViewForDraw and PreRender.

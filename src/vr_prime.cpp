@@ -50,6 +50,8 @@
 #include <cstdlib>
 #include <cstring>
 
+uint32_t gx_frames_submitted();  // gx/xf.cpp: frames the guest has finished
+
 namespace {
 
 constexpr uint32_t kFirstPersonCameraVtable = 0x803DA720;  // __vt__18CFirstPersonCamera
@@ -126,6 +128,29 @@ bool wants_stereo(const gx::Batch&) {
         }
     }
     return current == first_person && cinematic == 0 && world;
+}
+
+// ---------------------------------------------------------------------------
+// The map screen is flat.
+//
+// The panel shows the game's flat screens as a stereo pair (theater_stereo), but the map
+// screen reads badly that way, so it goes up flat, one image for both eyes. CAutoMapper
+// (revision 2's layout, from IsInMapperState): the current state at +0x1BC and the one it
+// is moving to at +0x1C0, each an EAutoMapperState -- 0 the HUD's minimap, 1 the map
+// screen, 2 the universe map. CAutoMapper::Draw runs every frame the map or the minimap is
+// shown, and a patch there (recomp/patches.txt) says where the automapper is and when it
+// last drew. The pause screen leaves it on the minimap, so it keeps its pair. Only an
+// automapper that drew in the last few frames is read: a cinematic draws no minimap, and
+// across an elevator ride the one recorded was the previous world's, freed, whose memory
+// read as the map and turned the ride's second half flat.
+constexpr uint32_t kMapperState = 0x1BC, kMapperNextState = 0x1C0;
+std::atomic<uint32_t> g_automapper{0}, g_automapper_frame{0};
+
+bool wants_panel_pair(const gx::Batch&) {
+    const uint32_t m = g_automapper.load(std::memory_order_relaxed);
+    if (!g_camera_pair.load(std::memory_order_relaxed) || !in_ram(m) || (m & 3)) return true;
+    if (gx_frames_submitted() - g_automapper_frame.load(std::memory_order_relaxed) > 4) return true;
+    return mem_r32(m + kMapperState) == 0 && mem_r32(m + kMapperNextState) == 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -942,6 +967,7 @@ const bool installed = [] {
     h.config_defaults = config_defaults;
     h.config_loaded = config_loaded;
     h.wants_stereo = wants_stereo;
+    h.wants_panel_pair = wants_panel_pair;
     h.map_pad = map_pad;
     h.eye_filter = eye_filter;
     vr::set_game_hooks(h);
@@ -956,6 +982,12 @@ extern "C" void prime_aim_gun(CPU* c) { aim_gun(c->r[28]); }
 // The patches in CMFGame::Draw and CMFGameLoader::Draw (recomp/patches.txt): whether the
 // game draws its world this frame.
 extern "C" void prime_world_drawn(uint32_t drawn) { g_world_drawn.store(drawn, std::memory_order_relaxed); }
+
+// The patch at CAutoMapper::Draw (recomp/patches.txt): where the automapper is.
+extern "C" void prime_automapper(uint32_t self) {
+    g_automapper.store(self, std::memory_order_relaxed);
+    g_automapper_frame.store(gx_frames_submitted(), std::memory_order_relaxed);
+}
 
 // The patches at three calls of the CFrustumPlanes constructor (recomp/patches.txt), in
 // place of the call.
