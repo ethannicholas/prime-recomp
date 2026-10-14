@@ -77,7 +77,12 @@ replay without them parted from the recording once aiming mattered (2026-10-13, 
   was the main loop's `CFrameDelayedKiller::StallAndFlushAllAllocations` waiting in
   `GXDrawDone`. `CheckReset`'s other two calls are hot resets (to the menu and not), which
   write the PI reset register; the runtime only logs that, so they would hang or crash as
-  well. Needs a reboot in gcn-recomp: restarting the game from its entry point.
+  well. **Handled the same day** by listing `OSResetSystem` in `recomp/hle.txt`: gcn-recomp
+  now ends the run there and the frontend starts the game again (a new process; see
+  gcn-recomp's `docs/diagnostics.md`, "Panics and faults"). The `s9` replay ends with
+  `[reset] the game reset the console (restart, code 0)` and exit 0. The headset app's
+  relaunch has not been seen working yet; `GCN_RESET_AFTER=<seconds>` in `gcn_env.txt`
+  forces a reset to try it.
 
 - **Main menu text is doubled and striped.** Each menu entry is drawn as a sharp white copy
   plus a dimmer copy offset a few pixels right and down, and "MAIN MENU" has horizontal

@@ -3,3 +3,4 @@ OSSaveContext
 OSLoadContext
 OSReport
 OSPanic
+OSResetSystem
