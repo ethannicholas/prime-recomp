@@ -65,6 +65,20 @@ replay without them parted from the recording once aiming mattered (2026-10-13, 
 
 ## Known broken
 
+- **Dying crashes the game (2026-10-14).** After a death Prime goes back to the title by
+  restarting the console: `CMain::CheckReset` calls `OSResetSystem(OS_RESET_RESTART, 0,
+  false)`, and the SDK's `__OSReboot` clears the exception and interrupt tables
+  (0x80003000-0x800030BF), then reads the boot loader from disc to start the game again.
+  The runtime emulates no reboot, so the game carries on with empty tables, and the next
+  decrementer interrupt calls a null handler: `FATAL: call_indirect: no function at
+  00000000 (lr=80385A28)`, in `SelectThread`'s idle loop. Found from `s9` replayed in
+  `--eye`, which parts from the recording and has Samus die in lava at frame ~9840; the
+  table was cleared by frame 9978 (`GCN_GUARD=80003020`), and the crash dump's guest stack
+  was the main loop's `CFrameDelayedKiller::StallAndFlushAllAllocations` waiting in
+  `GXDrawDone`. `CheckReset`'s other two calls are hot resets (to the menu and not), which
+  write the PI reset register; the runtime only logs that, so they would hang or crash as
+  well. Needs a reboot in gcn-recomp: restarting the game from its entry point.
+
 - **Main menu text is doubled and striped.** Each menu entry is drawn as a sharp white copy
   plus a dimmer copy offset a few pixels right and down, and "MAIN MENU" has horizontal
   banding; the "A Select / B Back" prompts are clean. The font texture itself decodes
