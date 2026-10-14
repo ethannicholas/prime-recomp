@@ -966,6 +966,45 @@ introduction when the camera pulls back to the theater.
 - **Seen, not yet addressed:** in the stereo eye dumps of frames 9300-9750 the lava's
   damage flash is a flat translucent rectangle over the HUD window.
 
+## Stutter, and a black left eye on the way into the ball (2026-10-13)
+
+A 6.8-minute session in Magmoor (`inputs/20261013-175118`, on the device as
+`/data/local/tmp/prime/s10`, the first log with the headset's poses) felt jerkier than
+usual, and one eye went briefly dark on most morphs. Its logcat had already scrolled out of
+the 256 KB buffer by the time it was looked at, so this was worked out from the input log
+and a replay.
+
+- **The input log measures stutter.** Each `jump` line is a catch-up after a host hitch
+  (2 ticks per edge at 40.5 MHz, so 94,500 edges is 4.7 ms). For this session against the
+  23-minute one before it (`20261013-053126`): 47 against 29 hitches of 10 ms or more a
+  minute, 5.0 against 2.1 of 40 ms or more, and 22% against 30% of the time spent behind.
+  Hitches over 100 ms are re-anchored rather than logged, so a long shader build or load
+  does not show up in these counts.
+- **The guess that a change had invalidated the shaders was right, in a worse way:
+  nothing had been cached since 2026-10-12.** The app's `shaders.bin` and the harness's
+  both had a version 1 header, and gcn-recomp had moved to version 2. The loader skipped
+  such a file and then appended every new program behind the same old header, so each
+  session compiled every program in the middle of play: 1,727 in the replay, 15-40 ms each.
+  The file had grown to 60 MB. Fixed in gcn-recomp (`docs/graphics.md`, "Shader cache"):
+  the harness's next run started with `672 programs from cache (672 from binaries, 0
+  compiled) in 255 ms`. The first run of the new build replaces the old file and compiles
+  once more as it goes. From then on the cache works.
+- **The dark eye was the left image of the theater pair, for one game frame.** The morph
+  switches the current camera to the ball camera (0404) at once. In the replay
+  (`GCN_STEREOLOG=1`) that was frame 6396, with the X press at 6397, and the view cuts to
+  the panel two frames later. Prime renders the eyes from an EFB at `stereo_scale` 2 and
+  the panel at `theater_scale` 3, so the first panel frame resized the EFB, and its
+  contents became undefined. That frame's first pass, the left image, drew over garbage
+  depth and came out black. The left pass's display copy then cleared the EFB, so the right
+  image was whole. Reproduced in the harness with `GCN_RESCALE=6400:3
+  GCN_THEATER_STEREO=0.063 --scale=2`, and gone once the renderer carried the EFB across
+  the resize. Every exit from stereo did the same (the pause screen, cinematics, the
+  world's name), but the morph is the exit a player makes most often.
+- **Ruled out on the way:** the panel's pair itself. With the camera starting inside
+  Samus's translucent body (frames 6411-6417) and the cannon dissolving into a faceted
+  yellow shape against the camera (6402-6408), one eye being covered by near geometry
+  seemed likely, but the dumped pair has the two images alike throughout.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
