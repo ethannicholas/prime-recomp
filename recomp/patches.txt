@@ -29,12 +29,11 @@
 801139F0 { void prime_scan_ortho(CPU*); prime_scan_ortho(c); } { uint32_t ea = (c->r[28] + (uint32_t)72); double v = LDF32(ea); c->f[1].d = v; c->ps1[1] = v; }
 # Locking on in the scan visor would turn the body and the camera to the target: the reads
 # of CPlayer::mOrbitState in CPlayer::UpdateOrbitOrientation and
-# CFirstPersonCamera::UpdateTransform. The camera's are also "no orbit" in every visor while
-# the camera follows the head (src/vr_prime.cpp, "The camera follows the head").
+# CFirstPersonCamera::UpdateTransform.
 8017F2D0 { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[31]); }
-8000E9D8 { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
-8000ECD8 { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
-8000F8FC { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
+8000E9D8 { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[30]); }
+8000ECD8 { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[30]); }
+8000F8FC { uint32_t prime_orbit_state(uint32_t); c->r[0] = prime_orbit_state(c->r[30]); }
 # Where the player steers by the first-person camera's forward, the forward without the
 # camera's follow turn, the three loads of its z, y and x as one (src/vr_prime.cpp, "The
 # camera follows the head"): UpdateOrbitOrientation (r3 the camera) turns the body to face it

@@ -971,13 +971,15 @@ uint32_t orbit_state_for_turning(uint32_t player) {
 // in the headset the world, and only the world, jumped by a frame's turn every so often
 // while the camera moved.
 //
-// Locking on also points the camera at the target (UpdateTransform's orbit branch, the
-// three reads of CPlayer::mOrbitState there). With the camera following the head that pulled
-// the world, as the eyes see it, round to the target, and left the game's screen off the
-// gaze by the turn; so while the camera follows the head, those reads are answered "no
-// orbit" in every visor, as the scan visor already had them. The body still turns to face
-// the target (UpdateOrbitOrientation, left alone outside the scan visor), so circling a
-// target turns the world in yaw as the stick does.
+// Locking on points the camera at the target, as the game always has, outside the scan
+// visor (which keeps both the body and the camera off the lock: "The scan visor follows the
+// head"); the turn goes on top. For a while the camera alone was kept off the lock in every
+// visor, so that it would not pull the world round to the target. But the body's lock-on
+// steering (CPlayer::UpdateOrbitOrientation) and the camera's go together: with only the
+// body's, holding L in the combat visor turned the body at full speed for as long as it was
+// held (frames 6717-7139 of the session 20261015-123810), turn or no turn. Where the player
+// steers by the camera's forward, it is given the forward with the turn taken off
+// (unturned_forward, below).
 //
 // Only while the eyes are published -- stereo in the headset, GCN_CULL_HEAD on the desktop;
 // without them the turn is none, which the panel needs (the morph between it and the eyes
@@ -1032,11 +1034,13 @@ void turn_camera(uint32_t camera, float dt) {
         last_h = h;
         last_p = p;
         static uint32_t calls = 0;
-        if (calls++ % 120 == 0) {
+        // Every 15 frames: the gaze, the game's own heading and the turn.
+        if (calls++ % 15 == 0) {
             float g[3] = {0, 0, -1};
             if (eyes) gaze(ev, g);
-            fprintf(stderr, "[prime] turn %u: eyes %d, gaze %.1f left %.1f up, dt %.4f\n", calls - 1, eyes ? 1 : 0,
-                    atan2f(-g[0], -g[2]) * 57.2958f, asinf(fmaxf(-1.0f, fminf(1.0f, g[1]))) * 57.2958f, dt);
+            fprintf(stderr, "[prime] frame %u: gaze %.1f left %.1f up, the game's heading %.1f, turn %.1f left %.1f up\n",
+                    gx_frames_submitted(), atan2f(-g[0], -g[2]) * 57.2958f, asinf(fmaxf(-1.0f, fminf(1.0f, g[1]))) * 57.2958f,
+                    h, g_turn.yaw * 57.2958f, g_turn.pitch * 57.2958f);
         }
     }
     if (!g_follow_on || !eyes) {
@@ -1127,17 +1131,6 @@ void publish_view_turn() {
         first_person = mem_r16(mgr) == mem_r16(mem_r32(pair) + 8) && mem_r32(mgr + kCinematicCount) == 0;
     }
     gx::set_view_turn(first_person ? g_turn.q : none);
-}
-
-// The reads of CPlayer::mOrbitState in CFirstPersonCamera::UpdateTransform: no orbit while
-// the camera follows the head, and the scan visor's answer otherwise.
-uint32_t orbit_state_for_camera(uint32_t player) {
-    const uint32_t s = orbit_state_for_turning(player);
-    if (s >= 1 && s <= 4 && g_follow_on) {
-        vr::EyeView ev[2];
-        if (vr::eye_views(ev) || stand_in_eyes(ev)) return 0;
-    }
-    return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -1387,7 +1380,6 @@ extern "C" void prime_scan_frame(CPU* c) { scan_frame(c->r[3]); }
 extern "C" void prime_scan_copy_src(CPU* c) { scan_copy_src(c); }
 extern "C" void prime_scan_ortho(CPU* c) { scan_ortho(c); }
 extern "C" uint32_t prime_orbit_state(uint32_t player) { return orbit_state_for_turning(player); }
-extern "C" uint32_t prime_camera_orbit_state(uint32_t player) { return orbit_state_for_camera(player); }
 
 // The patch in CFirstPersonCamera::Think (recomp/patches.txt): the camera follows the head.
 extern "C" void prime_turn_camera(CPU* c) { turn_camera(c->r[31], (float)c->f[31].d); }

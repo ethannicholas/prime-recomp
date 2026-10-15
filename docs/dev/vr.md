@@ -1242,11 +1242,9 @@ follows the head"):
   after the gaze once it is pushed.
 - **The poses the hooks read are taken into the turned camera's frame** (`unturn_pose`):
   the cannon in the hand, the culling to the eyes, the scan window and zone.
-- **Locking on no longer points the camera at the target**, in any visor. With the turn on
-  top, it pulled the world round to the target and left the game's screen off the gaze. The
-  three reads of the orbit state in `UpdateTransform` are answered "no orbit" while the camera
-  follows the head (`prime_camera_orbit_state`). The body still turns to face the target, so
-  circling a target turns the world in yaw, as the stick does.
+- **Locking on no longer pointed the camera at the target**, in any visor, at first: the
+  camera's reads of the orbit state in `UpdateTransform` were answered "no orbit" while the
+  camera followed the head. Withdrawn the same day: see below, "holding L turned the body".
 - Only while the eyes are published; otherwise the turn is none. `camera_follows_head 0` in
   `vr.txt` turns it off; `GCN_TURNLOG=1` prints the turn as it changes.
 
@@ -1302,6 +1300,18 @@ place the player reads that camera's transform directly and acts on it,
 that steers by the camera through its accessors (`GetCurrentCameraTransform` and the like)
 has not been looked for; a feedback of this kind shows as the game's own heading running
 away in `GCN_TURNLOG`.
+
+**Holding L turned the body** (`20261015-123810`): at the end of the session, L held and the
+head roughly ahead, the view drifted round to the right on its own. `GCN_TURNLOG=1`, whose
+line every 15 frames now gives the gaze, the game's own heading and the turn, showed the turn
+at nothing and the game's heading going round at 1.5 degrees a frame for exactly as long as L
+was held (frames 6717-7139). So not the turn. With `camera_follows_head 0` it held still;
+with the camera's "no orbit" answers alone withdrawn it held still; with the forward fix of
+the spin above withdrawn it still went round. The camera's "no orbit" outside the scan visor
+was the cause: the body's lock-on steering and the camera's go together, and the scan visor
+keeps both off the lock, while this kept only the camera's off. The camera follows the lock
+again outside the scan visor, as it did before any of this, with the turn on top; replayed,
+the heading holds through that L, and the 20261015-114835 spin stays fixed.
 
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
