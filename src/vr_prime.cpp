@@ -215,6 +215,7 @@ struct CullConfig {
 };
 CullConfig g_cull;
 bool g_scan_on = true;  // scan_follows_head
+bool g_follow_on = true;  // camera_follows_head
 // The frame the eyes paint the game's 2D elements on (gx::render_hud_frame), as the
 // headset frontend builds it from vr.txt: the scan window is placed through it.
 struct HudFrame { float dist, scale, height, pitch_rad; };
@@ -242,6 +243,7 @@ void config_loaded(const VrConfig& c) {
     g_cull.margin_rad = c.get("cull_margin_deg", 10.0f) * 3.14159265f / 180.0f;
     g_cull.on = c.get("cull_to_eyes", 1.0f) != 0.0f;
     g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
+    g_follow_on = c.get("camera_follows_head", 1.0f) != 0.0f;
     g_hud_frame = {c.hud_distance_m * u, c.hud_scale, c.hud_height_m * u, c.hud_pitch_deg * 3.14159265f / 180.0f};
     g_hide_helmet = c.get("hide_helmet", 1.0f) != 0.0f;
     g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
@@ -264,6 +266,45 @@ inline void eye_to_camera(const float v[3], float out[3]) { out[0] = v[0]; out[1
 // `m`'s rotation applied to `v`.
 inline void rotate(const float m[12], const float v[3], float out[3]) {
     for (int i = 0; i < 3; i++) out[i] = m[4 * i] * v[0] + m[4 * i + 1] * v[1] + m[4 * i + 2] * v[2];
+}
+
+// `v` turned by the unit quaternion `q`, or by its inverse.
+void qrot(const float q[4], const float v[3], float out[3], bool inverse = false) {
+    const float x = inverse ? -q[0] : q[0], y = inverse ? -q[1] : q[1], z = inverse ? -q[2] : q[2], w = q[3];
+    const float t[3] = {2 * (y * v[2] - z * v[1]), 2 * (z * v[0] - x * v[2]), 2 * (x * v[1] - y * v[0])};
+    out[0] = v[0] + w * t[0] + (y * t[2] - z * t[1]);
+    out[1] = v[1] + w * t[1] + (z * t[0] - x * t[2]);
+    out[2] = v[2] + w * t[2] + (x * t[1] - y * t[0]);
+}
+
+// The product a * b of two quaternions: b's turn, then a's.
+void qmul(const float a[4], const float b[4], float out[4]) {
+    out[0] = a[3] * b[0] + b[3] * a[0] + a[1] * b[2] - a[2] * b[1];
+    out[1] = a[3] * b[1] + b[3] * a[1] + a[2] * b[0] - a[0] * b[2];
+    out[2] = a[3] * b[2] + b[3] * a[2] + a[0] * b[1] - a[1] * b[0];
+    out[3] = a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2];
+}
+
+// How far the first-person camera is turned after the head (below, "The camera follows the
+// head"): yaw left about the eyes' up, then pitch up about the turned right, and the same as
+// a quaternion in the eyes' frame. The camera's transform has it in from the patch in
+// CFirstPersonCamera::Think until the game next rebuilds it, and the poses the frontend
+// publishes are in the frame before it: a hook that sets them against the camera takes the
+// turn off them first (unturn_pose).
+struct CameraTurn {
+    float yaw = 0.0f, pitch = 0.0f;
+    float q[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+};
+CameraTurn g_turn;
+
+// A pose in the frame the frontend publishes, into the turned camera's.
+void unturn_pose(float pos[3], float rot[4]) {
+    float p[3], r[4];
+    const float inv[4] = {-g_turn.q[0], -g_turn.q[1], -g_turn.q[2], g_turn.q[3]};
+    qrot(g_turn.q, pos, p, true);
+    qmul(inv, rot, r);
+    memcpy(pos, p, sizeof(p));
+    memcpy(rot, r, sizeof(r));
 }
 
 // With GCN_GUNLOG set, the game's own mXf in the camera's frame whenever it moves by more
@@ -370,6 +411,7 @@ void aim_gun(uint32_t gun) {
         if (log) log_rest(gun, cam);
         return;
     }
+    unturn_pose(hand.pos, hand.rot);
 
     // The controller's axes in the eyes' frame, tilted by gun_pitch_deg about its own x.
     const float x = hand.rot[0], y = hand.rot[1], z = hand.rot[2], w = hand.rot[3];
@@ -448,15 +490,6 @@ void aim_gun(uint32_t gun) {
 extern "C" void fn_80345CEC(CPU* c);  // __ct__14CFrustumPlanesFRC12CTransform4ffffbf
 
 
-// `v` turned by the unit quaternion `q`, or by its inverse.
-void qrot(const float q[4], const float v[3], float out[3], bool inverse = false) {
-    const float x = inverse ? -q[0] : q[0], y = inverse ? -q[1] : q[1], z = inverse ? -q[2] : q[2], w = q[3];
-    const float t[3] = {2 * (y * v[2] - z * v[1]), 2 * (z * v[0] - x * v[2]), 2 * (x * v[1] - y * v[0])};
-    out[0] = v[0] + w * t[0] + (y * t[2] - z * t[1]);
-    out[1] = v[1] + w * t[1] + (z * t[0] - x * t[2]);
-    out[2] = v[2] + w * t[2] + (x * t[1] - y * t[0]);
-}
-
 // GCN_CULL_HEAD="yaw pitch": eyes held still, for looking at the result without a headset
 // -- degrees left and up, a Quest-like field, 64 mm apart. The flat picture then shows the
 // world culled to where that head looks.
@@ -487,12 +520,19 @@ bool stand_in_eyes(vr::EyeView out[2]) {
     return ok;
 }
 
+// The eyes -- the headset's, or GCN_CULL_HEAD's -- in the turned camera's frame.
+bool camera_eyes(vr::EyeView ev[2]) {
+    if (!(vr::eye_views(ev) || stand_in_eyes(ev))) return false;
+    for (int e = 0; e < 2; e++) unturn_pose(ev[e].pos, ev[e].rot);
+    return true;
+}
+
 void cull_to_eyes(CPU* c) {
     const uint32_t frustum = c->r[3], xf = c->r[4];
     fn_80345CEC(c);
     ensure_config();
     vr::EyeView ev[2];
-    if (!g_cull.on || !(vr::eye_views(ev) || stand_in_eyes(ev))) return;
+    if (!g_cull.on || !camera_eyes(ev)) return;
     const uint32_t count = mem_r32(frustum);
     if (count > 6) return;
 
@@ -633,6 +673,69 @@ constexpr float kWindowHalfW = 85.0f, kWindowHalfH = 77.0f;
 extern "C" void fn_80379B4C(CPU* c);  // GXSetTexCopySrc
 extern "C" void fn_8030CFA4(CPU* c);  // CGraphics::SetOrtho(left, right, top, bottom, near, far)
 
+// The gaze. An eye's pose points along its optical axis, but a headset's field is not
+// centred on that axis: a Quest 3 sees 44 degrees above it and 55 below, so the centre of
+// what the viewer sees -- what reads as "straight ahead" -- is some 10 degrees below the
+// axis. A window placed on the axis sat half its height above where the viewer looked (the
+// headset's own log put the game's zone where the maths said, and the viewer disagreed). So
+// the gaze is the direction of the field's centre, the mean of the four edge tangents,
+// which is the axis itself on a symmetric field; scan_gaze_field 0 in vr.txt takes the axis,
+// and scan_gaze_pitch_deg nudges either. A unit vector, in the eyes' frame.
+void gaze(const vr::EyeView ev[2], float d[3]) {
+    d[0] = d[1] = d[2] = 0.0f;
+    for (int e = 0; e < 2; e++) {
+        float ahead[3] = {0, 0, -1};
+        if (g_gaze_field_centre) {
+            ahead[0] = 0.5f * (ev[e].tan_left + ev[e].tan_right);
+            ahead[1] = 0.5f * (ev[e].tan_up + ev[e].tan_down);
+        }
+        if (g_gaze_pitch_rad != 0.0f) {
+            const float cp = cosf(g_gaze_pitch_rad), sp = sinf(g_gaze_pitch_rad);
+            const float y = ahead[1] * cp - ahead[2] * sp, z = ahead[1] * sp + ahead[2] * cp;
+            ahead[1] = y; ahead[2] = z;
+        }
+        float f[3];
+        qrot(ev[e].rot, ahead, f);
+        const float len = sqrtf(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
+        for (int i = 0; i < 3; i++) d[i] += f[i] / (len > 0.0f ? len : 1.0f);
+    }
+    const float len = sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+    for (int i = 0; i < 3; i++) d[i] = len > 0.0f ? d[i] / len : (i == 2 ? -1.0f : 0.0f);
+}
+
+// How far the scan window's centre can go from the screen's, in normalised device
+// coordinates, and still fit the window on the screen: the region the head moves it in.
+// False without a viewport.
+bool window_reach(float lim[2]) {
+    const float W = (float)(int32_t)mem_r32(kViewport + 8), H = (float)(int32_t)mem_r32(kViewport + 12);
+    if (!(W > 0.0f) || !(H > 0.0f)) return false;
+    lim[0] = 1.0f - 2.0f * kWindowHalfW / W;
+    lim[1] = 1.0f - 2.0f * kWindowHalfH / H;
+    return true;
+}
+
+// The first-person camera's projection: the tangents of half its picture's width and height.
+bool camera_tangents(uint32_t camera, float k[2]) {
+    const float t = tanf(rd_f(camera + kCameraFov) * 0.5f * 3.14159265f / 180.0f);
+    const float aspect = rd_f(camera + kCameraAspect);
+    if (!(t > 0.0f) || !(aspect > 0.0f)) return false;
+    k[0] = aspect * t;
+    k[1] = t;
+    return true;
+}
+
+// A direction in the camera's frame (the eyes' axes) through that projection, to normalised
+// device coordinates; one behind the camera lands far off the side it leans to.
+void project(const float d[3], const float k[2], float n[2]) {
+    if (d[2] < -1e-3f) {
+        n[0] = d[0] / -d[2] / k[0];
+        n[1] = d[1] / -d[2] / k[1];
+    } else {
+        n[0] = d[0] * 1e3f;
+        n[1] = d[1] * 1e3f;
+    }
+}
+
 // Where the head looks, as a point on the game's screen, in pixels of the viewport with y
 // up (the convention of CPlayer's screen tests), kept far enough from the edges for the
 // window to fit. False when the scan is the game's own.
@@ -655,36 +758,13 @@ bool head_screen_point(float out[2], bool on_hud_frame = false) {
     ensure_config();
     if (!g_scan_on) return false;
     vr::EyeView ev[2];
-    if (!(vr::eye_views(ev) || stand_in_eyes(ev))) return false;
+    if (!camera_eyes(ev)) return false;
     const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
     if (!pair) return false;
     const uint32_t camera = mem_r32(pair);
     if (!is_camera(camera, kFirstPersonCameraVtable)) return false;
-    // The gaze. An eye's pose points along its optical axis, but a headset's field is not
-    // centred on that axis: a Quest 3 sees 44 degrees above it and 55 below, so the centre
-    // of what the viewer sees -- what reads as "straight ahead" -- is some 10 degrees
-    // below the axis. A window placed on the axis sat half its height above where the
-    // viewer looked (the headset's own log put the game's zone where the maths said,
-    // and the viewer disagreed). So the gaze is the direction of the field's centre, the
-    // mean of the four edge tangents, which is the axis itself on a symmetric field;
-    // scan_gaze_field 0 in vr.txt takes the axis, and scan_gaze_pitch_deg nudges either.
-    float d[3] = {0, 0, 0};
-    for (int e = 0; e < 2; e++) {
-        float ahead[3] = {0, 0, -1};
-        if (g_gaze_field_centre) {
-            ahead[0] = 0.5f * (ev[e].tan_left + ev[e].tan_right);
-            ahead[1] = 0.5f * (ev[e].tan_up + ev[e].tan_down);
-        }
-        if (g_gaze_pitch_rad != 0.0f) {
-            const float cp = cosf(g_gaze_pitch_rad), sp = sinf(g_gaze_pitch_rad);
-            const float y = ahead[1] * cp - ahead[2] * sp, z = ahead[1] * sp + ahead[2] * cp;
-            ahead[1] = y; ahead[2] = z;
-        }
-        float f[3];
-        qrot(ev[e].rot, ahead, f);
-        const float len = sqrtf(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
-        for (int i = 0; i < 3; i++) d[i] += f[i] / (len > 0.0f ? len : 1.0f);
-    }
+    float d[3];
+    gaze(ev, d);
     const float W = (float)(int32_t)mem_r32(kViewport + 8), H = (float)(int32_t)mem_r32(kViewport + 12);
     if (!(W > 0.0f) || !(H > 0.0f)) return false;
     // Normalised device coordinates; a head turned past the edge of the view pins to it.
@@ -710,20 +790,16 @@ bool head_screen_point(float out[2], bool on_hud_frame = false) {
             ny = (P[0] * up[0] + P[1] * up[1] + P[2] * up[2]) / half_h;
         }
     } else {
-        const float t = tanf(rd_f(camera + kCameraFov) * 0.5f * 3.14159265f / 180.0f);
-        const float aspect = rd_f(camera + kCameraAspect);
-        if (!(t > 0.0f) || !(aspect > 0.0f)) return false;
-        if (d[2] < -1e-3f) {
-            nx = d[0] / -d[2] / (aspect * t);
-            ny = d[1] / -d[2] / t;
-        } else {
-            nx = d[0] * 1e3f;
-            ny = d[1] * 1e3f;
-        }
+        float k[2], n[2];
+        if (!camera_tangents(camera, k)) return false;
+        project(d, k, n);
+        nx = n[0];
+        ny = n[1];
     }
-    const float lim_x = 1.0f - 2.0f * kWindowHalfW / W, lim_y = 1.0f - 2.0f * kWindowHalfH / H;
-    nx = fmaxf(-lim_x, fminf(lim_x, nx));
-    ny = fmaxf(-lim_y, fminf(lim_y, ny));
+    float lim[2];
+    window_reach(lim);
+    nx = fmaxf(-lim[0], fminf(lim[0], nx));
+    ny = fmaxf(-lim[1], fminf(lim[1], ny));
     out[0] = 0.5f * W * (1.0f + nx);
     out[1] = 0.5f * H * (1.0f + ny);
     return true;
@@ -841,6 +917,139 @@ uint32_t orbit_state_for_turning(uint32_t player) {
     if (s >= 1 && s <= 4 && mem_r32(player + kPlayerOrbitZoneMode) == 1) {
         float p[2];
         if (head_screen_point(p)) return 0;
+    }
+    return s;
+}
+
+// ---------------------------------------------------------------------------
+// The camera follows the head.
+//
+// The game's camera is the body's: the stick turns it, the free look tilts it, and the head
+// looks around from it. What the game does with what is on its screen -- locking on (its
+// orbit zones are boxes of screen pixels), scanning, the HUD's markers -- stops at that
+// screen's edges, though the viewer can see and shoot well past them: an enemy overhead
+// could be hit but not locked on to. So the camera follows the head the way the scan window
+// does. While the gaze stays where the scan window could follow it on the game's screen
+// (window_reach, through the first-person camera's own projection: about 28 degrees either
+// side and 19 up or down), the camera stays put; a gaze past that drags the camera just far
+// enough to bring it back to that edge, so the scan window never pins. Looking back leaves
+// the camera where it was dragged until the gaze pushes it from the other side.
+//
+// The turn goes onto the camera's transform once CFirstPersonCamera::Think has stored it (the
+// patch at 0x8000E570, recomp/patches.txt). UpdateTransform builds that transform afresh
+// every frame from the player and its own gun-follow transform without reading the last one
+// back, so the turn does not accumulate. The frame drawn from it is handed over with the
+// turn (gx::set_view_turn) and the eyes undo it: the world stays where the viewer saw it,
+// while what the game places about its camera -- the HUD frame, the scan window, the cannon
+// -- turns with the camera. The poses the other hooks read are taken into the turned
+// camera's frame before use (unturn_pose).
+//
+// Locking on also points the camera at the target (UpdateTransform's orbit branch, the
+// three reads of CPlayer::mOrbitState there). With the camera following the head that pulled
+// the world, as the eyes see it, round to the target, and left the game's screen off the
+// gaze by the turn; so while the camera follows the head, those reads are answered "no
+// orbit" in every visor, as the scan visor already had them. The body still turns to face
+// the target (UpdateOrbitOrientation, left alone outside the scan visor), so circling a
+// target turns the world in yaw as the stick does.
+//
+// Only while the eyes are published -- stereo in the headset, GCN_CULL_HEAD on the desktop;
+// without them the turn is none, which the panel needs (the morph between it and the eyes
+// would turn it too) and costs nothing in the eyes, which undo whatever turn a frame
+// carries: coming back to stereo the camera is dragged out to the gaze again at once, and
+// only the HUD moves. camera_follows_head 0 in vr.txt turns it off. GCN_TURNLOG=1 prints the
+// turn as it changes.
+
+float wrap_angle(float a) {
+    while (a > 3.14159265f) a -= 6.2831853f;
+    while (a < -3.14159265f) a += 6.2831853f;
+    return a;
+}
+
+// Moves g_turn just far enough that `g`, the gaze in the frontend's frame, lands inside the
+// window's reach `lim` on a camera whose half-picture tangents are `k`.
+void follow_gaze(const float g[3], const float k[2], const float lim[2]) {
+    float gt[3], n[2];
+    qrot(g_turn.q, g, gt, true);
+    project(gt, k, n);
+    if (fabsf(n[0]) <= lim[0] && fabsf(n[1]) <= lim[1]) return;
+    // Where on the turned camera's screen the gaze is to land: the nearest point in reach.
+    float d[3] = {fmaxf(-lim[0], fminf(lim[0], n[0])) * k[0], fmaxf(-lim[1], fminf(lim[1], n[1])) * k[1], -1.0f};
+    const float dl = sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+    for (int i = 0; i < 3; i++) d[i] /= dl;
+    // The turn Ry(yaw) Rx(pitch) taking d to g. The pitch leaves x alone, so the yaw alone has
+    // to bring g's x to d's: Ry(-yaw) g has x = g.x cos(yaw) - g.z sin(yaw) = r cos(yaw + phi).
+    // Of its two solutions, the one nearer the turn as it was.
+    float yaw = g_turn.yaw;
+    const float r = sqrtf(g[0] * g[0] + g[2] * g[2]);
+    if (r > 1e-4f) {
+        const float phi = atan2f(g[2], g[0]);
+        const float a = acosf(fmaxf(-1.0f, fminf(1.0f, d[0] / r)));
+        const float s1 = wrap_angle(a - phi - yaw), s2 = wrap_angle(-a - phi - yaw);
+        yaw = wrap_angle(yaw + (fabsf(s1) < fabsf(s2) ? s1 : s2));
+    }
+    // Then the pitch that turns d's (y, z) to those of Ry(-yaw) g.
+    const float wy = g[1], wz = g[0] * sinf(yaw) + g[2] * cosf(yaw);
+    const float pitch = wrap_angle(atan2f(wz, wy) - atan2f(d[2], d[1]));
+    g_turn.yaw = yaw;
+    g_turn.pitch = fmaxf(-1.45f, fminf(1.45f, pitch));
+}
+
+// The patch in CFirstPersonCamera::Think: the turn, onto the transform just stored.
+void turn_camera(uint32_t camera) {
+    ensure_config();
+    if (!is_camera(camera, kFirstPersonCameraVtable)) return;
+    vr::EyeView ev[2];
+    float k[2], lim[2];
+    if (!g_follow_on || !(vr::eye_views(ev) || stand_in_eyes(ev))) {
+        g_turn.yaw = g_turn.pitch = 0.0f;
+    } else if (camera_tangents(camera, k) && window_reach(lim)) {
+        float g[3];
+        gaze(ev, g);
+        follow_gaze(g, k, lim);
+    }
+    // Yaw about y, then pitch about the turned x.
+    const float cy = cosf(0.5f * g_turn.yaw), sy = sinf(0.5f * g_turn.yaw);
+    const float cp = cosf(0.5f * g_turn.pitch), sp = sinf(0.5f * g_turn.pitch);
+    g_turn.q[0] = cy * sp;
+    g_turn.q[1] = sy * cp;
+    g_turn.q[2] = -sy * sp;
+    g_turn.q[3] = cy * cp;
+    gx::set_view_turn(g_turn.q);
+
+    static const bool log = getenv("GCN_TURNLOG") != nullptr;
+    if (log) {
+        static float last[2] = {0.0f, 0.0f};
+        if (fabsf(g_turn.yaw - last[0]) + fabsf(g_turn.pitch - last[1]) > 0.5f * 3.14159265f / 180.0f) {
+            last[0] = g_turn.yaw;
+            last[1] = g_turn.pitch;
+            fprintf(stderr, "[prime] camera turned %.1f left, %.1f up after the head\n", g_turn.yaw * 57.2958f,
+                    g_turn.pitch * 57.2958f);
+        }
+    }
+    if (g_turn.yaw == 0.0f && g_turn.pitch == 0.0f) return;
+
+    // The camera's right, forward and up, turned in its own frame, then into the world.
+    float cam[12];
+    read_xf(camera + kActorXf, cam);
+    const float axes[3][3] = {{1, 0, 0}, {0, 0, -1}, {0, 1, 0}};  // in the eyes' frame
+    float turned[3][3];
+    for (int j = 0; j < 3; j++) {
+        float t[3], c[3];
+        qrot(g_turn.q, axes[j], t);
+        eye_to_camera(t, c);
+        rotate(cam, c, turned[j]);
+    }
+    for (int j = 0; j < 3; j++)
+        for (int i = 0; i < 3; i++) wr_f(camera + kActorXf + 16 * i + 4 * j, turned[j][i]);
+}
+
+// The reads of CPlayer::mOrbitState in CFirstPersonCamera::UpdateTransform: no orbit while
+// the camera follows the head, and the scan visor's answer otherwise.
+uint32_t orbit_state_for_camera(uint32_t player) {
+    const uint32_t s = orbit_state_for_turning(player);
+    if (s >= 1 && s <= 4 && g_follow_on) {
+        vr::EyeView ev[2];
+        if (vr::eye_views(ev) || stand_in_eyes(ev)) return 0;
     }
     return s;
 }
@@ -1089,3 +1298,7 @@ extern "C" void prime_scan_frame(CPU* c) { scan_frame(c->r[3]); }
 extern "C" void prime_scan_copy_src(CPU* c) { scan_copy_src(c); }
 extern "C" void prime_scan_ortho(CPU* c) { scan_ortho(c); }
 extern "C" uint32_t prime_orbit_state(uint32_t player) { return orbit_state_for_turning(player); }
+extern "C" uint32_t prime_camera_orbit_state(uint32_t player) { return orbit_state_for_camera(player); }
+
+// The patch in CFirstPersonCamera::Think (recomp/patches.txt): the camera follows the head.
+extern "C" void prime_turn_camera(uint32_t camera) { turn_camera(camera); }

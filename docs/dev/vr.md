@@ -1218,6 +1218,47 @@ still showed, so it was the shell's own fragments losing. Also: an input log wri
 line only when the input changes, so the last pad line is not the end of a session (the pose
 lines go on after it); the harness's "replay finished" line gives the real end of the polls.
 
+## The camera follows the head (2026-10-15)
+
+The game's camera stood where the body and the free look put it, whatever the head did. An
+enemy overhead could be looked at and shot by hand, but not locked on to, because for the
+game it was off the screen; the same went for the scan visor's reach and the HUD's markers.
+Now the camera follows the head the way the scan window does. While the gaze stays where
+the scan window could follow it (its idle half-size kept inside the screen, through the
+first-person camera's projection: about 28 degrees either side, 19 up or down), the camera
+stays put; past that it is dragged just far enough to keep the gaze on that edge, and stays
+there when the head comes back. The mechanism is in `src/vr_prime.cpp` ("The camera follows
+the head"):
+
+- **The turn** goes onto the camera's transform at the end of `CFirstPersonCamera::Think`
+  (patch at 0x8000E570), once the transform `UpdateTransform` built has been validated and
+  stored. `UpdateTransform` builds it afresh every frame from the player and its gun-follow
+  transform, so the turn does not accumulate.
+- **The eyes undo it.** gcn-recomp's `gx::set_view_turn` latches the turn into each batch,
+  and each eye is drawn through its view times the turn. The world stays still; the HUD
+  frame, the scan window and the view-space draws turn with the camera, so the HUD swings
+  after the gaze once it is pushed.
+- **The poses the hooks read are taken into the turned camera's frame** (`unturn_pose`):
+  the cannon in the hand, the culling to the eyes, the scan window and zone.
+- **Locking on no longer points the camera at the target**, in any visor. With the turn on
+  top, it pulled the world round to the target and left the game's screen off the gaze. The
+  three reads of the orbit state in `UpdateTransform` are answered "no orbit" while the camera
+  follows the head (`prime_camera_orbit_state`). The body still turns to face the target, so
+  circling a target turns the world in yaw, as the stick does.
+- Only while the eyes are published; otherwise the turn is none. `camera_follows_head 0` in
+  `vr.txt` turns it off; `GCN_TURNLOG=1` prints the turn as it changes.
+
+Checked on the headset with `prime_egl14 --eye --eyes=1 --eye-pitch=-40` (looking 40 degrees
+up), frame 10500 of the new-game route, in the hangar under the planet: the log said
+`camera turned 0.0 left, 21.1 up`, the 40 degrees less the 19 the window reaches. Against the
+same pose with `camera_follows_head 0`, the world -- planet, hull, the drifting debris -- is
+the same, and the HUD has moved up by the turn. With a hand
+(`GCN_GUN_HAND='0.2 -0.15 -0.35 10 35'`) the cannon is in the same place in both. Without
+one, the game's own cannon pose follows the turned camera, low in the turned view. Not yet
+seen worn: whether the HUD's swing reads well, and whether locking on in the combat visor
+works on something overhead (the combat visor's lock box is the game's own, around the
+screen's centre, not on the gaze as the scan visor's is).
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
