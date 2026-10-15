@@ -1127,6 +1127,44 @@ A vertical edge about a third of the way across the left eye, with the lower rig
 view slightly lighter, is in these frames before any switch too (frame 2350), in this
 foggy room. Not looked into.
 
+## The thermal visor (2026-10-14)
+
+On getting the thermal visor (`inputs/20261014-220552`, on the device as `s15`; the switch
+is the D-pad press at frame 2422, the last of the recording, and the replay carries on
+with no input), the headset showed a purple rectangle locked to the HUD over a normally lit
+room, and the cannon and the warm parts of the room black where they should glow yellow and
+orange. The game's two passes are described in `graphics.md`. In frame 2600: draws 0-97 the
+room, an I4 copy of the whole frame, draw 98 the cold filter, draws 99-113 the hot things
+(the cannon is 112-113), a second I4 copy, draw 114 the hot filter.
+
+Three faults, one of them not the eyes':
+
+- **The hot filter's palette.** Draw 114 binds the copy as CI4 (`fmt7=8` in the verbose
+  draw log, which now prints formats) with a TLUT loaded. The renderer handed back the copy
+  whatever the format, so the hot things were the copy's grey. The flat frame was wrong too:
+  the cannon was white, not yellow, which had not been noticed because nobody had looked at
+  the thermal visor on a television either. gcn-recomp now reads a copy through its palette
+  when it is bound as CI4 or CI8 over a copy with as many bits a texel ("Copies read through
+  a palette" in its `graphics.md`), and an I4 or I8 copy reads back its intensity in the
+  alpha as well, as the formats do.
+- **The filters on the HUD frame.** Both filters are orthographic quads over the whole
+  screen, which the eyes painted on the HUD frame as a picture smaller than the field: the
+  purple rectangle. The eye filter now calls them screens (`is_screen_filter`, gcn-recomp's
+  `EyeScreen`): an ortho state whose draws together cover the picture and which samples a copy
+  of the whole frame. The eye substitutes its own grab for the copy at each fragment's
+  position, so each eye filters its own view. `screen_filter_on_head 0` in `vr.txt` puts them
+  back on the frame.
+- **The cannon black.** The eye grabbed its frame once, at the first draw that sampled a
+  whole-frame copy (98), so the hot filter read a frame without the hot things in it, through
+  no palette, blended by the cannon's heat: black over the cannon. It now grabs again after
+  every later whole-frame copy, and converts the grab as the copy was converted (I4, with the
+  copy's truncation to four bits, which the palette's index depends on).
+
+Seen in the harness, frames 2380-2700 in `--eye` and frame 2600 flat: the room purple across
+the whole eye with its noise, the cannon yellow to orange, the pillars red at their edges,
+the HUD unchanged on its frame. Frames 2380-2420, before the switch, are identical to the
+previous build's to the pixel. Not yet seen in the headset.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
@@ -1134,5 +1172,5 @@ foggy room. Not looked into.
   treats them is the first thing to look at in the headset.
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.
-- **Visor effects** (thermal, X-ray) and the EFB copies behind them are the renderer's
-  hard part, as the water was for Blue Storm; the scan visor is above.
+- **Visor effects.** The X-ray visor has not been seen yet; the scan and thermal visors are
+  above.

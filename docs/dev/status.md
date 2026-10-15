@@ -159,6 +159,12 @@ replay without them parted from the recording once aiming mattered (2026-10-13, 
   handles), and MusyX is the CPU-side driver. The AX HLE had the length of one command
   wrong and skipped the others MusyX uses, so every command list was abandoned at its
   second command. See `audio.md`.
+- **The thermal visor drew hot things white (2026-10-14).** Flat and in stereo: the game
+  colours them by reading an intensity copy of the frame back as CI4 through a heat
+  palette, and the renderer sampled the copy as it was, grey. In stereo the filters were
+  also small pictures on the HUD frame and the cannon came out black. **Handled the same
+  day** (gcn-recomp reads such copies through their palette; the eyes draw the filters
+  across their field). See `graphics.md` and `vr.md`, "The thermal visor".
 - **NES Metroid (the Fusion-link bonus) cannot run.** It is a REL module (`NESemuP.rel`)
   loaded at runtime; the recompiler only translates `main.dol`, so entering it will end in
   `call_indirect: no function at …`.

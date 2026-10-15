@@ -224,6 +224,7 @@ bool g_hide_flat_warps = true;  // hide_flat_warps
 bool g_hide_scan_tint = true;   // hide_scan_tint
 bool g_visor_film_on_head = true;  // visor_film_on_head
 bool g_cannon_cutaway = true;      // cannon_cutaway
+bool g_screen_filter_on_head = true;  // screen_filter_on_head
 bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
 float g_gaze_pitch_rad = 0.0f;    // scan_gaze_pitch_deg: and this much further up
 
@@ -247,6 +248,7 @@ void config_loaded(const VrConfig& c) {
     g_hide_scan_tint = c.get("hide_scan_tint", 1.0f) != 0.0f;
     g_visor_film_on_head = c.get("visor_film_on_head", 1.0f) != 0.0f;
     g_cannon_cutaway = c.get("cannon_cutaway", 1.0f) != 0.0f;
+    g_screen_filter_on_head = c.get("screen_filter_on_head", 1.0f) != 0.0f;
     g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
     g_gaze_pitch_rad = c.get("scan_gaze_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
 }
@@ -937,8 +939,28 @@ bool is_cannon_cutaway(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
            f.band_lo >= 0.03f && f.band_hi <= 0.13f;
 }
 
+// The thermal visor's filters. With the thermal visor the game draws the room, copies the
+// whole frame as intensity (a 640x448 I4 copy) and draws it back over the whole screen in
+// false colour (draw 98 of frame 2600 of the session 20261014-220552: orthographic, six
+// vertices, the copy jittered by a noise texture through an indirect stage, tinted
+// purple). Then it draws the hot things -- the cannon, the creatures -- with their heat in
+// the frame's alpha, copies the frame again and draws that copy back read as CI4 through
+// the heat palette, blended by the frame's alpha (draw 114), so only the hot things take
+// the palette's colours. On the HUD frame both were a picture of the flat view, smaller
+// than the eye's field: the purple rectangle hanging in the room, and the cannon black
+// where the second filter's stale lookup met its heat. They are drawn across the whole
+// of each eye (gx::EyeScreen), and the eye substitutes its own grab of the frame for each
+// copy: any orthographic state whose draws together cover the picture and which samples a
+// copy of the whole frame. screen_filter_on_head 0 in vr.txt puts them back on the frame.
+bool is_screen_filter(const gx::EyeDrawFacts& f) {
+    const float edge = 0.98f;
+    return f.ortho && f.samples_fullscreen_copy && f.clip_x0 <= -edge && f.clip_x1 >= edge &&
+           f.clip_y0 <= -edge && f.clip_y1 >= edge && f.clip_area >= 3.6f;
+}
+
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
+    if (g_screen_filter_on_head && is_screen_filter(f)) return gx::EyeScreen;
     if (g_cannon_cutaway && is_cannon_cutaway(st, f)) return gx::EyeRestore;
     if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return gx::EyeHideDraw;
     if (g_hide_scan_tint && is_scan_tint(st, f)) return gx::EyeHideDraw;
