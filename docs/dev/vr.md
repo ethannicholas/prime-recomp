@@ -1177,20 +1177,46 @@ only draw pushed (the eye's draw log names it `hud-band(pushed)`). With the head
 10 cm to the side (`--eye-pos=0.1,0,0`) it used to jump well off the triangles' centre and
 now stays at their centre. `hud_push_below 0` in `vr.txt` turns it off.
 
-## The cannon when the controller is lost (2026-10-14)
+## The cannon's shell opening (2026-10-15)
 
-At the end of the session `20261014-225445` (on the device as `s16`), in the combat visor,
-the cannon's green shell looked cut away, with its inside showing. The recording's last
-controller sample is invalid (`pose hand1 3246 0`): tracking was lost as the session
-ended, for instance by the system menu taking the controllers over. `aim_gun` then left the
-gun to the game, which puts it where it sits on a television: low at the bottom right, a few
-tens of centimetres out at the foreground's half scale, where the headset's far wider field
-looks into the open back of the model and the arm behind it. The harness shows it the same
-way: the replay's poses end at frame 3878, and from 3882 the cannon jumped from the hand to
-that pose. Now the cannon stays where the hand last had it until the controller is tracked
-again. With that, frames 3876-3900 keep it in the hand, and the beam change that a push of
-the right stick (the C-stick) started at frame 3868 plays out there, with the next beam's
-orange shell sweeping over the cannon.
+In the sessions `20261014-225445` (`s16`) and `20261014-231657` (`s17`), the cannon held
+close and looked at from the side lost part of its shell, its core showing through: the
+Power Beam's yellow core in `s17` after a switch to it at frame 2560. A regression from
+gcn-recomp 78aa222 (2026-10-09 13:37), "a foreground layer keeps the game's own depth in
+its band", six hours after the cannon first followed the hand.
+
+That commit has the cannon's layer write the game's depth, from the camera's position and
+the game's projection, worked out at each vertex and interpolated across each triangle.
+The game's z/w is linear in its own screen, not in an eye turned away from the camera, so
+across a face it is wrong, the more so the wider the face and the nearer the camera. A
+cannon held a few tens of centimetres out to the right with the head turned towards it has
+large faces at just that angle, and the core won the depth test against the shell over
+them. The depth is now worked out per fragment (gcn-recomp's `docs/graphics.md`, "Depth
+bands in an eye").
+
+Found with a fixed pose rather than a replay: the new-game route to the frigate (Power Beam,
+no beam change), `GCN_GUN_HAND='0.26 -0.18 -0.18 19 28'` (the hand at the end of `s17`),
+`--eye --eye-yaw=31.5` (the head turned towards it), frame 9700. The game's own flat render
+of the same pose turned into its field shows the shell whole, so the eyes were losing it,
+not the model or the game's culling. Each build of the bisect ran in a worktree, older ones
+with `GCN_STEREOLOG=1`, which is what has the harness of that time find the camera manager
+and so lets `aim_gun` move the cannon: e3e33bf (the first build with the cannon in the
+hand) and 4a8381c whole; 836feac (gcn-recomp moved to 78aa222) open, and whole with
+`GCN_EYE_FGDEPTH=0`; 0f16f4e (2026-10-14 18:32) and everything since open. With the depth per
+fragment the frigate pose and `s17`'s frame 2592 are whole, and the beam change's wipe in
+`s14` (frames 2356-2410) still cuts the cannon as before. Not yet seen in the headset.
+
+Two wrong turns on the way, recorded so they are not taken again. The opening was first put
+down to the controller losing tracking at the end of `s16`, whose last hand sample is
+invalid (`pose hand1 3246 0`): untracked, `aim_gun` leaves the cannon to the game's
+television pose, low and close, which the headset's wider field looks into the back of.
+That is real, and the cannon now stays where the hand last had it until tracking returns,
+but it was not this: the opening shows with the hand tracked throughout. Then to the beam
+change's cut-away (`EyeRestore`), because it showed during a switch: with the cut-away, the
+next beam's hologram and the glow all left out of the frame (`GCN_DRAW_SKIP`), the core
+still showed, so it was the shell's own fragments losing. Also: an input log writes a pad
+line only when the input changes, so the last pad line is not the end of a session (the pose
+lines go on after it); the harness's "replay finished" line gives the real end of the polls.
 
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
