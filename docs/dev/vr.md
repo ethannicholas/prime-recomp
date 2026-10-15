@@ -1064,6 +1064,28 @@ window") is probably the same kind of draw and would go across the eye too; not 
   visor's thin crosshair lines, which now reach the edge of the field instead of stopping
   at the frame's.
 
+## Corruption while morphing into stereo (2026-10-14)
+
+Morphing from the panel into stereo as play began after the new-game intro (`s13`, the
+session `20261014-201038`, stereo from frame 9036), the frigate's pillars and much else
+vanished until the morph finished. Rendered part way with `GCN_EYE_MORPH=0.1,...,0.9` at
+frame 9040:
+
+- **The sky hid the world.** The planet is in the sky band (see the next section), and the
+  morph's shader path (`u_vr` 3) did not map depth into each draw's band as the eye's does,
+  so the planet kept its modelled depth of 7-32 units and covered the station behind it.
+  The morph now keeps the bands (gcn-recomp's `docs/graphics.md`, "Depth bands in an eye"):
+  the pillars, the ship and the laser lines are there at every step, and the HUD's
+  selectors, which the sky had covered too, show again.
+- **Dark bands across the HUD.** Draw 795 of that frame (the eye's 1141) is one untextured
+  orthographic mesh of 224 vertices: dark bars that the game draws for well under a
+  second as play begins, gone by frame 9080. Its box is the whole picture, so the
+  visor-film rule took it for a film and drew it across the eye. In the morph it went to the
+  HUD frame, like any 2D draw, as bands across the HUD. The rule now also wants the
+  triangles to fill the picture (`clip_area`), so the bars stay on the HUD frame where the
+  game puts them, briefly. And an `EyeScreen` draw now morphs to its place across the eye,
+  not to the HUD frame. The steam still qualifies.
+
 ## The intro's planet at infinity on the panel (2026-10-14)
 
 The new-game intro (`s12`, frames 4200-6600) is shown on the panel as a stereo pair, and the

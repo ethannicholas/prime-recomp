@@ -905,11 +905,15 @@ bool is_scan_tint(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
 // a copy of the frame (the scan window does) nor warps through an indirect stage. The first
 // version asked for a whole-screen viewport instead, and caught the scan window's outline,
 // which is drawn into one: it went across the eye and stood far nearer than the window it
-// frames. visor_film_on_head 0 in vr.txt puts them back on the frame.
+// frames. The draws' box is not enough either: the dark bars the game draws as play begins
+// after a cinematic are one mesh whose box is the whole picture, and across the eye they
+// slid past the edges of the field as the view morphed into stereo and left a strip along
+// the bottom. So the triangles must fill the picture too (clip_area: 4 is all of it once).
+// visor_film_on_head 0 in vr.txt puts them back on the frame.
 bool is_visor_film(const gx::EyeDrawFacts& f) {
     const float edge = 0.98f;
     return f.ortho && !f.samples_copy && !f.indirect && f.clip_x0 <= -edge && f.clip_x1 >= edge &&
-           f.clip_y0 <= -edge && f.clip_y1 >= edge;
+           f.clip_y0 <= -edge && f.clip_y1 >= edge && f.clip_area >= 3.6f;
 }
 
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
