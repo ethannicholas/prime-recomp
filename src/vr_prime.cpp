@@ -351,10 +351,22 @@ void aim_gun(uint32_t gun) {
     float cam[12];
     read_xf(camera + kActorXf, cam);
 
+    // A controller that loses its pose -- out of the headset's cameras, or the system menu
+    // taking the controllers over -- leaves the cannon where it last was in the hand. Left
+    // to the game, it went back to where it sits on a television, low and a few tens of
+    // centimetres out, where the headset's wider field looks into the open back of the
+    // model (the session 20261014-225445 ended on such a pose).
+    static vr::HandPose last_hand;
+    static bool have_last = false;
     vr::HandPose hand;
     const bool tracked = g_gun.on && (vr::hand_pose(vr::kRightHand, &hand) || stand_in_hand(&hand));
     smooth_hand(&hand, tracked);
-    if (!tracked) {
+    if (tracked) {
+        last_hand = hand;
+        have_last = true;
+    } else if (g_gun.on && have_last) {
+        hand = last_hand;
+    } else {
         if (log) log_rest(gun, cam);
         return;
     }

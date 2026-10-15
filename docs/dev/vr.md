@@ -1177,6 +1177,21 @@ only draw pushed (the eye's draw log names it `hud-band(pushed)`). With the head
 10 cm to the side (`--eye-pos=0.1,0,0`) it used to jump well off the triangles' centre and
 now stays at their centre. `hud_push_below 0` in `vr.txt` turns it off.
 
+## The cannon when the controller is lost (2026-10-14)
+
+At the end of the session `20261014-225445` (on the device as `s16`), in the combat visor,
+the cannon's green shell looked cut away, with its inside showing. The recording's last
+controller sample is invalid (`pose hand1 3246 0`): tracking was lost as the session
+ended, for instance by the system menu taking the controllers over. `aim_gun` then left the
+gun to the game, which puts it where it sits on a television: low at the bottom right, a few
+tens of centimetres out at the foreground's half scale, where the headset's far wider field
+looks into the open back of the model and the arm behind it. The harness shows it the same
+way: the replay's poses end at frame 3878, and from 3882 the cannon jumped from the hand to
+that pose. Now the cannon stays where the hand last had it until the controller is tracked
+again. With that, frames 3876-3900 keep it in the hand, and the beam change that a push of
+the right stick (the C-stick) started at frame 3868 plays out there, with the next beam's
+orange shell sweeping over the cannon.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
