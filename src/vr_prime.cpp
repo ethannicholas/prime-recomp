@@ -217,7 +217,7 @@ CullConfig g_cull;
 bool g_scan_on = true;  // scan_follows_head
 bool g_follow_on = true;  // camera_follows_head
 struct FollowConfig {
-    float reach = 0.8f;      // camera_follow_reach
+    float reach = 0.64f;     // camera_follow_reach
     float out_rate = 8.0f;   // camera_follow_rate
     float back_rate = 4.0f;  // camera_return_rate
 };
@@ -250,7 +250,7 @@ void config_loaded(const VrConfig& c) {
     g_cull.on = c.get("cull_to_eyes", 1.0f) != 0.0f;
     g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
     g_follow_on = c.get("camera_follows_head", 1.0f) != 0.0f;
-    g_follow.reach = c.get("camera_follow_reach", 0.8f);
+    g_follow.reach = c.get("camera_follow_reach", 0.64f);
     g_follow.out_rate = c.get("camera_follow_rate", 8.0f);
     g_follow.back_rate = c.get("camera_return_rate", 4.0f);
     g_hud_frame = {c.hud_distance_m * u, c.hud_scale, c.hud_height_m * u, c.hud_pitch_deg * 3.14159265f / 180.0f};
@@ -943,14 +943,15 @@ uint32_t orbit_state_for_turning(uint32_t player) {
 // camera's own projection: about 28 degrees either side and 19 up or down).
 //
 // Where the camera is headed is a function of the gaze alone: straight ahead while the gaze
-// is within camera_follow_reach (a fraction, 0.8) of that region, and past it, turned just
-// far enough to bring the gaze back to that fraction of it -- so looking back pulls the
-// camera home again. It gets there on a critically damped spring, quicker following the gaze
+// is within camera_follow_reach (a fraction, 0.64: 19 degrees either side, 12 up or down) of
+// that region, and past it, turned just far enough to bring the gaze back to that fraction
+// of it -- so looking back pulls the camera home again. (0.8 at first; worn, it was asked to
+// start following a fifth sooner.) It gets there on a critically damped spring, quicker following the gaze
 // out (camera_follow_rate, 8 a second: a steady head turn is followed a quarter of a second
 // behind) than going back (camera_return_rate, 4), so that it has some weight and eases in
 // and out of its moves. The first version kept the gaze exactly on the region's edge,
 // moving with the head and staying where it was left; worn, that read as weightless and as
-// stuck, and the spring's lag is what the 0.8 leaves room for. Yaw and pitch are worked out
+// stuck, and the spring's lag is what the fraction leaves room for. Yaw and pitch are worked out
 // separately, the yaw's region widened by the gaze's pitch (a yaw turns the view less far
 // the nearer it looks to straight up).
 //
@@ -1018,6 +1019,18 @@ void turn_camera(uint32_t camera, float dt) {
     const bool eyes = vr::eye_views(ev) || stand_in_eyes(ev);
     static const bool tlog = getenv("GCN_TURNLOG") != nullptr;
     if (tlog) {
+        // The game's own camera, before the turn: its heading and pitch, when either moves by
+        // more than 3 degrees in a frame.
+        float cam[12];
+        read_xf(camera + kActorXf, cam);
+        const float h = atan2f(cam[1], cam[5]) * 57.2958f, p = asinf(fmaxf(-1.0f, fminf(1.0f, cam[9]))) * 57.2958f;
+        static float last_h = 0.0f, last_p = 0.0f;
+        const float dh = fabsf(wrap_angle((h - last_h) / 57.2958f)) * 57.2958f;
+        if (dh > 3.0f || fabsf(p - last_p) > 3.0f)
+            fprintf(stderr, "[prime] frame %u: the game's camera heading %.1f pitch %.1f (from %.1f %.1f)\n", gx_frames_submitted(), h,
+                    p, last_h, last_p);
+        last_h = h;
+        last_p = p;
         static uint32_t calls = 0;
         if (calls++ % 120 == 0) {
             float g[3] = {0, 0, -1};
@@ -1058,8 +1071,8 @@ void turn_camera(uint32_t camera, float dt) {
         if (fabsf(g_turn.yaw - last[0]) + fabsf(g_turn.pitch - last[1]) > 0.5f * 3.14159265f / 180.0f) {
             last[0] = g_turn.yaw;
             last[1] = g_turn.pitch;
-            fprintf(stderr, "[prime] camera turned %.1f left, %.1f up after the head\n", g_turn.yaw * 57.2958f,
-                    g_turn.pitch * 57.2958f);
+            fprintf(stderr, "[prime] frame %u: camera turned %.1f left, %.1f up after the head\n", gx_frames_submitted(),
+                    g_turn.yaw * 57.2958f, g_turn.pitch * 57.2958f);
         }
     }
     if (g_turn.yaw == 0.0f && g_turn.pitch == 0.0f) return;
@@ -1077,6 +1090,30 @@ void turn_camera(uint32_t camera, float dt) {
     }
     for (int j = 0; j < 3; j++)
         for (int i = 0; i < 3; i++) wr_f(camera + kActorXf + 16 * i + 4 * j, turned[j][i]);
+}
+
+// In place of the game's loads of the first-person camera's forward, where its player steers
+// by it: `camera`'s forward with the follow turn taken off, x, y and z into `fx`, `fy`, `fz`.
+// - CPlayer::UpdateOrbitOrientation: until a lock is established the body is turned to face
+//   that forward, and the camera is the body's plus the turn. Given the turned one, the body
+//   turned by the whole turn every frame, round and round while L was held -- 20 degrees a
+//   frame at the end of the session 20261015-114835, circling a target with the camera
+//   turned that far.
+// - CPlayer::UpdateFreeLookState: tests the camera's level forward against the body's, to
+//   end the free look; with the turn in it, that test would not pass while the head was
+//   turned past the region.
+void unturned_forward(CPU* c, uint32_t camera, int fx, int fy, int fz) {
+    float cam[12], back[3], local[3], fwd[3];
+    read_xf(camera + kActorXf, cam);
+    const float ahead[3] = {0.0f, 0.0f, -1.0f};
+    qrot(g_turn.q, ahead, back, true);
+    eye_to_camera(back, local);
+    rotate(cam, local, fwd);
+    const int to[3] = {fx, fy, fz};
+    for (int i = 0; i < 3; i++) {
+        c->f[to[i]].d = fwd[i];
+        c->ps1[to[i]] = fwd[i];
+    }
 }
 
 // As the world's view is set up for drawing: the turn of the camera it is drawn from, none
@@ -1354,3 +1391,7 @@ extern "C" uint32_t prime_camera_orbit_state(uint32_t player) { return orbit_sta
 
 // The patch in CFirstPersonCamera::Think (recomp/patches.txt): the camera follows the head.
 extern "C" void prime_turn_camera(CPU* c) { turn_camera(c->r[31], (float)c->f[31].d); }
+// The patches in CPlayer::UpdateOrbitOrientation (r3 the camera) and
+// CPlayer::UpdateFreeLookState (r4) where they load the first-person camera's forward.
+extern "C" void prime_orbit_facing(CPU* c) { unturned_forward(c, c->r[3], 0, 1, 2); }
+extern "C" void prime_free_look_facing(CPU* c) { unturned_forward(c, c->r[4], 31, 30, 29); }

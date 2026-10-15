@@ -35,6 +35,17 @@
 8000E9D8 { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
 8000ECD8 { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
 8000F8FC { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
+# Where the player steers by the first-person camera's forward, the forward without the
+# camera's follow turn, the three loads of its z, y and x as one (src/vr_prime.cpp, "The
+# camera follows the head"): UpdateOrbitOrientation (r3 the camera) turns the body to face it
+# until a lock is established, which with the turn in turned the body by the turn every
+# frame; UpdateFreeLookState (r4) tests it against the body's to end the free look.
+8017F354 { void prime_orbit_facing(CPU*); prime_orbit_facing(c); }
+8017F358 { }
+8017F35C { }
+800172FC { void prime_free_look_facing(CPU*); prime_free_look_facing(c); }
+80017300 { }
+80017304 { }
 # The game's camera follows the head (src/vr_prime.cpp, "The camera follows the head"):
 # CFirstPersonCamera::Think (r31 the camera, f31 its time step), once it has stored the transform
 # UpdateTransform built and ValidateCameraTransform passed.

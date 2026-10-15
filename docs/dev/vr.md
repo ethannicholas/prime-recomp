@@ -1285,6 +1285,24 @@ Worn (sessions `20261015-101818` to `-104147`), three things were wrong:
   replayed so far was missing its head poses (the hands, shorter, were fine); gcn-recomp's
   reader now takes 2 KB lines and refuses a log with a longer one.
 
+Worn again (`20261015-114835`): good, but the region before the camera follows wanted to be
+a fifth smaller (`camera_follow_reach` 0.8 to 0.64: about 19 degrees either side, 12 up or
+down), and a few seconds before the end the view spun violently round. Replayed with
+`camera_follow_reach 0.8` and `GCN_TURNLOG=1`, which now also logs the game's own camera
+heading (before the turn) whenever it moves more than 3 degrees in a frame: the follow turn
+never moved more than 2 degrees a frame, but from frame 24439 the game's own heading turned
+faster and faster, to 20 degrees a frame, nearly two whole turns. L was held, circling a
+target with the stick, and the camera was turned 17 degrees after the head. Until a lock is
+established, `CPlayer::UpdateOrbitOrientation` turns the body to face the first-person
+camera's forward -- which now has the turn in it, while the camera is rebuilt every frame
+as the body plus the turn: the body turned by the whole turn every frame. Its read of the
+camera's forward (0x8017F354) now gets the forward with the turn taken off. The only other
+place the player reads that camera's transform directly and acts on it,
+`CPlayer::UpdateFreeLookState` (0x800172FC), gets the same. Anything else of the game's
+that steers by the camera through its accessors (`GetCurrentCameraTransform` and the like)
+has not been looked for; a feedback of this kind shows as the game's own heading running
+away in `GCN_TURNLOG`.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
