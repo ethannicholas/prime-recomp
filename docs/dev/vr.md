@@ -1054,6 +1054,28 @@ in the headset. `visor_film_on_head 0` in `vr.txt` puts these draws back on the 
 The lava's damage flash noted on 2026-10-13 ("a flat translucent rectangle over the HUD
 window") is probably the same kind of draw and would go across the eye too; not checked.
 
+- **The first rule caught the scan window's outline.** It asked for a whole-screen
+  viewport, and the outline is drawn into one, so it went across the eye and stood far
+  nearer than the magnified window it frames (seen in the headset in `s12`, the session
+  `20261014-193208`, at frame 13800). The rule now asks that the state's draws cover the
+  picture together (gcn-recomp's `EyeDrawFacts` gained their clip-space box; the steam's
+  four quadrants cover -1..1). At frame 13800 the outline is back on the HUD frame round the
+  window. One full-screen draw there still goes across the eye, most likely the scan
+  visor's thin crosshair lines, which now reach the edge of the field instead of stopping
+  at the frame's.
+
+## The intro's planet at infinity on the panel (2026-10-14)
+
+The new-game intro (`s12`, frames 4200-6600) is shown on the panel as a stereo pair, and the
+planet looked short of infinity. It is drawn in the sky band (0.999-1; draws 1320-1321 of
+frame 6000, about 2,300 vertices each, 7-32 units from the camera), which the eyes put at
+infinity but the pair did not: the pair gave it its modelled depth, against a convergence
+distance of about 1.5 units, so 80-95% of infinity's disparity. On a panel 2.5 m away, 90%
+reads as about 25 m. The pair now gives the background band infinity's disparity (gcn-recomp's
+`docs/graphics.md`, "The theater panel as a stereo pair"); measured on frame 6000, the
+planet's offset between the two images is 25 px either way at 1280 wide, but about 7% of the
+pixels moved. Not yet seen in the headset.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as

@@ -900,11 +900,16 @@ bool is_scan_tint(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
 // 20261014-173803, the hot steam on entering a heated room in Magmoor: orthographic, the
 // whole viewport, four draws of one state). On the HUD frame they were a rectangle hanging
 // at the HUD's distance with its edges in plain view. They are drawn across the whole of
-// each eye instead, fixed to the head (gx::EyeScreen): any orthographic draw over the whole
-// viewport that neither samples a copy of the frame (the scan window does) nor warps
-// through an indirect stage. visor_film_on_head 0 in vr.txt puts them back on the frame.
+// each eye instead, fixed to the head (gx::EyeScreen): any orthographic state whose draws
+// cover the whole picture together (the steam is four quadrants) and which neither samples
+// a copy of the frame (the scan window does) nor warps through an indirect stage. The first
+// version asked for a whole-screen viewport instead, and caught the scan window's outline,
+// which is drawn into one: it went across the eye and stood far nearer than the window it
+// frames. visor_film_on_head 0 in vr.txt puts them back on the frame.
 bool is_visor_film(const gx::EyeDrawFacts& f) {
-    return f.ortho && !f.samples_copy && !f.indirect && f.vp_w >= 600.0f && f.vp_h >= 420.0f;
+    const float edge = 0.98f;
+    return f.ortho && !f.samples_copy && !f.indirect && f.clip_x0 <= -edge && f.clip_x1 >= edge &&
+           f.clip_y0 <= -edge && f.clip_y1 >= edge;
 }
 
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
