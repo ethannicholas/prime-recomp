@@ -223,6 +223,7 @@ bool g_hide_helmet = true;      // hide_helmet
 bool g_hide_flat_warps = true;  // hide_flat_warps
 bool g_hide_scan_tint = true;   // hide_scan_tint
 bool g_visor_film_on_head = true;  // visor_film_on_head
+bool g_cannon_cutaway = true;      // cannon_cutaway
 bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
 float g_gaze_pitch_rad = 0.0f;    // scan_gaze_pitch_deg: and this much further up
 
@@ -245,6 +246,7 @@ void config_loaded(const VrConfig& c) {
     g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
     g_hide_scan_tint = c.get("hide_scan_tint", 1.0f) != 0.0f;
     g_visor_film_on_head = c.get("visor_film_on_head", 1.0f) != 0.0f;
+    g_cannon_cutaway = c.get("cannon_cutaway", 1.0f) != 0.0f;
     g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
     g_gaze_pitch_rad = c.get("scan_gaze_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
 }
@@ -916,8 +918,28 @@ bool is_visor_film(const gx::EyeDrawFacts& f) {
            f.clip_y0 <= -edge && f.clip_y1 >= edge && f.clip_area >= 3.6f;
 }
 
+// The beam change. Switching beams, the cannon is wiped away and the new one wiped in
+// behind a plane that moves along it (CPlayerGun::Render): the game copies the quarter of
+// the frame the cannon is in once the world is drawn (CopyScreenTex, a 320x224 copy of the
+// bottom right), draws the cannon, then puts the copy back over that quarter at the plane's
+// depth with a GEQUAL test (DrawScreenTex: draw 62 of frame 2380 of the session
+// 20261014-205240, orthographic, the cannon's band 1/32-1/8, depth tested and written), so
+// whatever of the cannon is nearer than the plane is replaced by the room behind it. The
+// eyes painted that quad on the HUD frame, a flat picture of the room's corner hanging in
+// the air, and with no depth test it covered the cannon in patches. It is a cut-away
+// (gx::EyeRestore): each eye grabs its own room where the game copies and puts it back
+// across its field at the plane's depth. The scan window, the other ortho draw of a partial
+// copy, is in the band in front of the cannon's (1/64-1/32). cannon_cutaway 0 in
+// vr.txt paints it on the frame again.
+bool is_cannon_cutaway(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
+    const bool depth_test = st.bp[0x40] & 1;
+    return f.ortho && f.samples_copy && !f.samples_fullscreen_copy && !f.indirect && depth_test &&
+           f.band_lo >= 0.03f && f.band_hi <= 0.13f;
+}
+
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
+    if (g_cannon_cutaway && is_cannon_cutaway(st, f)) return gx::EyeRestore;
     if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return gx::EyeHideDraw;
     if (g_hide_scan_tint && is_scan_tint(st, f)) return gx::EyeHideDraw;
     if (g_visor_film_on_head && is_visor_film(f)) return gx::EyeScreen;

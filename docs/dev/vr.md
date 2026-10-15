@@ -1098,6 +1098,35 @@ reads as about 25 m. The pair now gives the background band infinity's disparity
 planet's offset between the two images is 25 px either way at 1280 wide, but about 7% of the
 pixels moved. Not yet seen in the headset.
 
+## The beam change's wipe (2026-10-14)
+
+Switching beams just after loading a save (`inputs/20261014-205240`, on the device as
+`s14`, stereo from frame 2274, the first switch on the C stick at frame 2358) showed what
+looked like an EFB copy billboarded in front of the view, and patches of the cannon gone
+for the length of the change. The game wipes the old cannon away behind a plane that
+moves along it (`CPlayerGun::Render`): once the world is drawn it copies the bottom-right
+quarter of the frame (`CopyScreenTex`, a 320x224 copy, after draw 58 of frame 2380), draws
+the cannon, then draws that copy back over the quarter at the plane's depth with a GEQUAL
+test and depth writes on (`DrawScreenTex`, draw 62: orthographic, six vertices, in the
+cannon's band 1/32-1/8). Whatever of the cannon is nearer than the plane is replaced by
+the room behind it. The eyes treated draw 62 as a 2D element: on the HUD frame, without a
+depth test, sampling the flat view's copy. That was the billboarded picture of the room's
+corner, covering the cannon.
+
+The eye filter now calls it a cut-away (`is_cannon_cutaway`, gcn-recomp's `EyeRestore`,
+`docs/graphics.md`): an ortho draw of a partial copy, no indirect stage, depth-tested, in
+the cannon's band. Each eye grabs its own target at the copy and draws the quad across its
+field at the plane's depth in the band, which compares with the cannon's own depth (the
+foreground layer writes the game's depth). The hand moves the cannon in guest memory, so
+the plane the game works out is where the cannon really is. Seen in the harness, frames
+2356-2410: no rectangle, and the Wave Beam's purple parts wipe away over 2362-2370. The large orange cannon reaching to the bottom-right corner at 2390-2392 is
+the game's holographic shell, also drawn by the flat view at that frame. Not yet seen in the
+headset. `cannon_cutaway 0` in `vr.txt` puts the draw back on the HUD frame.
+
+A vertical edge about a third of the way across the left eye, with the lower right of the
+view slightly lighter, is in these frames before any switch too (frame 2350), in this
+foggy room. Not looked into.
+
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
   energy bar, the radar). Which draws those are is readable from their position matrix, as
