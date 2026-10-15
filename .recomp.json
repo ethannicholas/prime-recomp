@@ -1,0 +1,36 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Metroid Prime",
+  "system": "GameCube",
+  "type": "recomp",
+  "original": {
+    "region": "USA",
+    "revision": "Rev 2",
+    "serial": "DL-DOL-GM8E-USA",
+    "sha1": "1a737910b55b59c6ad91be9e3e3c43517fd52efb"
+  },
+  "project": "prime-recomp",
+  "status": "in-progress",
+  "targets": [
+    "macOS",
+    "Windows",
+    "Meta Quest 3"
+  ],
+  "toolchain": "gcn-recomp",
+  "approach": "Static recompilation of the PowerPC executable to C, linked against a runtime that stands in for the GameCube hardware",
+  "tags": [
+    "VR"
+  ],
+  "maintainers": [
+    {
+      "name": "Ethan Nicholas",
+      "link": "https://github.com/ethannicholas"
+    }
+  ],
+  "links": [
+    {
+      "label": "Source",
+      "url": "https://github.com/ethannicholas/prime-recomp"
+    }
+  ]
+}

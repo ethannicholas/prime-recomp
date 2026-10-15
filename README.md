@@ -1,15 +1,13 @@
 # prime-recomp
 
 A static recompilation of *Metroid Prime* (Nintendo GameCube, 2002) to native code, for
-macOS and Windows, with a VR port as the goal.
+macOS, Windows and the Meta Quest 3 (in VR).
 
 The game's PowerPC executable is translated ahead of time into C, then compiled and linked
 against a runtime that stands in for the GameCube hardware (graphics, audio, DVD, controllers,
 memory card). The result is a native program that runs the original game logic without an
 emulator's CPU core. The recompiler and runtime are
-[gcn-recomp](https://github.com/ethannicholas/gcn-recomp), shared with
-[bluestorm-recomp](https://github.com/ethannicholas/bluestorm-recomp), where they were first
-written for *Wave Race: Blue Storm*.
+[gcn-recomp](https://github.com/ethannicholas/gcn-recomp).
 
 > **This repository contains no game code or data.** You must supply your own disc image,
 > dumped from a copy of the game that you own. The build process reads the executable out of
@@ -152,8 +150,6 @@ attempt to find a Vulkan device first. It is slow, but it renders correctly.
 Escape quits.
 
 ## Running on a Quest 3
-
-Early: the app builds and installs, but has not yet been played in the headset.
 
 The Android build and packaging scripts are PowerShell, so these steps are written for a
 Windows PC.
