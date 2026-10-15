@@ -1163,7 +1163,19 @@ Three faults, one of them not the eyes':
 Seen in the harness, frames 2380-2700 in `--eye` and frame 2600 flat: the room purple across
 the whole eye with its noise, the cannon yellow to orange, the pillars red at their edges,
 the HUD unchanged on its frame. Frames 2380-2420, before the switch, are identical to the
-previous build's to the pixel. Not yet seen in the headset.
+previous build's to the pixel. In the headset the same day: the filters right, but the
+innermost of the visor's nested triangles uncomfortably close.
+
+That triangle is draw 115: a flat mesh of 243 vertices, 2.95 units out, in the HUD's
+1/512-1/64 band, where the rest of the thermal HUD is 14-27 units out (the nested triangles
+14.2-21.9). The HUD band's one scale, 0.1, put it 0.3 m from the eyes, in front of the
+triangles it sits inside, and with them about 1.4-2.2 m. gcn-recomp now pushes such a piece
+out (`hud_push_below`, `hud_push_to`, its `graphics.md`, "Depth bands in an eye"): a HUD
+draw nearer than 10 units is scaled about the camera until its nearest point is 22 units
+out, the far end of the nested triangles, at the same angular size. In frame 2600 it is the
+only draw pushed (the eye's draw log names it `hud-band(pushed)`). With the head stepped
+10 cm to the side (`--eye-pos=0.1,0,0`) it used to jump well off the triangles' centre and
+now stays at their centre. `hud_push_below 0` in `vr.txt` turns it off.
 
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the

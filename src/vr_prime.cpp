@@ -1017,6 +1017,15 @@ void config_defaults(VrConfig& c) {
     // out a hair above 1/64, so the bound has slack; the cannon's band starts at 1/32.
     c.hud_band = 0.02f;
     c.hud_band_scale = 0.1f;
+    // The thermal visor's innermost triangle (draw 115 of frame 2600 of the session
+    // 20261014-220552: 243 vertices, flat, 2.95 units out, in the 1/512-1/64 band) is
+    // modelled seven times nearer than the rest of its HUD, 14-27 units out, so at that
+    // scale it stood 0.3 m from the eyes. A HUD draw nearer than 10 units is drawn with its
+    // nearest point at 22 instead, at the same angular size: the far end of the visor's
+    // nested triangles (14.2-21.9), the one it sits inside. hud_push_below 0 in vr.txt
+    // turns it off.
+    c.hud_push_below = 10.0f;
+    c.hud_push_to = 22.0f;
     // Leaving stereo is a cut, not a fold. Every exit -- the pause screen's blur, the ball,
     // a cinematic, the world's name between worlds -- is noticed only once the game is
     // already drawing something that looks wrong in stereo, so the fold would only show
