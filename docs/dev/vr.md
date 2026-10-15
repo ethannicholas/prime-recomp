@@ -1223,12 +1223,14 @@ lines go on after it); the harness's "replay finished" line gives the real end o
 The game's camera stood where the body and the free look put it, whatever the head did. An
 enemy overhead could be looked at and shot by hand, but not locked on to, because for the
 game it was off the screen; the same went for the scan visor's reach and the HUD's markers.
-Now the camera follows the head the way the scan window does. While the gaze stays where
-the scan window could follow it (its idle half-size kept inside the screen, through the
-first-person camera's projection: about 28 degrees either side, 19 up or down), the camera
-stays put; past that it is dragged just far enough to keep the gaze on that edge, and stays
-there when the head comes back. The mechanism is in `src/vr_prime.cpp` ("The camera follows
-the head"):
+Now the camera follows the head past the region the scan window could follow it in (its
+idle half-size kept inside the screen, through the first-person camera's projection: about
+28 degrees either side, 19 up or down). Where the camera is headed depends on the gaze
+alone: straight ahead while the gaze is within `camera_follow_reach` (0.8) of that region,
+and past it, just far enough to bring the gaze back to that fraction. It gets there on a
+critically damped spring, `camera_follow_rate` (8 a second) going out and
+`camera_return_rate` (4) coming back. The mechanism is in `src/vr_prime.cpp` ("The camera
+follows the head"):
 
 - **The turn** goes onto the camera's transform at the end of `CFirstPersonCamera::Think`
   (patch at 0x8000E570), once the transform `UpdateTransform` built has been validated and
@@ -1258,6 +1260,30 @@ one, the game's own cannon pose follows the turned camera, low in the turned vie
 seen worn: whether the HUD's swing reads well, and whether locking on in the combat visor
 works on something overhead (the combat visor's lock box is the game's own, around the
 screen's centre, not on the gaze as the scan visor's is).
+
+Worn (sessions `20261015-101818` to `-104147`), three things were wrong:
+
+- **The world jumped by a frame now and then while the camera moved**; the HUD did not.
+  First put down to the turn being latched when a batch was handed over, after the next
+  frame's update had turned the camera again. Logging the guest's order disproved that:
+  every frame ran its camera update, then its draw, then its hand-over. Logging, per batch
+  the eyes drew, the turn it carried showed the real cause: runs of batches carrying the
+  next frame's turn (2283 had 2284's, ... 2288 and 2289 the same). gcn-recomp's GX front
+  end runs on its own thread up to a frame behind the guest, and the turn, set on the
+  guest thread, went into whichever batch it was building. Now the turn is pinned to its
+  place in the command stream (gcn-recomp's `docs/graphics.md`, "A camera the game turns
+  after the head"). Measured by replaying `20261015-104147` with the eye held still and
+  phase-correlating each dumped frame against the last (`prime_egl --eye --eyes=1`,
+  frames 2270-2360, where the camera swings 46 degrees right and back): before, a 7-pixel
+  shift for one frame every few frames; after, none in 91 frames.
+- **It moved with the head, weightless, and stayed where it was left.** The camera now
+  heads for a target that falls back to the centre as the gaze does, on a spring: on the
+  same replay the turn eases out to 46 degrees and back through the centre.
+- **A replay never had the recorded head.** The input log's reader read lines into 256
+  bytes, and a line of the eyes' poses is over 300 characters: every record was cut, failed
+  the size check, and the replay quietly gave the game the live head. Every headset session
+  replayed so far was missing its head poses (the hands, shorter, were fine); gcn-recomp's
+  reader now takes 2 KB lines and refuses a log with a longer one.
 
 ## Still to look at
 - **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the

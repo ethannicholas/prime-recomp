@@ -36,6 +36,6 @@
 8000ECD8 { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
 8000F8FC { uint32_t prime_camera_orbit_state(uint32_t); c->r[0] = prime_camera_orbit_state(c->r[30]); }
 # The game's camera follows the head (src/vr_prime.cpp, "The camera follows the head"):
-# CFirstPersonCamera::Think (r31 the camera), once it has stored the transform
+# CFirstPersonCamera::Think (r31 the camera, f31 its time step), once it has stored the transform
 # UpdateTransform built and ValidateCameraTransform passed.
-8000E570 { void prime_turn_camera(uint32_t); prime_turn_camera(c->r[31]); } c->r[0] = LD8((c->r[31] + (uint32_t)240));
+8000E570 { void prime_turn_camera(CPU*); prime_turn_camera(c); } c->r[0] = LD8((c->r[31] + (uint32_t)240));

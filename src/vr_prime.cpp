@@ -216,6 +216,12 @@ struct CullConfig {
 CullConfig g_cull;
 bool g_scan_on = true;  // scan_follows_head
 bool g_follow_on = true;  // camera_follows_head
+struct FollowConfig {
+    float reach = 0.8f;      // camera_follow_reach
+    float out_rate = 8.0f;   // camera_follow_rate
+    float back_rate = 4.0f;  // camera_return_rate
+};
+FollowConfig g_follow;
 // The frame the eyes paint the game's 2D elements on (gx::render_hud_frame), as the
 // headset frontend builds it from vr.txt: the scan window is placed through it.
 struct HudFrame { float dist, scale, height, pitch_rad; };
@@ -244,6 +250,9 @@ void config_loaded(const VrConfig& c) {
     g_cull.on = c.get("cull_to_eyes", 1.0f) != 0.0f;
     g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
     g_follow_on = c.get("camera_follows_head", 1.0f) != 0.0f;
+    g_follow.reach = c.get("camera_follow_reach", 0.8f);
+    g_follow.out_rate = c.get("camera_follow_rate", 8.0f);
+    g_follow.back_rate = c.get("camera_return_rate", 4.0f);
     g_hud_frame = {c.hud_distance_m * u, c.hud_scale, c.hud_height_m * u, c.hud_pitch_deg * 3.14159265f / 180.0f};
     g_hide_helmet = c.get("hide_helmet", 1.0f) != 0.0f;
     g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
@@ -293,6 +302,7 @@ void qmul(const float a[4], const float b[4], float out[4]) {
 // turn off them first (unturn_pose).
 struct CameraTurn {
     float yaw = 0.0f, pitch = 0.0f;
+    float yaw_rate = 0.0f, pitch_rate = 0.0f;  // radians a second
     float q[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 };
 CameraTurn g_turn;
@@ -928,21 +938,37 @@ uint32_t orbit_state_for_turning(uint32_t player) {
 // looks around from it. What the game does with what is on its screen -- locking on (its
 // orbit zones are boxes of screen pixels), scanning, the HUD's markers -- stops at that
 // screen's edges, though the viewer can see and shoot well past them: an enemy overhead
-// could be hit but not locked on to. So the camera follows the head the way the scan window
-// does. While the gaze stays where the scan window could follow it on the game's screen
-// (window_reach, through the first-person camera's own projection: about 28 degrees either
-// side and 19 up or down), the camera stays put; a gaze past that drags the camera just far
-// enough to bring it back to that edge, so the scan window never pins. Looking back leaves
-// the camera where it was dragged until the gaze pushes it from the other side.
+// could be hit but not locked on to. So the camera follows the head, past the region the
+// scan window can follow it in on the game's screen (window_reach, through the first-person
+// camera's own projection: about 28 degrees either side and 19 up or down).
+//
+// Where the camera is headed is a function of the gaze alone: straight ahead while the gaze
+// is within camera_follow_reach (a fraction, 0.8) of that region, and past it, turned just
+// far enough to bring the gaze back to that fraction of it -- so looking back pulls the
+// camera home again. It gets there on a critically damped spring, quicker following the gaze
+// out (camera_follow_rate, 8 a second: a steady head turn is followed a quarter of a second
+// behind) than going back (camera_return_rate, 4), so that it has some weight and eases in
+// and out of its moves. The first version kept the gaze exactly on the region's edge,
+// moving with the head and staying where it was left; worn, that read as weightless and as
+// stuck, and the spring's lag is what the 0.8 leaves room for. Yaw and pitch are worked out
+// separately, the yaw's region widened by the gaze's pitch (a yaw turns the view less far
+// the nearer it looks to straight up).
 //
 // The turn goes onto the camera's transform once CFirstPersonCamera::Think has stored it (the
-// patch at 0x8000E570, recomp/patches.txt). UpdateTransform builds that transform afresh
-// every frame from the player and its own gun-follow transform without reading the last one
-// back, so the turn does not accumulate. The frame drawn from it is handed over with the
-// turn (gx::set_view_turn) and the eyes undo it: the world stays where the viewer saw it,
-// while what the game places about its camera -- the HUD frame, the scan window, the cannon
-// -- turns with the camera. The poses the other hooks read are taken into the turned
+// patch at 0x8000E570, recomp/patches.txt), stepped by Think's own time step. UpdateTransform
+// builds that transform afresh every frame from the player and its own gun-follow transform
+// without reading the last one back, so the turn does not accumulate. The frame drawn from it
+// carries the turn (gx::set_view_turn) and the eyes undo it: the world stays where the viewer
+// saw it, while what the game places about its camera -- the HUD frame, the scan window, the
+// cannon -- turns with the camera. The poses the other hooks read are taken into the turned
 // camera's frame before use (unturn_pose).
+//
+// The turn is said as the world's view is set up for drawing (the cull patch in
+// CStateManager::SetupViewForDraw), and none for a view from another camera. gcn-recomp
+// pins it to that point of the command stream; the first version had it applied on the
+// guest thread to whichever batch the front end, up to a frame behind, was building, and
+// in the headset the world, and only the world, jumped by a frame's turn every so often
+// while the camera moved.
 //
 // Locking on also points the camera at the target (UpdateTransform's orbit branch, the
 // three reads of CPlayer::mOrbitState there). With the camera following the head that pulled
@@ -955,9 +981,8 @@ uint32_t orbit_state_for_turning(uint32_t player) {
 // Only while the eyes are published -- stereo in the headset, GCN_CULL_HEAD on the desktop;
 // without them the turn is none, which the panel needs (the morph between it and the eyes
 // would turn it too) and costs nothing in the eyes, which undo whatever turn a frame
-// carries: coming back to stereo the camera is dragged out to the gaze again at once, and
-// only the HUD moves. camera_follows_head 0 in vr.txt turns it off. GCN_TURNLOG=1 prints the
-// turn as it changes.
+// carries. camera_follows_head 0 in vr.txt turns it off. GCN_TURNLOG=1 prints the turn as it
+// changes.
 
 float wrap_angle(float a) {
     while (a > 3.14159265f) a -= 6.2831853f;
@@ -965,47 +990,59 @@ float wrap_angle(float a) {
     return a;
 }
 
-// Moves g_turn just far enough that `g`, the gaze in the frontend's frame, lands inside the
-// window's reach `lim` on a camera whose half-picture tangents are `k`.
-void follow_gaze(const float g[3], const float k[2], const float lim[2]) {
-    float gt[3], n[2];
-    qrot(g_turn.q, g, gt, true);
-    project(gt, k, n);
-    if (fabsf(n[0]) <= lim[0] && fabsf(n[1]) <= lim[1]) return;
-    // Where on the turned camera's screen the gaze is to land: the nearest point in reach.
-    float d[3] = {fmaxf(-lim[0], fminf(lim[0], n[0])) * k[0], fmaxf(-lim[1], fminf(lim[1], n[1])) * k[1], -1.0f};
-    const float dl = sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
-    for (int i = 0; i < 3; i++) d[i] /= dl;
-    // The turn Ry(yaw) Rx(pitch) taking d to g. The pitch leaves x alone, so the yaw alone has
-    // to bring g's x to d's: Ry(-yaw) g has x = g.x cos(yaw) - g.z sin(yaw) = r cos(yaw + phi).
-    // Of its two solutions, the one nearer the turn as it was.
-    float yaw = g_turn.yaw;
-    const float r = sqrtf(g[0] * g[0] + g[2] * g[2]);
-    if (r > 1e-4f) {
-        const float phi = atan2f(g[2], g[0]);
-        const float a = acosf(fmaxf(-1.0f, fminf(1.0f, d[0] / r)));
-        const float s1 = wrap_angle(a - phi - yaw), s2 = wrap_angle(-a - phi - yaw);
-        yaw = wrap_angle(yaw + (fabsf(s1) < fabsf(s2) ? s1 : s2));
+// How far past `half` either way `a` is: what the camera has to turn by to bring it back.
+float past(float a, float half) { return a > half ? a - half : a < -half ? a + half : 0.0f; }
+
+// The spring's rate for an axis of the turn at `x` headed for `to`: the quicker one while the
+// target is further from the centre than the turn.
+float spring_rate(float x, float to) { return fabsf(to) > fabsf(x) ? g_follow.out_rate : g_follow.back_rate; }
+
+// One axis of the turn, `x` with its rate `v`, `dt` seconds towards `to` on a critically
+// damped spring of rate `w`.
+void spring(float& x, float& v, float to, float w, float dt) {
+    const int n = (int)ceilf(dt / 0.004f);
+    const float h = n > 0 ? dt / (float)n : 0.0f;
+    for (int i = 0; i < n; i++) {
+        v += h * (w * w * (to - x) - 2.0f * w * v);
+        x += h * v;
     }
-    // Then the pitch that turns d's (y, z) to those of Ry(-yaw) g.
-    const float wy = g[1], wz = g[0] * sinf(yaw) + g[2] * cosf(yaw);
-    const float pitch = wrap_angle(atan2f(wz, wy) - atan2f(d[2], d[1]));
-    g_turn.yaw = yaw;
-    g_turn.pitch = fmaxf(-1.45f, fminf(1.45f, pitch));
 }
 
-// The patch in CFirstPersonCamera::Think: the turn, onto the transform just stored.
-void turn_camera(uint32_t camera) {
+// The patch in CFirstPersonCamera::Think, `dt` its time step: the turn, onto the transform
+// just stored.
+void turn_camera(uint32_t camera, float dt) {
     ensure_config();
     if (!is_camera(camera, kFirstPersonCameraVtable)) return;
     vr::EyeView ev[2];
     float k[2], lim[2];
-    if (!g_follow_on || !(vr::eye_views(ev) || stand_in_eyes(ev))) {
-        g_turn.yaw = g_turn.pitch = 0.0f;
+    const bool eyes = vr::eye_views(ev) || stand_in_eyes(ev);
+    static const bool tlog = getenv("GCN_TURNLOG") != nullptr;
+    if (tlog) {
+        static uint32_t calls = 0;
+        if (calls++ % 120 == 0) {
+            float g[3] = {0, 0, -1};
+            if (eyes) gaze(ev, g);
+            fprintf(stderr, "[prime] turn %u: eyes %d, gaze %.1f left %.1f up, dt %.4f\n", calls - 1, eyes ? 1 : 0,
+                    atan2f(-g[0], -g[2]) * 57.2958f, asinf(fmaxf(-1.0f, fminf(1.0f, g[1]))) * 57.2958f, dt);
+        }
+    }
+    if (!g_follow_on || !eyes) {
+        g_turn.yaw = g_turn.pitch = g_turn.yaw_rate = g_turn.pitch_rate = 0.0f;
     } else if (camera_tangents(camera, k) && window_reach(lim)) {
         float g[3];
         gaze(ev, g);
-        follow_gaze(g, k, lim);
+        // The gaze's yaw (left) and pitch (up), and the region about the centre, as angles.
+        const float gp = asinf(fmaxf(-1.0f, fminf(1.0f, g[1]))), gy = atan2f(-g[0], -g[2]);
+        const float half_p = atanf(g_follow.reach * lim[1] * k[1]);
+        const float half_y = fminf(3.0f, atanf(g_follow.reach * lim[0] * k[0]) / fmaxf(cosf(gp), 0.25f));
+        const float to_pitch = fmaxf(-1.45f, fminf(1.45f, past(gp, half_p)));
+        const float to_yaw = past(gy, half_y);
+        const float step = fmaxf(0.0f, fminf(0.1f, dt));
+        // The yaw measured from where it is, so that it goes the short way round.
+        float yaw_off = 0.0f;
+        spring(yaw_off, g_turn.yaw_rate, wrap_angle(to_yaw - g_turn.yaw), spring_rate(g_turn.yaw, to_yaw), step);
+        g_turn.yaw = wrap_angle(g_turn.yaw + yaw_off);
+        spring(g_turn.pitch, g_turn.pitch_rate, to_pitch, spring_rate(g_turn.pitch, to_pitch), step);
     }
     // Yaw about y, then pitch about the turned x.
     const float cy = cosf(0.5f * g_turn.yaw), sy = sinf(0.5f * g_turn.yaw);
@@ -1014,7 +1051,6 @@ void turn_camera(uint32_t camera) {
     g_turn.q[1] = sy * cp;
     g_turn.q[2] = -sy * sp;
     g_turn.q[3] = cy * cp;
-    gx::set_view_turn(g_turn.q);
 
     static const bool log = getenv("GCN_TURNLOG") != nullptr;
     if (log) {
@@ -1041,6 +1077,19 @@ void turn_camera(uint32_t camera) {
     }
     for (int j = 0; j < 3; j++)
         for (int i = 0; i < 3; i++) wr_f(camera + kActorXf + 16 * i + 4 * j, turned[j][i]);
+}
+
+// As the world's view is set up for drawing: the turn of the camera it is drawn from, none
+// unless that is the first-person camera.
+void publish_view_turn() {
+    static const float none[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+    bool first_person = false;
+    if (pair && is_camera(mem_r32(pair), kFirstPersonCameraVtable)) {
+        const uint32_t mgr = pair - kCameraPairOffset;
+        first_person = mem_r16(mgr) == mem_r16(mem_r32(pair) + 8) && mem_r32(mgr + kCinematicCount) == 0;
+    }
+    gx::set_view_turn(first_person ? g_turn.q : none);
 }
 
 // The reads of CPlayer::mOrbitState in CFirstPersonCamera::UpdateTransform: no orbit while
@@ -1289,7 +1338,10 @@ extern "C" void prime_automapper(uint32_t self) {
 
 // The patches at three calls of the CFrustumPlanes constructor (recomp/patches.txt), in
 // place of the call.
-extern "C" void prime_cull_frustum(CPU* c) { cull_to_eyes(c); }
+extern "C" void prime_cull_frustum(CPU* c) {
+    if (c->lr == 0x800474DCu) publish_view_turn();  // SetupViewForDraw's ("The camera follows the head")
+    cull_to_eyes(c);
+}
 
 // The scan visor's patches (recomp/patches.txt): once a frame in CPlayer::UpdateOrbitZone,
 // the two draws in CPlayerVisor::DrawScanEffect, and the orbit state as the body's and the
@@ -1301,4 +1353,4 @@ extern "C" uint32_t prime_orbit_state(uint32_t player) { return orbit_state_for_
 extern "C" uint32_t prime_camera_orbit_state(uint32_t player) { return orbit_state_for_camera(player); }
 
 // The patch in CFirstPersonCamera::Think (recomp/patches.txt): the camera follows the head.
-extern "C" void prime_turn_camera(uint32_t camera) { turn_camera(camera); }
+extern "C" void prime_turn_camera(CPU* c) { turn_camera(c->r[31], (float)c->f[31].d); }
