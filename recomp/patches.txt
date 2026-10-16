@@ -49,3 +49,10 @@
 # CFirstPersonCamera::Think (r31 the camera, f31 its time step), once it has stored the transform
 # UpdateTransform built and ValidateCameraTransform passed.
 8000E570 { void prime_turn_camera(CPU*); prime_turn_camera(c); } c->r[0] = LD8((c->r[31] + (uint32_t)240));
+# GCN_FACELOG=1 (src/vr_prime.cpp, prime_face_drawn): CSamusFaceReflection::Draw, past its
+# test of the hidden flag, once it is going to draw the face.
+8015B63C { void prime_face_drawn(void); prime_face_drawn(); } c->r[3] = LD32((c->r[30] + (uint32_t)2160));
+# Locking on where the viewer looks (src/vr_prime.cpp, orbit_box_transform): in
+# CPlayer::UpdateOrbitableObjects, the transform GetFirstPersonCameraTransform returned for
+# the box the candidates are gathered from.
+8017D574 { void prime_orbit_box(CPU*); prime_orbit_box(c); } c->r[0] = c->r[3];

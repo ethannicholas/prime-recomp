@@ -91,6 +91,26 @@ uint32_t search() {
 // render thread, and re-checked there before use.
 std::atomic<uint32_t> g_camera_pair{0};
 
+// The guest thread's own copy, for the hooks that steer the game (the cannon, the scan, the
+// camera's turn). It must not be the render thread's: that one is found when the render
+// thread happens to search, every 120 of its frames, and until then the hooks left the game
+// to itself -- so what they did over the first frames of a world depended on how fast the
+// host drew, and a replay in the harness parted from a session recorded in the headset four
+// seconds in (20261015-194904, the scan zone at frame 4811). This one is a function of guest
+// memory alone: checked at every use and searched for again whenever it does not check out,
+// at most once in 60 failed calls, which are only made in play, where the pair is there to find.
+// The logs read g_guest_pair as it stands, so that turning one on does not move a search.
+uint32_t g_guest_pair = 0;
+uint32_t guest_camera_pair() {
+    static uint32_t failed = 0;
+    if (g_guest_pair && live_pair(g_guest_pair)) return g_guest_pair;
+    g_guest_pair = 0;
+    if (failed++ % 60) return 0;
+    g_guest_pair = search();
+    if (g_guest_pair) failed = 0;
+    return g_guest_pair;
+}
+
 // The game's latest answer to whether it draws its world (the patches above), written on the
 // guest thread, read on the render thread.
 std::atomic<uint32_t> g_world_drawn{0};
@@ -216,6 +236,7 @@ struct CullConfig {
 CullConfig g_cull;
 bool g_scan_on = true;  // scan_follows_head
 bool g_follow_on = true;  // camera_follows_head
+bool g_lock_follows_gaze = true;  // lock_on_follows_gaze
 struct FollowConfig {
     float reach = 0.64f;     // camera_follow_reach
     float out_rate = 8.0f;   // camera_follow_rate
@@ -250,6 +271,7 @@ void config_loaded(const VrConfig& c) {
     g_cull.on = c.get("cull_to_eyes", 1.0f) != 0.0f;
     g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
     g_follow_on = c.get("camera_follows_head", 1.0f) != 0.0f;
+    g_lock_follows_gaze = c.get("lock_on_follows_gaze", 1.0f) != 0.0f;
     g_follow.reach = c.get("camera_follow_reach", 0.64f);
     g_follow.out_rate = c.get("camera_follow_rate", 8.0f);
     g_follow.back_rate = c.get("camera_return_rate", 4.0f);
@@ -395,7 +417,7 @@ void ensure_config() {
 void aim_gun(uint32_t gun) {
     static const bool log = getenv("GCN_GUNLOG") != nullptr;
     ensure_config();
-    const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+    const uint32_t pair = guest_camera_pair();
     if (!pair) return;
     const uint32_t camera = mem_r32(pair);
     if (!is_camera(camera, kFirstPersonCameraVtable)) return;
@@ -531,8 +553,16 @@ bool stand_in_eyes(vr::EyeView out[2]) {
 }
 
 // The eyes -- the headset's, or GCN_CULL_HEAD's -- in the turned camera's frame.
+// The last eyes it gave, for the logs: a read of the eyes is input, counted and logged
+// (input_pose), so a log that read them again would make a session recorded with it on
+// replay apart from one without.
+vr::EyeView g_last_eyes[2];
+uint32_t g_last_eyes_frame = ~0u - 8;
 bool camera_eyes(vr::EyeView ev[2]) {
     if (!(vr::eye_views(ev) || stand_in_eyes(ev))) return false;
+    g_last_eyes_frame = gx_frames_submitted();
+    g_last_eyes[0] = ev[0];
+    g_last_eyes[1] = ev[1];
     for (int e = 0; e < 2; e++) unturn_pose(ev[e].pos, ev[e].rot);
     return true;
 }
@@ -769,7 +799,7 @@ bool head_screen_point(float out[2], bool on_hud_frame = false) {
     if (!g_scan_on) return false;
     vr::EyeView ev[2];
     if (!camera_eyes(ev)) return false;
-    const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+    const uint32_t pair = guest_camera_pair();
     if (!pair) return false;
     const uint32_t camera = mem_r32(pair);
     if (!is_camera(camera, kFirstPersonCameraVtable)) return false;
@@ -816,6 +846,7 @@ bool head_screen_point(float out[2], bool on_hud_frame = false) {
 }
 
 // The patch at CPlayer::UpdateOrbitZone: the scan zone's centre, or the game's own.
+float g_last_zone[2];  // the zone's point as last placed, for scan_ortho's log
 void scan_frame(uint32_t player) {
     static const bool log = getenv("GCN_SCANLOG") != nullptr;
     static bool have_original = false, moved = false;
@@ -833,7 +864,7 @@ void scan_frame(uint32_t player) {
         // Every 50 frames: where the camera looks and the orbit state, for checking that
         // locking on does not turn it.
         static uint32_t calls = 0;
-        const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+        const uint32_t pair = g_guest_pair;
         if (calls++ % 50 == 0 && pair && is_camera(mem_r32(pair), kFirstPersonCameraVtable)) {
             float cam[12];
             read_xf(mem_r32(pair) + kActorXf, cam);
@@ -843,6 +874,8 @@ void scan_frame(uint32_t player) {
     }
     float p[2];
     if (head_screen_point(p)) {
+        g_last_zone[0] = p[0];
+        g_last_zone[1] = p[1];
         const uint32_t v[4] = {(uint32_t)p[0], (uint32_t)p[1], (uint32_t)p[0], (uint32_t)p[1]};
         for (int i = 0; i < 4; i++) mem_w32(tweak + kScanZoneFields[i], v[i]);
         if (log) {
@@ -896,12 +929,13 @@ void scan_ortho(CPU* c) {
         static float last[2] = {-1e9f, -1e9f};
         if (fabsf(p[0] - last[0]) > 4.0f || fabsf(p[1] - last[1]) > 4.0f) {
             last[0] = p[0]; last[1] = p[1];
-            float z[2] = {0, 0};
-            head_screen_point(z, false);
-            vr::EyeView ev[2];
+            // What the hooks already read: the zone's point as scan_frame last placed it,
+            // the eyes as they were last given. Reading either again would be a read of
+            // the eyes (camera_eyes).
+            const float z[2] = {g_last_zone[0], g_last_zone[1]};
+            const vr::EyeView* ev = g_last_eyes;
             float tan_half = 0.0f;
-            if (vr::eye_views(ev) || stand_in_eyes(ev))
-                for (int e = 0; e < 2; e++) tan_half = fmaxf(tan_half, fmaxf(fabsf(ev[e].tan_up), fabsf(ev[e].tan_down)));
+            for (int e = 0; e < 2; e++) tan_half = fmaxf(tan_half, fmaxf(fabsf(ev[e].tan_up), fabsf(ev[e].tan_down)));
             fprintf(stderr, "[prime] scan window at %.0f %.0f (zone %.0f %.0f; frame %.2f x %.2f tall at %.2f, height %.2f, pitch %.1f; eyes tan up %.3f down %.3f)\n",
                     p[0], p[1], z[0], z[1], g_hud_frame.scale, tan_half, g_hud_frame.dist, g_hud_frame.height,
                     g_hud_frame.pitch_rad * 180.0f / 3.14159265f, ev[0].tan_up, ev[0].tan_down);
@@ -918,6 +952,126 @@ void scan_ortho(CPU* c) {
     }
     c->lr = 0x801139F0u;
     fn_8030CFA4(c);
+}
+
+// GCN_ORBITLOG: every damageable trigger's lock-on state (CScriptDamageableTrigger, vtable
+// 0x803E0DC8), logged when it changes: the active bit (+0x30, 0x80), its own flags (+0x310:
+// 0x08 can orbit, 0x40 dead), its health (+0x17C) and whether it has the Orbit material
+// (bit 41, 0x200 in the word at +0x68), with its distance and elevation from the camera.
+void damageable_log(uint32_t mgr, const float* cam) {
+    const uint32_t list = mem_r32(mgr + 0x810);
+    if (!in_ram(list)) return;
+    static uint32_t last[1024];
+    for (uint32_t slot = 0; slot < 1024; slot++) {
+        const uint32_t obj = mem_r32(list + 4 + 8 * slot);
+        if (!in_ram(obj) || (obj & 3) || mem_r32(obj) != 0x803E0DC8u) {
+            last[slot] = 0;
+            continue;
+        }
+        const uint32_t s = 0x80000000u | (uint32_t)mem_r8(obj + 0x30) << 16 | (uint32_t)mem_r8(obj + 0x310) << 8 |
+                           ((mem_r32(obj + 0x68) >> 9) & 1) | (rd_f(obj + 0x17C) > 0.0f ? 2 : 0);
+        if (s == last[slot]) continue;
+        last[slot] = s;
+        float d[3];
+        for (int j = 0; j < 3; j++) d[j] = rd_f(obj + kActorXf + 16 * j + 12) - cam[4 * j + 3];
+        const float h = sqrtf(d[0] * d[0] + d[1] * d[1]);
+        fprintf(stderr, "[prime] frame %u: damageable %04X active %u flags %02X hp %.1f orbit %u, %.1f m, %.1f up\n",
+                gx_frames_submitted(), mem_r16(obj + 8), mem_r8(obj + 0x30) >> 7, mem_r8(obj + 0x310), rd_f(obj + 0x17C),
+                s & 1, sqrtf(h * h + d[2] * d[2]), atan2f(d[2], h) * 57.2958f);
+    }
+}
+
+// GCN_ORBITLOG=1: what the lock-on has to choose from, once a frame from UpdateOrbitZone (r3
+// the player, r4 the state manager). CPlayer keeps three lists of TUniqueIds, each an
+// rstl::vector (size at +4, items at +0xC): the orbitable objects near enough
+// (+0x354), those of them inside the visor's zone (+0x364) and outside it (+0x374); the
+// lists are last frame's. For each near one: its vtable (symbols.txt names the class),
+// where its origin lands on the game's screen against the zone's box (CTweakPlayer: centre
+// at +0x1B8, half extents at +0x1A8, four bytes a zone, the combat visor's zone 0), and its
+// elevation from the camera. An object is looked up in the state manager's list of all
+// objects (+0x810: entries of eight bytes from +4, the entity first, by the id's low ten
+// bits). Logged whenever the lists or the lock change, and every 30 frames while any is near.
+void orbit_log(uint32_t player, uint32_t mgr) {
+    static const bool log = getenv("GCN_ORBITLOG") != nullptr;
+    if (!log || !in_ram(player) || !in_ram(mgr)) return;
+    const uint32_t tweak = mem_r32(kTweakPlayer), list = mem_r32(mgr + 0x810);
+    const uint32_t pair = g_guest_pair;
+    if (!in_ram(tweak) || !in_ram(list) || !pair) return;
+    const uint32_t camera = mem_r32(pair);
+    float k[2];
+    if (!is_camera(camera, kFirstPersonCameraVtable) || !camera_tangents(camera, k)) return;
+    const uint32_t zone = mem_r32(player + kPlayerOrbitZoneMode), state = mem_r32(player + kPlayerOrbitState);
+    const uint32_t n[3] = {mem_r32(player + 0x358), mem_r32(player + 0x368), mem_r32(player + 0x378)};
+    const uint16_t target = mem_r16(player + 0x320);
+    static uint32_t last_n[3] = {~0u, ~0u, ~0u}, last_state = ~0u, frames = 0;
+    static uint16_t last_target = 0;
+    const bool changed = memcmp(n, last_n, sizeof(n)) || state != last_state || target != last_target;
+    memcpy(last_n, n, sizeof(n));
+    last_state = state;
+    last_target = target;
+    {
+        float c0[12];
+        read_xf(camera + kActorXf, c0);
+        damageable_log(mgr, c0);
+        // The camera manager's fluid counter (+0x74): non-zero while the camera is in water.
+        static uint32_t last_fluid = ~0u;
+        const uint32_t cm = mem_r32(mgr + 0x870);
+        const uint32_t fl = in_ram(cm) ? mem_r32(cm + 0x74) : 0;
+        if (fl != last_fluid) {
+            last_fluid = fl;
+            fprintf(stderr, "[prime] frame %u: camera in fluid %u\n", gx_frames_submitted(), fl);
+        }
+    }
+    if (!changed && !(n[0] && ++frames % 30 == 0)) return;
+    if (n[0] > 64) return;
+    const float W = (float)(int32_t)mem_r32(kViewport + 8), H = (float)(int32_t)mem_r32(kViewport + 12);
+    const int32_t cx = (int32_t)mem_r32(tweak + 0x1B8 + 4 * zone), cy = (int32_t)mem_r32(tweak + 0x1C0 + 4 * zone);
+    const int32_t hx = (int32_t)mem_r32(tweak + 0x1A8 + 4 * zone), hy = (int32_t)mem_r32(tweak + 0x1B0 + 4 * zone);
+    fprintf(stderr, "[prime] frame %u: orbit state %u target %04X, zone %u box %d %d +- %d %d, %u near, %u in, %u out; turn %.1f left %.1f up\n",
+            gx_frames_submitted(), state, target, zone, cx, cy, hx, hy, n[0], n[1], n[2], g_turn.yaw * 57.2958f,
+            g_turn.pitch * 57.2958f);
+    float cam[12];
+    read_xf(camera + kActorXf, cam);
+    const uint32_t items = mem_r32(player + 0x360);
+    for (uint32_t i = 0; i < n[0] && in_ram(items); i++) {
+        const uint16_t id = mem_r16(items + 2 * i);
+        const uint32_t obj = mem_r32(list + 4 + 8 * (id & 0x3FF));
+        if (!in_ram(obj) || mem_r16(obj + 8) != id) continue;
+        float d[3], v[3];
+        for (int j = 0; j < 3; j++) d[j] = rd_f(obj + kActorXf + 16 * j + 12) - cam[4 * j + 3];
+        for (int j = 0; j < 3; j++) v[j] = d[0] * cam[j] + d[1] * cam[4 + j] + d[2] * cam[8 + j];  // right, fwd, up
+        const float sx = v[1] > 1e-3f ? 0.5f * W * (1.0f + v[0] / v[1] / k[0]) : -1.0f;
+        const float sy = v[1] > 1e-3f ? 0.5f * H * (1.0f + v[2] / v[1] / k[1]) : -1.0f;
+        const float elev = atan2f(d[2], sqrtf(d[0] * d[0] + d[1] * d[1])) * 57.2958f;
+        fprintf(stderr, "[prime]   %04X vt %08X at %.0f %.0f on screen, %.1f m, %.1f up\n", id, mem_r32(obj), sx, sy,
+                sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]), elev);
+    }
+    // Locking on (state 2) with nothing near: every object of the state manager's list with
+    // a transform within 60 m and more than 15 degrees above the camera, whatever it is,
+    // with its material bits (+0x68, as ValidateObjectForMode reads them) and the flag bytes
+    // ValidateOrbitTargetId tests (+0x30, +0xF2, +0xF3), and the tweak's angle limits above
+    // and below the horizon (+0x188, +0x18C), which that test holds the eye's line to it to.
+    if (state == 2 && n[0] == 0 && changed) {
+        fprintf(stderr, "[prime]   nothing near; orbit angle limits %.1f up %.1f down\n", rd_f(tweak + 0x188), rd_f(tweak + 0x18C));
+        for (uint32_t slot = 0; slot < 1024; slot++) {
+            const uint32_t obj = mem_r32(list + 4 + 8 * slot);
+            if (!in_ram(obj) || (obj & 3)) continue;
+            const uint32_t vt = mem_r32(obj);
+            if (vt < 0x803D0000u || vt >= 0x80400000u) continue;
+            float d[3];
+            bool ok = true;
+            for (int j = 0; j < 3; j++) {
+                d[j] = rd_f(obj + kActorXf + 16 * j + 12) - cam[4 * j + 3];
+                ok = ok && fabsf(d[j]) < 60.0f;
+            }
+            if (!ok) continue;
+            const float h = sqrtf(d[0] * d[0] + d[1] * d[1]), elev = atan2f(d[2], h) * 57.2958f;
+            if (elev < 15.0f) continue;
+            fprintf(stderr, "[prime]   above: %04X vt %08X %.1f m, %.1f up, mat %08X %08X, flags %02X %02X %02X\n", mem_r16(obj + 8), vt,
+                    sqrtf(h * h + d[2] * d[2]), elev, mem_r32(obj + 0x68), mem_r32(obj + 0x6C), mem_r8(obj + 0x30),
+                    mem_r8(obj + 0xF2), mem_r8(obj + 0xF3));
+        }
+    }
 }
 
 // The reads of CPlayer::mOrbitState in UpdateOrbitOrientation and the first-person camera:
@@ -1124,7 +1278,7 @@ void unturned_forward(CPU* c, uint32_t camera, int fx, int fy, int fz) {
 // unless that is the first-person camera.
 void publish_view_turn() {
     static const float none[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-    const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+    const uint32_t pair = guest_camera_pair();
     bool first_person = false;
     if (pair && is_camera(mem_r32(pair), kFirstPersonCameraVtable)) {
         const uint32_t mgr = pair - kCameraPairOffset;
@@ -1258,6 +1412,23 @@ bool is_screen_filter(const gx::EyeDrawFacts& f) {
            f.clip_y0 <= -edge && f.clip_y1 >= edge && f.clip_area >= 3.6f;
 }
 
+// Samus's face in the visor. A bright flash close by lights her face up in the glass
+// (CSamusFaceReflection::Draw): a model drawn orthographically into the window of the
+// visor, twice -- once for depth alone, then in colour with the depth test, so that only
+// its nearest surface shows (draws 483 and 484 of frame 22290 of the session
+// 20261015-194904: 2,388 vertices, one texture, in the band 1/64-1/32). The eyes painted it
+// on the HUD frame, which has no depth test, so the eyeballs drawn after the face showed
+// through it: two great eyes staring out of the dark. It is composed into the HUD
+// (gx::EyeFlat), which keeps the game's depth for it. Told by its texture.
+constexpr uint64_t kFaceTexture = 0x25b0a289fb233f6full;
+
+bool is_face_reflection(const gx::EyeDrawFacts& f) {
+    if (!f.ortho) return false;
+    for (int i = 0; i < 8; i++)
+        if (f.tex_hash[i] == kFaceTexture) return true;
+    return false;
+}
+
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
     if (g_screen_filter_on_head && is_screen_filter(f)) return gx::EyeScreen;
@@ -1265,6 +1436,7 @@ int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return gx::EyeHideDraw;
     if (g_hide_scan_tint && is_scan_tint(st, f)) return gx::EyeHideDraw;
     if (g_visor_film_on_head && is_visor_film(f)) return gx::EyeScreen;
+    if (is_face_reflection(f)) return gx::EyeFlat;
     if (g_hide_helmet) {
         // The whole model goes with its textured materials: the untextured strips along
         // the top and bottom and the small block by the missile count are drawn with the
@@ -1373,11 +1545,64 @@ extern "C" void prime_cull_frustum(CPU* c) {
     cull_to_eyes(c);
 }
 
+// GCN_FACELOG=1: the frames in which the game draws Samus's face reflected in the visor
+// (CSamusFaceReflection::Draw, past its test of the hidden flag; recomp/patches.txt), to
+// find one to draw-log.
+extern "C" void prime_face_drawn(void) {
+    static const bool log = getenv("GCN_FACELOG") != nullptr;
+    if (log) fprintf(stderr, "[prime] frame %u: face reflection drawn\n", gx_frames_submitted());
+}
+
+// Locking on where the viewer looks. The game gathers what can be locked on to from a box
+// in front of the first-person camera's gun-follow transform (CPlayer::UpdateOrbitableObjects:
+// BuildNearListBox, 0x80180154, over GetFirstPersonCameraTransform): the target distance
+// ahead, but only a few metres to either side and above and below. On a television the
+// free look pitches that transform, so the box goes wherever the player looks. In the
+// headset the head looks and the body stays level, and the follow turn goes onto the
+// camera's own transform, not the gun-follow one, so the box stayed level with the body:
+// whatever was more than about ten metres above or below it was never a candidate. The
+// stalactites in Frost Cave, 25 to 85 degrees up and 25 to 55 metres away, could not be
+// locked on to (session 20261015-194904, frames 121450-130700), though the game itself
+// passed them (ValidateOrbitTargetId answered 0 for both). The box's transform is aimed
+// along the gaze instead, from the same place: the eyes the hooks last read, at most a
+// frame old (no read of its own, which would be input), and nothing without them.
+// lock_on_follows_gaze 0 in vr.txt gives the game's box back.
+uint32_t orbit_box_transform(uint32_t xf, uint32_t sp) {
+    ensure_config();
+    if (!g_lock_follows_gaze || !in_ram(xf) || gx_frames_submitted() - g_last_eyes_frame > 1) return xf;
+    float g[3], local[3], m[12], fwd[3];
+    gaze(g_last_eyes, g);
+    eye_to_camera(g, local);
+    read_xf(xf, m);
+    rotate(m, local, fwd);
+    float right[3] = {fwd[1], -fwd[0], 0.0f};  // forward x world up
+    const float len = sqrtf(right[0] * right[0] + right[1] * right[1]);
+    if (len < 1e-3f) return xf;  // straight up or down: the game's box
+    right[0] /= len;
+    right[1] /= len;
+    const float up[3] = {right[1] * fwd[2], -right[0] * fwd[2], right[0] * fwd[1] - right[1] * fwd[0]};
+    // In the guest's stack well below its frame, read by BuildNearListBox before anything
+    // else is called.
+    const uint32_t out = (sp - 0x1000) & ~15u;
+    for (int i = 0; i < 3; i++) {
+        const uint32_t row = out + 16 * i;
+        wr_f(row, right[i]);
+        wr_f(row + 4, fwd[i]);
+        wr_f(row + 8, up[i]);
+        wr_f(row + 12, m[4 * i + 3]);
+    }
+    return out;
+}
+
 // The scan visor's patches (recomp/patches.txt): once a frame in CPlayer::UpdateOrbitZone,
 // the two draws in CPlayerVisor::DrawScanEffect, and the orbit state as the body's and the
 // camera's turning read it.
-extern "C" void prime_scan_frame(CPU* c) { scan_frame(c->r[3]); }
+extern "C" void prime_scan_frame(CPU* c) {
+    scan_frame(c->r[3]);
+    orbit_log(c->r[3], c->r[4]);
+}
 extern "C" void prime_scan_copy_src(CPU* c) { scan_copy_src(c); }
+extern "C" void prime_orbit_box(CPU* c) { c->r[3] = orbit_box_transform(c->r[3], c->r[1]); }
 extern "C" void prime_scan_ortho(CPU* c) { scan_ortho(c); }
 extern "C" uint32_t prime_orbit_state(uint32_t player) { return orbit_state_for_turning(player); }
 

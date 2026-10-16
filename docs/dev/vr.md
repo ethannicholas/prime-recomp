@@ -1313,12 +1313,102 @@ keeps both off the lock, while this kept only the camera's off. The camera follo
 again outside the scan visor, as it did before any of this, with the turn on top; replayed,
 the heading holds through that L, and the 20261015-114835 spin stays fixed.
 
+## An hour in the headset (2026-10-16)
+
+The session `20261015-194904` (an hour, about 216,000 frames, from the Chozo Ruins through
+Flaahgra, Magmoor and Phendrana; on the device as `u194904`) came with three reports: the
+water was clear before the Gravity Suit, the stalactites knocked down with missiles could
+not be locked on to, and Samus's face reflected in the visor after a nearby explosion was
+two great eyeballs in the dark.
+
+**The replay parted from the recording.** The first replay showed a death at frame ~15,600
+that the player never had. Three causes, each of which moved the guest off its recording:
+
+- *Lost tracking replayed as tracked.* The session has 123 stretches where the headset or
+  a controller lost tracking, logged as poses with no values, and the replay answered only
+  records with values; those reads got the harness's live stand-in, a tracked head looking
+  ahead. Fixed in gcn-recomp (`docs/diagnostics.md`, "Input logging and replay").
+- *The hooks found the game's camera through the render thread.* `g_camera_pair`, the
+  camera manager's pair of cameras, was searched for by the render thread every 120 of its
+  frames, and the guest hooks (`aim_gun`, `head_screen_point`, `publish_view_turn`) used
+  whatever it had found, so they changed what they did depending on how far the render
+  thread had got -- which a replay does not reproduce. The guest now keeps its own
+  (`guest_camera_pair`: checked at every use, searched for again at most once per 60
+  failed calls); the render thread keeps its copy for its own decisions, which never reach
+  the game.
+- *The scan log read the eyes.* With `GCN_SCANLOG`, `scan_ortho`'s log called
+  `head_screen_point` and `vr::eye_views` again, counted pose reads, so a session recorded
+  with the log on (this one: the app's `gcn_env.txt` has it) replays only with it on, and
+  one recorded without it only without. Replayed without, this one parted at poll 43,304
+  (frame 4,811). The log now prints what the hook already read (`g_last_eyes`,
+  `g_last_zone`).
+
+gcn-recomp now reports the first place a replay parts from its recording, which is how the
+second cause was found. Sessions recorded before this replay faithfully only with the hooks
+as they were (and with `GCN_SCANLOG=1` if it was on): with those, this one replays through
+to Phendrana without parting. With the hooks as they are now, two replays of the same log, one with
+`GCN_SCANLOG`, `GCN_ORBITLOG` and `GCN_EYE_FULLFLAT` on and one with none, gave
+byte-identical eyes at every thousandth frame to 20,000: the render thread's pace and the
+logs no longer reach the game.
+
+**The face in the visor.** `CSamusFaceReflection::Draw` (0x8015B5A8) draws Samus's face
+orthographically into the visor's window, twice: once for depth alone, then in colour with
+the depth test (draws 483 and 484 of frame 22,290: 2,388 vertices, one texture, in the
+band 1/64-1/32; `GCN_FACELOG=1` logs the frames it draws in, patched at 0x8015B63C). The
+eyes paint orthographic draws on the HUD frame without a depth test, so the eyeballs,
+drawn after the face, showed through it. The face is now `gx::EyeFlat` (`is_face_reflection`
+in `src/vr_prime.cpp`, by its texture), and gcn-recomp gives an orthographic EyeFlat draw
+the game's depth test. At frame 22,456 the eyeballs were whole white spheres before; after,
+the lids cover them as in the flat picture.
+
+**The water's fog.** `CCameraManager::UpdateFilters` (0x8000B8F0) fogs the view under water
+with exponential fog (type 4) out to `GetWaterFarDistance` (0x8000B864: one pair of tweak
+values without the Gravity Suit, another with it). The renderer read the fog's type one bit
+off (gcn-recomp `docs/graphics.md`, "Fog's type"): exponential fog came out as none, so the
+water was clear whatever the suit, and every room's linear fog was drawn as exponential,
+too dense. Frost Cave's room fog, for one, is linear from 80 to 600 (frame 122,280).
+Under water in the Chozo Ruins before the Gravity Suit (frames 73,093-73,297, which
+`GCN_ORBITLOG` now finds: the camera manager's fluid counter, +0x74), the game asks for
+exponential fog in light blue (0xACCCED) from 0.8 to 220 metres (frame 73,200): before, the
+water was clear; now it is the blue haze it should be. The suit's own distances
+(`GetWaterFarDistance`'s other pair) have not been seen in a session yet.
+
+**Locking on overhead.** The stalactites in Frost Cave are knocked down by their weak
+points, `CScriptDamageableTrigger`s (1ACE and 1ACF in this session: active, able to orbit,
+5 health, with the Orbit material), 25 to 85 degrees up and 25 to 55 metres away. Every
+press of L under them found nothing. What it was not, each ruled out by `GCN_ORBITLOG`:
+
+- *The angle limit.* `ValidateOrbitTargetId` (0x8017F860) refuses a target too far above or
+  below the eye, but CTweakPlayer's limits (+0x188, +0x18C) are 1.2 radians, 69 degrees,
+  and the stalactites were at 41-45.
+- *The trigger's own state.* A damageable trigger has the Orbit material (bit 41, 0x200 in
+  the word at +0x68) only once activated, if its "can orbit" flag (+0x310, 0x08) is set,
+  and is in the spatial lists (`GetTouchBounds`) only while its area is visible (+0x310,
+  0x80). Both weak points had all of it throughout.
+- *Anything else the game checks.* Called on them at the presses, `ValidateOrbitTargetId`
+  answered 0, OK; no orbit-disable source, no visor static, not in water, 34 metres
+  against a target distance of 100.
+
+The candidates are gathered before any of that, from a box (`CPlayer::UpdateOrbitableObjects`
+over `BuildNearListBox`, 0x80180154): the target distance ahead of
+`GetFirstPersonCameraTransform` (the first-person camera's gun-follow transform), but only a
+few metres to either side and above and below. On a television the free look pitches that
+transform, so the box goes where the player looks. In the headset the head looks, and the
+follow turn goes onto the camera's own transform, not the gun-follow one, so the box stayed
+level with the body: 1ACF dropped out of it at about ten metres above the body's line, and
+nothing 25 degrees up or more was ever in it. The box is now aimed along the gaze, from the
+same place (`orbit_box_transform`, patched in at 0x8017D574; `lock_on_follows_gaze 0` in
+vr.txt turns it off). It reads no pose of its own: it uses the eyes the hooks last read, at
+most a frame old, so that it adds no input to a replay.
+
+The box also picks the aim assist's targets and the scan visor's, so a session recorded
+before this replays differently from its first fight (this one died at frame 14,668).
+Tested by switching it on just before the stalactites (`GCN_LOCKBOX_FROM`, a diagnostic
+in the replay's build only): from frame 126,500 both weak points are candidates, and the
+press of L at 126,612 locks on to 1ACF, 55 metres away and 30 degrees up, the reticle on
+the stalactite, where before it found nothing.
+
 ## Still to look at
-- **The HUD** is drawn as geometry hanging in front of the camera (the visor frame, the
-  energy bar, the radar). Which draws those are is readable from their position matrix, as
-  with Blue Storm's countdown rig (`PixelState::view_space`); how the renderer's HUD frame
-  treats them is the first thing to look at in the headset.
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.
-- **Visor effects.** The X-ray visor has not been seen yet; the scan and thermal visors are
-  above.
+- **The X-ray visor** has not been seen in the headset yet.

@@ -52,3 +52,25 @@ quickest way to find where to look for a given subsystem.
 
 The game's `OSPanic` is replaced (`recomp/hle.txt`) so that a panic prints the message and a
 guest backtrace and exits, instead of spinning in `PPCHalt` looking like a hang.
+
+## The VR hooks' logs
+
+Prime's hooks (`src/vr_prime.cpp`) log to stderr when asked:
+
+- `GCN_SCANLOG=1`: the scan visor's zone as it follows the head. It prints only what the
+  hook already read, so a session recorded with it on or off replays either way; sessions
+  recorded before 2026-10-16 with it on replay faithfully only with it on (`vr.md`, "An
+  hour in the headset").
+- `GCN_TURNLOG=1`: the camera's follow turn, the gaze and the game's own heading.
+- `GCN_ORBITLOG=1`: the lock-on's candidates (near, in the zone, out of it) whenever they or
+  the lock change, each with its class's vtable, place on the game's screen, distance and
+  elevation; every damageable trigger's lock-on state as it changes; the camera going into
+  and out of water; and, when L finds nothing, every object more than 15 degrees up within
+  60 metres with its materials and flags.
+- `GCN_FACELOG=1`: the frames in which Samus's face is drawn reflected in the visor, to
+  find one to draw-log.
+
+To find something in a long session, replay it with the log on and dumps sparse
+(`--dump-every=120`), then replay once more with `GCN_DRAWLOG=<frame>`,
+`GCN_DRAWLOG_VERBOSE=1` and `GCN_EYE_FULLFLAT=1` (without it the flat pass leaves out the
+draws the eyes make themselves, and they are missing from the draw log).
