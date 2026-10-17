@@ -1428,6 +1428,17 @@ device as `u092738`, recorded with `GCN_SCANLOG=1`):
   where they stand, and left out of the copy (`gx::EyeLateObject`, told by the marker's
   texture, the other three draws by their position matrix; `scan_icons_over_window 0` in
   vr.txt turns it off). Frame 11400: a red marker in the window that was not there before.
+
+  Worn (`20261017-140518`, back in the plaza, the gaze held on a marker for the last
+  seconds), nothing had changed. The belief was that the marker has one texture; it has
+  two, one per model (critical and non-critical scans), and all six markers of frame 8640
+  had the other one (`7267e5ccc5008f17` against `1b50237ceda41ddf`), so none was drawn
+  last and the window covered them as before. With both textures the 24 draws are drawn
+  last. Drawn with no depth test at all (a temporary switch), the frame was the same, so
+  the depth test hides nothing there. The marker the gaze was on (object 06D9, 56 m off,
+  25 degrees up) is now a faint ring at the window's centre: the game draws markers
+  additively in a translucent orange, which over the totem's orange emblem has little
+  contrast to begin with.
 - **The scan window slid about the HUD's plane and was seen at a slant.** It is now drawn
   turned to face the viewer (`gx::EyeFacing`): its draws are the ortho ones in its band
   whose projection `scan_ortho` translated off centre. Checked by rendering frame 11100

@@ -1447,13 +1447,18 @@ bool is_face_reflection(const gx::EyeDrawFacts& f) {
 // markers inside the window, the region the scan targets, were missing or cut off. They
 // are drawn last instead (gx::EyeLateObject), over the window where they stand, and left
 // out of the copy. Told by the marker's texture; the other three draws go with it, by
-// their position matrix. scan_icons_over_window 0 in vr.txt puts them back.
-constexpr uint64_t kScanMarkerTexture = 0x1b50237ceda41ddfull;
+// their position matrix. There are two markers, two models with a texture each
+// (CPlayerVisor's scan icons for critical and non-critical scans): the first version knew only the one in
+// that frame, and every marker of the other kind -- all six in the plaza at frame 8640 of
+// the session 20261017-140518 -- stayed under the window. scan_icons_over_window 0 in
+// vr.txt puts them back.
+constexpr uint64_t kScanMarkerTextures[] = {0x1b50237ceda41ddfull, 0x7267e5ccc5008f17ull};
 
 bool is_scan_marker(const gx::EyeDrawFacts& f) {
     if (f.ortho) return false;
     for (int i = 0; i < 8; i++)
-        if (f.tex_hash[i] == kScanMarkerTexture) return true;
+        for (uint64_t h : kScanMarkerTextures)
+            if (f.tex_hash[i] == h) return true;
     return false;
 }
 
