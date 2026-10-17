@@ -1408,6 +1408,53 @@ in the replay's build only): from frame 126,500 both weak points are candidates,
 press of L at 126,612 locks on to 1ACF, 55 metres away and 30 degrees up, the reticle on
 the stalactite, where before it found nothing.
 
+## The scan window's markers and slant, the empty lock's reticle (2026-10-17)
+
+Four reports from the session `20261017-092738` (five minutes in the Chozo Ruins' plaza with
+the scan visor, L held with nothing to lock on to at the end, frames 16799-17375; on the
+device as `u092738`, recorded with `GCN_SCANLOG=1`):
+
+- **The scan markers inside the scan window were missing or cut off.** The belief was a
+  failed depth test; it was the order of the draws. `CPlayerVisor::DrawScanEffect` first
+  calls `DrawScanObjectIndicators` (0x801125B8), which draws a small model at each
+  scannable object, in perspective, in the world's band, depth-tested (draws 314-333 of
+  frame 12300: four draws a marker, the fourth textured), then copies the screen around
+  the scan zone and paints the magnified copy over the same place (draw 337, ortho, band
+  1/64-1/32). On a television the copy holds the markers, magnified. In an eye the window,
+  on the HUD frame with no depth test, covered the eye's own markers, and the copy -- the
+  flat view's, magnified about where the gaze lands on the game's screen, in a window the
+  HUD frame makes about 1.3 times larger than the game's -- had them pushed out to the
+  window's edge or past it. The markers are now drawn last in each eye, over the window
+  where they stand, and left out of the copy (`gx::EyeLateObject`, told by the marker's
+  texture, the other three draws by their position matrix; `scan_icons_over_window 0` in
+  vr.txt turns it off). Frame 11400: a red marker in the window that was not there before.
+- **The scan window slid about the HUD's plane and was seen at a slant.** It is now drawn
+  turned to face the viewer (`gx::EyeFacing`): its draws are the ortho ones in its band
+  whose projection `scan_ortho` translated off centre. Checked by rendering frame 11100
+  (gaze 37 degrees right, 15 up, the camera's follow turn 18 right) with the harness head
+  on the recorded gaze (`--eye-yaw=37.07 --eye-pitch=-27.59`, the pitch raised by the
+  13 degrees `--eye-fov=44,55` puts the field's centre below the axis): before, a
+  parallelogram; after, a rectangle. A dump from the harness's own straight-ahead head shows
+  the turned window as a trapezoid, which is right: it faces the gaze, not that head.
+- **Holding L with nothing to lock on to, the reticle was double.** It is draw 273 of frame
+  17220: 792 vertices, 74-77 units ahead, through the first-person camera's own projection,
+  in the HUD's band (1/512-1/64) so that the world never hides it. `hud_band_scale` brought
+  it to a tenth, 7.5 m, in front of a world tens of metres off. A perspective draw in the
+  HUD's band through the camera's projection (the HUD proper has its own, a 65-degree field
+  against 55) is now drawn at its modelled distance (`gx::EyeTrueScale`; the draw log names
+  it `true-scale`; `reticle_true_distance 0` in vr.txt turns it off). With the head 60 cm
+  to the side (`--eye-pos=0.6,0,0`) the old reticle slides across the doorway behind it and
+  the new one stays on it. The same rule catches every `CTargetingManager` reticle in that
+  band, on a locked target too; not yet seen worn.
+- **The HUD's swing started too late.** `camera_follow_reach` is now 0.32 (from 0.64):
+  the camera, and so the HUD, start following at about 10 degrees either side, 6 up or
+  down.
+
+The replays of this session for the checks used a `vr.txt` beside `prime_egl` with
+`camera_follow_reach 0.64`, the value it was recorded with: the follow turn steers the
+game (the scan zone, the lock-on box), so a replay with another reach parts from the
+recording.
+
 ## Still to look at
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.

@@ -238,7 +238,7 @@ bool g_scan_on = true;  // scan_follows_head
 bool g_follow_on = true;  // camera_follows_head
 bool g_lock_follows_gaze = true;  // lock_on_follows_gaze
 struct FollowConfig {
-    float reach = 0.64f;     // camera_follow_reach
+    float reach = 0.32f;     // camera_follow_reach
     float out_rate = 8.0f;   // camera_follow_rate
     float back_rate = 4.0f;  // camera_return_rate
 };
@@ -255,6 +255,9 @@ bool g_cannon_cutaway = true;      // cannon_cutaway
 bool g_screen_filter_on_head = true;  // screen_filter_on_head
 bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
 float g_gaze_pitch_rad = 0.0f;    // scan_gaze_pitch_deg: and this much further up
+bool g_scan_icons_late = true;    // scan_icons_over_window
+bool g_scan_window_faces = true;  // scan_window_faces
+bool g_reticle_true_scale = true; // reticle_true_distance
 
 // gun_x, gun_y and gun_z move the cannon from there, in metres in the controller's frame.
 void config_loaded(const VrConfig& c) {
@@ -272,7 +275,7 @@ void config_loaded(const VrConfig& c) {
     g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
     g_follow_on = c.get("camera_follows_head", 1.0f) != 0.0f;
     g_lock_follows_gaze = c.get("lock_on_follows_gaze", 1.0f) != 0.0f;
-    g_follow.reach = c.get("camera_follow_reach", 0.64f);
+    g_follow.reach = c.get("camera_follow_reach", 0.32f);
     g_follow.out_rate = c.get("camera_follow_rate", 8.0f);
     g_follow.back_rate = c.get("camera_return_rate", 4.0f);
     g_hud_frame = {c.hud_distance_m * u, c.hud_scale, c.hud_height_m * u, c.hud_pitch_deg * 3.14159265f / 180.0f};
@@ -284,6 +287,9 @@ void config_loaded(const VrConfig& c) {
     g_screen_filter_on_head = c.get("screen_filter_on_head", 1.0f) != 0.0f;
     g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
     g_gaze_pitch_rad = c.get("scan_gaze_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
+    g_scan_icons_late = c.get("scan_icons_over_window", 1.0f) != 0.0f;
+    g_scan_window_faces = c.get("scan_window_faces", 1.0f) != 0.0f;
+    g_reticle_true_scale = c.get("reticle_true_distance", 1.0f) != 0.0f;
 }
 
 inline float rd_f(uint32_t a) { const uint32_t u = mem_r32(a); float f; memcpy(&f, &u, 4); return f; }
@@ -1097,10 +1103,10 @@ uint32_t orbit_state_for_turning(uint32_t player) {
 // camera's own projection: about 28 degrees either side and 19 up or down).
 //
 // Where the camera is headed is a function of the gaze alone: straight ahead while the gaze
-// is within camera_follow_reach (a fraction, 0.64: 19 degrees either side, 12 up or down) of
+// is within camera_follow_reach (a fraction, 0.32: 10 degrees either side, 6 up or down) of
 // that region, and past it, turned just far enough to bring the gaze back to that fraction
 // of it -- so looking back pulls the camera home again. (0.8 at first; worn, it was asked to
-// start following a fifth sooner.) It gets there on a critically damped spring, quicker following the gaze
+// start following a fifth sooner, 0.64, and then at half that.) It gets there on a critically damped spring, quicker following the gaze
 // out (camera_follow_rate, 8 a second: a steady head turn is followed a quarter of a second
 // behind) than going back (camera_return_rate, 4), so that it has some weight and eases in
 // and out of its moves. The first version kept the gaze exactly on the region's edge,
@@ -1429,14 +1435,72 @@ bool is_face_reflection(const gx::EyeDrawFacts& f) {
     return false;
 }
 
+// The scan visor's markers. CPlayerVisor::DrawScanObjectIndicators draws a small model at
+// each scannable object, in perspective, in the world's band with the depth test (draws
+// 314-333 of frame 12300 of the session 20261017-092738: four draws a marker, the last of
+// them textured), and then DrawScanEffect copies the screen around the scan zone and
+// paints the magnified copy in its window over the same place. On the screen the copy
+// holds the markers, magnified. In an eye the window, on the HUD frame, covered the
+// eye's own markers, and the copy -- taken from the flat view around where the gaze
+// lands on the game's screen, magnified, in a window the HUD frame makes larger than the
+// game's -- held the flat view's, pushed out towards the window's edge or past it: the
+// markers inside the window, the region the scan targets, were missing or cut off. They
+// are drawn last instead (gx::EyeLateObject), over the window where they stand, and left
+// out of the copy. Told by the marker's texture; the other three draws go with it, by
+// their position matrix. scan_icons_over_window 0 in vr.txt puts them back.
+constexpr uint64_t kScanMarkerTexture = 0x1b50237ceda41ddfull;
+
+bool is_scan_marker(const gx::EyeDrawFacts& f) {
+    if (f.ortho) return false;
+    for (int i = 0; i < 8; i++)
+        if (f.tex_hash[i] == kScanMarkerTexture) return true;
+    return false;
+}
+
+// The scan window, moved to the gaze by translating its orthographic projection
+// (scan_ortho): its draws are the ortho ones in the window's band (1/64-1/32) whose
+// projection is translated off the screen's centre, by less than its half-width (draws
+// 337-349 of that frame; the game's own orthos there are centred). On the HUD frame, flat and fixed to the camera, the window off the frame's
+// centre was seen at a slant; turned to face the viewer (gx::EyeFacing), it is square on
+// to the gaze wherever it goes. scan_window_faces 0 in vr.txt leaves it on the frame.
+bool is_moved_scan_window(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
+    if (!f.ortho || f.band_lo < 0.01f || f.band_hi > 0.04f) return false;
+    const float tx = fabsf(st.proj[1]), ty = fabsf(st.proj[3]);
+    return (tx > 1e-4f || ty > 1e-4f) && tx < 0.99f && ty < 0.99f;
+}
+
+// The targeting reticles (CTargetingManager::Draw, the CCompoundTargetReticle). Holding L
+// with nothing to lock on to draws one far out ahead, where the aim is: draw 273 of frame
+// 17220 of that session, 792 vertices, 74-77 units out, through the first-person camera's
+// own projection but in the HUD's band (1/512-1/64), so that nothing in the world hides
+// it. The HUD layer's scale (hud_band_scale, a tenth) brought it to 7.5 m, in front of a
+// world tens of metres off, and the eyes saw it double. A perspective draw in the HUD's
+// band through the camera's own projection is something placed in the world -- the HUD
+// proper has a projection of its own (a 65-degree field against the camera's 55) -- and
+// is drawn at its modelled distance (gx::EyeTrueScale), in front of everything as before.
+// The camera is the render thread's own find (g_camera_pair). reticle_true_distance 0 in
+// vr.txt scales it with the HUD again.
+bool is_world_marker_in_hud_band(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
+    if (f.ortho || f.band_hi > 0.02f) return false;
+    const uint32_t pair = g_camera_pair.load(std::memory_order_relaxed);
+    if (!pair) return false;
+    const uint32_t camera = mem_r32(pair);
+    if (!is_camera(camera, kFirstPersonCameraVtable)) return false;
+    const float t = tanf(rd_f(camera + kCameraFov) * 0.5f * 3.14159265f / 180.0f);
+    return t > 0.0f && fabsf(st.proj[2] * t - 1.0f) < 1e-3f;
+}
+
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
+    if (g_scan_icons_late && is_scan_marker(f)) return gx::EyeLateObject;
+    if (g_reticle_true_scale && is_world_marker_in_hud_band(st, f)) return gx::EyeTrueScale;
     if (g_screen_filter_on_head && is_screen_filter(f)) return gx::EyeScreen;
     if (g_cannon_cutaway && is_cannon_cutaway(st, f)) return gx::EyeRestore;
     if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return gx::EyeHideDraw;
     if (g_hide_scan_tint && is_scan_tint(st, f)) return gx::EyeHideDraw;
     if (g_visor_film_on_head && is_visor_film(f)) return gx::EyeScreen;
     if (is_face_reflection(f)) return gx::EyeFlat;
+    if (g_scan_window_faces && is_moved_scan_window(st, f)) return gx::EyeFacing;
     if (g_hide_helmet) {
         // The whole model goes with its textured materials: the untextured strips along
         // the top and bottom and the small block by the missile count are drawn with the
