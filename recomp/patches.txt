@@ -27,6 +27,13 @@
 # once SetViewportOrtho has returned.
 80113998 { void prime_scan_copy_src(CPU*); prime_scan_copy_src(c); }
 801139F0 { void prime_scan_ortho(CPU*); prime_scan_ortho(c); } { uint32_t ea = (c->r[28] + (uint32_t)72); double v = LDF32(ea); c->f[1].d = v; c->ps1[1] = v; }
+# The scan markers, tagged for the eyes (src/vr_prime.cpp, is_scan_marker): from
+# CPlayerVisor::DrawScanObjectIndicators once SetViewPointMatrix has returned (its depth
+# range and projection already written, so no earlier draw is left in the gather pipe),
+# through the targeting reticles DrawScanEffect draws next (CTargetingManager::Draw), to
+# where its two paths past that call meet.
+80112798 { void prime_scan_markers(uint32_t); prime_scan_markers(1); } { uint32_t ea = (c->r[2] + (uint32_t)-27172); double v = LDF32(ea); c->f[1].d = v; c->ps1[1] = v; }
+80113834 { void prime_scan_markers(uint32_t); prime_scan_markers(0); } c->r[4] = 0x803F0000u;
 # Locking on in the scan visor would turn the body and the camera to the target: the reads
 # of CPlayer::mOrbitState in CPlayer::UpdateOrbitOrientation and
 # CFirstPersonCamera::UpdateTransform.

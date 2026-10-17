@@ -1446,20 +1446,23 @@ bool is_face_reflection(const gx::EyeDrawFacts& f) {
 // game's -- held the flat view's, pushed out towards the window's edge or past it: the
 // markers inside the window, the region the scan targets, were missing or cut off. They
 // are drawn last instead (gx::EyeLateObject), over the window where they stand, and left
-// out of the copy. Told by the marker's texture; the other three draws go with it, by
-// their position matrix. There are two markers, two models with a texture each
-// (CPlayerVisor's scan icons for critical and non-critical scans): the first version knew only the one in
-// that frame, and every marker of the other kind -- all six in the plaza at frame 8640 of
-// the session 20261017-140518 -- stayed under the window. scan_icons_over_window 0 in
-// vr.txt puts them back.
-constexpr uint64_t kScanMarkerTextures[] = {0x1b50237ceda41ddfull, 0x7267e5ccc5008f17ull};
+// out of the copy. The targeting reticle round what is being scanned, which DrawScanEffect
+// draws next (CTargetingManager::Draw: draws 468-470 of frame 12300 of the session
+// 20261017-162603, a red square in the band at 1/8), was under the window the same way, all
+// but its lower edge. Both are told by where they are drawn: the patches at 0x80112798 (in
+// DrawScanObjectIndicators, once it has set its projection and view) and 0x80113834 (in
+// DrawScanEffect, past the targeting draw) tag the draws between (gx::set_draw_tag), and the
+// perspective ones from the world's band on among them are drawn last. The first versions told them by the marker's
+// texture, but its content hash is not the same from one session to the next
+// (1b50237ceda41ddf, 7267e5ccc5008f17, e450cde4903e4cc6 in the three sessions of
+// 2026-10-17), so in every session but the one it was taken from no marker was found and the
+// window covered them all. scan_icons_over_window 0 in vr.txt puts them back.
+constexpr uint8_t kScanMarkerTag = 1;
 
-bool is_scan_marker(const gx::EyeDrawFacts& f) {
-    if (f.ortho) return false;
-    for (int i = 0; i < 8; i++)
-        for (uint64_t h : kScanMarkerTextures)
-            if (f.tex_hash[i] == h) return true;
-    return false;
+void scan_markers_drawn(bool begin) { gx::set_draw_tag(begin ? kScanMarkerTag : 0); }
+
+bool is_scan_marker(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
+    return st.tag == kScanMarkerTag && !f.ortho && f.band_lo >= 0.12f;
 }
 
 // The scan window, moved to the gaze by translating its orthographic projection
@@ -1497,7 +1500,7 @@ bool is_world_marker_in_hud_band(const gx::PixelState& st, const gx::EyeDrawFact
 
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
-    if (g_scan_icons_late && is_scan_marker(f)) return gx::EyeLateObject;
+    if (g_scan_icons_late && is_scan_marker(st, f)) return gx::EyeLateObject;
     if (g_reticle_true_scale && is_world_marker_in_hud_band(st, f)) return gx::EyeTrueScale;
     if (g_screen_filter_on_head && is_screen_filter(f)) return gx::EyeScreen;
     if (g_cannon_cutaway && is_cannon_cutaway(st, f)) return gx::EyeRestore;
@@ -1673,6 +1676,7 @@ extern "C" void prime_scan_frame(CPU* c) {
 extern "C" void prime_scan_copy_src(CPU* c) { scan_copy_src(c); }
 extern "C" void prime_orbit_box(CPU* c) { c->r[3] = orbit_box_transform(c->r[3], c->r[1]); }
 extern "C" void prime_scan_ortho(CPU* c) { scan_ortho(c); }
+extern "C" void prime_scan_markers(uint32_t begin) { scan_markers_drawn(begin != 0); }
 extern "C" uint32_t prime_orbit_state(uint32_t player) { return orbit_state_for_turning(player); }
 
 // The patch in CFirstPersonCamera::Think (recomp/patches.txt): the camera follows the head.

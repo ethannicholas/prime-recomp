@@ -1439,6 +1439,20 @@ device as `u092738`, recorded with `GCN_SCANLOG=1`):
   25 degrees up) is now a faint ring at the window's centre: the game draws markers
   additively in a translucent orange, which over the totem's orange emblem has little
   contrast to begin with.
+
+  That was wrong twice over. Worn again (`20261017-162603`, the gaze held at the end,
+  frames 12150-12400, on the device as `u20261017-162603`): the markers still vanished
+  under the window, and the red square was cut to its bottom few pixels. The marker's
+  texture had a third hash, `e450cde4903e4cc6`: its content hash is not stable from one
+  session to the next (unlike the helmet's, which is why the hash had been trusted), so a
+  rule by texture finds the markers only in the session it was taken from. And the red
+  square is not a marker but the targeting reticle round what is being scanned, which
+  `DrawScanEffect` draws after the markers and before the window (`CTargetingManager::Draw`,
+  draws 468-470 of frame 12300: three draws in the band exactly at 1/8). Both are now told
+  by where they are drawn: patches at 0x80112798, in `DrawScanObjectIndicators` once it has
+  set its view, and 0x80113834, in `DrawScanEffect` past the targeting draw, tag the draws
+  between (gcn-recomp's `gx::set_draw_tag`), and the perspective ones from the world's band
+  on are drawn last.
 - **The scan window slid about the HUD's plane and was seen at a slant.** It is now drawn
   turned to face the viewer (`gx::EyeFacing`): its draws are the ortho ones in its band
   whose projection `scan_ortho` translated off centre. Checked by rendering frame 11100
