@@ -1480,6 +1480,46 @@ The replays of this session for the checks used a `vr.txt` beside `prime_egl` wi
 game (the scan zone, the lock-on box), so a replay with another reach parts from the
 recording.
 
+## The shader cache's start, the door's freeze, the scan reticle's depth (2026-10-18)
+
+Three reports after `20261018-074206` (a minute from the Phendrana save through two doors;
+on the device as `u20261018-074206`, recorded with `GCN_SCANLOG=1`):
+
+- **Getting through the shader cache took longer as the game went on.** The belief was
+  that programs were compiled at startup; they were not -- every one came from a stored
+  binary (`[shaders] 23673 programs from cache (23673 from binaries, 0 compiled) in 47217
+  ms`, 133 MB). There were too many: keyed by raw registers, each real program came in
+  about ten copies differing only in what a stage past the last or an unused swap table
+  had been left holding. gcn-recomp now makes keys canonical (`docs/graphics.md`, "Shader
+  cache"), which turned that file into 2,193 programs and 13.9 MB, restored in 1.1-1.3 s,
+  with the frame at 2480 identical byte for byte. An old file shrinks on the first start
+  without being thrown away. Restoring on more threads, or lazily, was not needed after.
+- **The game froze when the door opened.** Not shaders, and not the game: `GCN_FRAMETIME=1`
+  showed the render thread spending 487 ms on f2442 uploading the next room's 87 new
+  textures (12.4 MB), and 600 ms on f1912 for 47 (5.7 MB), while the guest waited for it
+  (654 and 581 ms frames). Each texture cost several milliseconds whatever its size, mostly
+  waits in the driver in steps of about 0.76 ms. The cause was the 23,673 resident
+  programs: with the canonical keys the same two batches took 30-41 and 54-62 ms. Uploads
+  also go through immutable storage and an unpack buffer now, worth about a third with
+  the old programs and making the first draw from new textures 2 ms instead of 85-110.
+  Left over in that replay: game-thread frames of 90-190 ms with almost nothing drawn, at
+  the save's load (f1674-1700), after the first room appears (f1932) and at f2309 before
+  the door opens -- the game's own work, not yet looked into; `--sample` is too coarse for
+  them.
+- **A scan marker and the reticle round it stood at different depths.** In
+  `20261017-162603`, frame 12300 (replayed with `camera_follow_reach 0.64` and
+  `scan_icons_over_window 0` to get the draws into the log), the targeted marker is
+  modelled 6.8-7.2 m out and the reticle (`CTargetingManager`, draws 450-452) at 6.97 m
+  round it: the game puts them together. But the reticle is drawn in the band at exactly
+  1/8, inside the foreground layer that `foreground_scale` 0.5 brings halfway to the
+  camera for the arm cannon, so the eyes saw it at about 3.5 m in front of its marker.
+  A late object (`gx::EyeLateObject`) is now drawn at its modelled distance whatever its
+  band, as `EyeTrueScale` is: both at the target. From a head 0.6 m to the side
+  (`--eye-pos=0.6,0,0`) the reticle's outline now frames the marker where before it stood
+  off to one side; from the camera's own place the frame is unchanged. The request was
+  the marker at the reticle's depth; it is the reticle that moved, to the marker's,
+  because that is where the game modelled both and where the object is.
+
 ## Still to look at
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.
