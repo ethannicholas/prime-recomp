@@ -13,6 +13,8 @@ fixed lives in the file for its area (`vr.md`, `graphics.md`, `audio.md`, gcn-re
   bugs left. It is played in stereo, with the arm cannon in the right hand, the scan visor
   and the camera following the head, and the menus, map and morph ball on a stereo
   theater panel. `vr.md` covers how each of those works.
+- **Vision Pro**: a standalone build (`build-visionos.sh`) for PS VR2 Sense controllers or a
+  gamepad, built but not yet run on a device (`vr.md`, "The Vision Pro").
 - **Desktop builds** run on Apple Silicon Macs and Windows (x64 and ARM64; a VM without an
   OpenGL driver renders through Mesa's llvmpipe, slowly). Sound is the game's own, through
   the AX HLE (`audio.md`).

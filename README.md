@@ -1,7 +1,7 @@
 # prime-recomp
 
 A static recompilation of *Metroid Prime* (Nintendo GameCube, 2002) to native code, for
-macOS, Windows (including PCVR) and the Meta Quest 3 (standalone VR). The main goal of this
+macOS, Windows (including PCVR), the Meta Quest 3 and the Apple Vision Pro (standalone VR). The main goal of this
 particular port was getting as close to 'native-feeling' VR as possible.
 
 The game's PowerPC executable is translated ahead of time into C, then compiled and linked
@@ -232,6 +232,68 @@ start_in_stereo 0        # 1 to start in stereo
 gun_follows_hand 1       # the arm cannon in the right hand (0: the game's own aim)
 scan_follows_head 1      # the scan visor's window and target follow the head
 ```
+
+## Running on an Apple Vision Pro
+
+New, and not yet confirmed on a device: see [docs/dev/vr.md](docs/dev/vr.md#the-vision-pro).
+
+### Requirements
+
+- A Mac with Xcode 26 (with the visionOS SDK), CMake, and Python 3.
+- An Apple developer account signed in to Xcode. The build signs with the team in
+  `$GCN_APPLE_TEAM`.
+- The Vision Pro paired with the Mac (Xcode → Window → Devices and Simulators) and in
+  developer mode (Settings → Privacy & Security → Developer Mode).
+
+### Build and install
+
+With your disc image in `rom/`:
+
+```sh
+GCN_APPLE_TEAM=<your team id> ./build-visionos.sh --install --push-image
+```
+
+The first build also builds [ANGLE](https://chromium.googlesource.com/angle/angle) (OpenGL
+ES on Metal) from WebKit's sources, which takes a few minutes. `--push-image` copies the disc
+image into the app's Documents folder. You can instead choose it from the Files app in the
+app's launcher window. The memory card, the shader cache, `vr.txt` and the logs live in the
+same folder, which the Files app shows under *On My Apple Vision Pro*.
+
+### Playing
+
+Open **Prime Recomp** and press *Play*. The game runs in a full immersive space. Leaving
+it, or the game resetting the console (after a game over), closes the app; open it again
+to carry on.
+
+With **PlayStation VR2 Sense controllers**, the arm cannon follows your right hand, as on
+the Quest:
+
+| GameCube | Sense controller |
+|---|---|
+| Control stick | Left stick |
+| C stick | Right stick |
+| A (fire) | Right trigger |
+| B (jump) | Right face button A |
+| Y (missile) | Right face button B |
+| X (morph ball) | Left face button A |
+| Z (map) | Left face button B |
+| R (free look) | Right grip |
+| L (lock-on) | Left trigger |
+| Start | Either menu button |
+| D-pad (visors) | Hold left grip + left stick |
+
+With a **gamepad** (Xbox, PlayStation or MFi), the arm cannon points where you look, and the
+buttons are laid out as on the desktop:
+
+| GameCube | Gamepad |
+|---|---|
+| A / B / X / Y | South / West / East / North face buttons |
+| Z | Right shoulder |
+| L / R | Left / right trigger |
+| Start | Menu |
+| Control stick, C stick, D-pad | Left stick, right stick, D-pad |
+
+`vr.txt` in the app's Documents folder takes the same settings as on the Quest.
 
 ## Repository layout
 

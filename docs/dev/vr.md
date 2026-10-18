@@ -1583,3 +1583,43 @@ on how it fills) or the cutscene running at speed.
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.
 - **The X-ray visor** has not been seen in the headset yet.
+
+## The Vision Pro (2026-10-18)
+
+A standalone Vision Pro build, with PS VR2 Sense controllers or a gamepad. The frontend is
+gcn-recomp's `visionos/` (`gcn-recomp/docs/visionos.md` has how it works): the same frontend
+core the Quest runs, on a small OpenXR runtime of its own over CompositorServices, ARKit and
+GameController, with the renderer on ANGLE. Prime needed nothing new for it.
+`VISIONOS_BUNDLE_ID` in `CMakeLists.txt` turns it on, and `build-visionos.sh` builds,
+installs and pushes the disc image.
+
+Built and linked, not yet run on a device: signing was blocked on the developer account's
+pending license agreement, and no Vision Pro was paired with the Mac.
+
+- **There is no GL on visionOS.** The first build was written for Apple's OpenGL ES 3.0,
+  since `OpenGLES.framework` is in the visionOS SDK. It does not compile: `EAGLContext` is
+  unavailable to native visionOS apps (it is there for iPad apps). So the renderer runs on
+  ANGLE's Metal backend at GL ES 3.0. Its two needs beyond 3.0 have fallbacks:
+  `glDrawElementsBaseVertex` comes from the OES or EXT extension, and failing those each
+  draw's base vertex is added into its indices on upload. That fallback first re-pointed
+  the vertex arrays at the base vertex instead, which broke the HUD, the cannon and the sky
+  (a base vertex is often negative). Forced on the desktop, the corrected fallback renders
+  frame 10000 of `routes/new-game` byte-identical to the normal path.
+- **The controllers.** A Sense controller is mapped onto the Touch profile the core
+  suggests, so Prime's `map_pad` sees the same layout as on a Quest, and the cannon follows
+  the right hand through ARKit's accessory tracking. Which physical button the SDK calls A
+  and B on each hand (Cross and Circle on the right, Square and Triangle on the left, it is
+  assumed) is to be confirmed: the log lists each controller's element names on connect.
+- **A gamepad** is merged after `map_pad` with the desktop's plain GameCube layout. No hand
+  pose is published, so the game keeps its own aim: the cannon points with the camera,
+  which follows the head.
+- **Dying ends the app.** A game over resets the console, and on a Quest the app relaunches
+  itself; visionOS gives an app no way to do that.
+
+To look at on the first run: whether the views line up (the field each eye is given is
+read off the compositor's projection), the theater panel's size and distance, the colour
+(the eye images are composited through an sRGB view), the Sense mapping, and the frame
+rate. `eye_scale` 1.2 and `msaa` 2 are the Quest's numbers, and the eyes are sized from the
+compositor's drawable with foveation off. `log.txt` in the app's Documents folder, pulled
+with `xcrun devicectl device copy from --domain-type appDataContainer --domain-identifier
+com.ethannicholas.prime --source Documents/log.txt --destination .`, has the run's output.
