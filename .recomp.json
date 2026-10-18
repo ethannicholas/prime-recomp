@@ -10,7 +10,7 @@
     "sha1": "1a737910b55b59c6ad91be9e3e3c43517fd52efb"
   },
   "project": "prime-recomp",
-  "status": "in-progress",
+  "status": "complete",
   "targets": [
     "macOS",
     "Windows",
@@ -18,6 +18,7 @@
   ],
   "toolchain": "gcn-recomp",
   "approach": "Static recompilation of the PowerPC executable to C, linked against a runtime that stands in for the GameCube hardware",
+  "notes": "Playable from start to finish, with no known significant bugs; first beaten, in VR on a Meta Quest 3, on 2026-10-18. Work continues on a steadier frame rate in the headset.",
   "tags": [
     "VR"
   ],

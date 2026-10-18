@@ -5,13 +5,14 @@ current state belongs here: a fixed problem leaves this file, and how it was fou
 fixed lives in the file for its area (`vr.md`, `graphics.md`, `audio.md`, gcn-recomp's
 `docs/`) and in the history.
 
-## Where it stands (2026-10-16)
+## Where it stands (2026-10-18)
 
-- **Played in the headset.** The Quest 3 app is the main way the game is played: sessions
-  of an hour and more, from the frigate through the Chozo Ruins, Magmoor Caverns and
-  Phendrana Drifts, in stereo, with the arm cannon in the right hand, the scan visor and
-  the camera following the head, and the menus, map and morph ball on a stereo theater
-  panel. `vr.md` covers how each of those works.
+- **Complete: beaten from start to finish in the headset.** The game was played through to
+  the credits on the Quest 3 in sessions of an hour and more, ending with the Metroid
+  Prime fight in the Impact Crater (`inputs/20261018-090925`), with no known significant
+  bugs left. It is played in stereo, with the arm cannon in the right hand, the scan visor
+  and the camera following the head, and the menus, map and morph ball on a stereo
+  theater panel. `vr.md` covers how each of those works.
 - **Desktop builds** run on Apple Silicon Macs and Windows (x64 and ARM64; a VM without an
   OpenGL driver renders through Mesa's llvmpipe, slowly). Sound is the game's own, through
   the AX HLE (`audio.md`).
@@ -26,10 +27,13 @@ fixed lives in the file for its area (`vr.md`, `graphics.md`, `audio.md`, gcn-re
 
 ## Known broken
 
+- **The frame rate in the headset** is not steady: the play-through's last session ran at
+  about 45 game frames a second through most rooms and about 32 in the final battle
+  (`vr.md`, "The play-through's frame rate").
 - **NES Metroid** (the Fusion-link bonus) cannot run: it is a REL module (`NESemuP.rel`)
   loaded at runtime, and the recompiler translates only `main.dol`.
 
-Seen early on the desktop and not re-checked since, so possibly gone:
+Seen early on the desktop and not re-checked since, minor and possibly gone:
 
 - Main menu text doubled and striped (2026-10-07).
 - Thin orange hairlines across the frigate's exterior and hangar (2026-10-08).
@@ -38,6 +42,5 @@ Seen early on the desktop and not re-checked since, so possibly gone:
 
 ## Next milestones
 
-1. VR: a steady frame rate in stereo on the Quest 3 in the heaviest rooms (`vr.md`,
-   "Performance" and "The Chozo Ruins").
-2. Play on through the game in the headset and fix what turns up.
+1. VR: a steady frame rate in stereo on the Quest 3, the final battle first (`vr.md`,
+   "Performance", "The Chozo Ruins" and "The play-through's frame rate").

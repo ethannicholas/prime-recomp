@@ -45,8 +45,10 @@ The build verifies this hash and stops with an error for any other version.
 
 ## Status
 
-Early. The game boots and runs its startup; see `docs/dev/status.md` for how far it gets and
-what is known not to work.
+Complete. The whole game is playable from start to finish, with no known significant bugs;
+it was first beaten in VR on a Meta Quest 3 on 2026-10-18. The one thing that does not run is
+the bonus NES *Metroid*. In the headset the frame rate still dips in the heaviest scenes,
+which is being worked on. `docs/dev/status.md` has the details.
 
 ## Building
 
