@@ -1,18 +1,17 @@
 # prime-recomp
 
 A static recompilation of *Metroid Prime* (Nintendo GameCube, 2002) to native code, for
-macOS, Windows and the Meta Quest 3 (in VR).
+macOS, Windows (including PCVR) and the Meta Quest 3 (standalone VR). The main goal of this
+particular port was getting as close to 'native-feeling' VR as possible.
 
 The game's PowerPC executable is translated ahead of time into C, then compiled and linked
-against a runtime that stands in for the GameCube hardware (graphics, audio, DVD, controllers,
-memory card). The result is a native program that runs the original game logic without an
-emulator's CPU core. The recompiler and runtime are
-[gcn-recomp](https://github.com/ethannicholas/gcn-recomp).
+against a runtime that provides virtual GameCube hardware (graphics, audio, DVD, controllers,
+memory card). The result is a native program that runs without an emulator. The recompiler
+and runtime are [gcn-recomp](https://github.com/ethannicholas/gcn-recomp).
 
 > **This repository contains no game code or data.** You must supply your own disc image,
-> dumped from a copy of the game that you own. The build process reads the executable out of
-> *your* image and recompiles it locally. No game code or assets are distributed here; what
-> this repository holds about the game is a table of its function addresses and names.
+> legally dumped from your own copy of the game. The build process reads the executable out
+> of your image and recompiles it locally. No game code or assets are distributed here.
 
 ## License
 
@@ -41,14 +40,10 @@ Only the North American Rev 2 release (v1.02, the *Player's Choice* disc) is sup
 |---|---|---|
 | Metroid Prime (USA) (Rev 2) | `GM8E01` | `39a2f928159ad46491e9b1ef0a72613d91e0cc40` |
 
-The build verifies this hash and stops with an error for any other version.
-
 ## Status
 
-Complete. The whole game is playable from start to finish, with no known significant bugs;
-it was first beaten in VR on a Meta Quest 3 on 2026-10-18. The one thing that does not run is
-the bonus NES *Metroid*. In the headset the frame rate still dips in the heaviest scenes,
-which is being worked on. `docs/dev/status.md` has the details.
+Complete. The whole game is playable from start to finish, with no known significant bugs.
+`docs/dev/status.md` has further details.
 
 ## Building
 
@@ -137,7 +132,7 @@ beside `prime.exe`: `opengl32.dll`, `libgallium_wgl.dll` and the DLLs they load,
 `mingw-w64-clang-aarch64-mesa` package on ARM64. Set `GALLIUM_DRIVER=llvmpipe` to skip its
 attempt to find a Vulkan device first. It is slow, but it renders correctly.
 
-## Controls
+## Controls (Windows / MacOS)
 
 | GameCube | Keyboard | Controller |
 |---|---|---|
@@ -190,28 +185,25 @@ time. The memory card and the shader cache live there too, and survive reinstall
 
 ### Playing
 
-The app appears under **Library → Unknown Sources → Prime Recomp**. Menus, cinematics and
-the morph ball are shown on a flat screen in front of you; first-person play switches to
-stereo 3D by itself. Clicking the left thumbstick switches by hand, until the game next
-changes view. In stereo the arm cannon is in your right hand and fires where it points, and
-the scan visor's window follows your head: look at something to scan it, no free look needed.
+The app appears under **Library → Unknown Sources → Prime Recomp**. The game will seamlessly switch
+between full 3D and a (still stereoscopic) 2D "theater mode" as needed.
 
 | GameCube | Touch controller |
 |---|---|
 | Control stick | Left thumbstick |
 | C stick | Right thumbstick |
-| A (fire) | Right trigger; on the pause and map screens it is R instead |
-| B (jump) | A (right) while playing; on the menus and the pause and map screens A selects |
-| Y (missile) | B (right) while playing; on the menus and the pause and map screens B goes back |
+| A (fire) | Right trigger |
+| B (jump) | A (right) |
+| Y (missile) | B (right)  |
 | X (morph ball) | X (left) |
 | Z (map) | Y (left) |
 | R (free look) | Right grip |
 | L (lock-on) | Left trigger |
 | Start | Menu (left) |
 | D-pad (visors) | Hold left grip + left thumbstick |
-| *(flat screen / stereo, by hand)* | Left thumbstick click |
 
-`adb logcat -s prime` shows the app's log.
+On the map and menu screens, the controls change to better match the on-screen legend (e.g. the L
+and R triggers become the GameCube's L and R triggers on the map screen).
 
 ### Tuning the VR view
 

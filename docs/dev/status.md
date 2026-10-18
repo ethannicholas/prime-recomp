@@ -33,13 +33,6 @@ fixed lives in the file for its area (`vr.md`, `graphics.md`, `audio.md`, gcn-re
 - **NES Metroid** (the Fusion-link bonus) cannot run: it is a REL module (`NESemuP.rel`)
   loaded at runtime, and the recompiler translates only `main.dol`.
 
-Seen early on the desktop and not re-checked since, minor and possibly gone:
-
-- Main menu text doubled and striped (2026-10-07).
-- Thin orange hairlines across the frigate's exterior and hangar (2026-10-08).
-- Grey rather than black letterbox bars on the intro's gunship close-up (2026-10-07).
-- The `[OS] UART:` log lines drop characters (`rotecting stack`); cosmetic.
-
 ## Next milestones
 
 1. VR: a steady frame rate in stereo on the Quest 3, the final battle first (`vr.md`,
