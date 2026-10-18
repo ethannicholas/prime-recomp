@@ -1579,6 +1579,27 @@ DMA until the game queued made it worse (each block waited, repeated anyway, and
 sound came up short). The way out is either making that player's refill keep up (a hook
 on how it fills) or the cutscene running at speed.
 
+**What sets the cutscene's pace.** Replayed in the app with `GCN_SCHEDLOG=1` (the replay
+held to the recording's 38-41 fps), the guest thread ran about 16 ms a frame, the transform
+workers 9.5 each, the frame loop 8.5 and the front end 7, none of them short of a core (a
+millisecond or two a frame waiting runnable). So it is the guest, at 2208 MHz; the harness's
+14 ms at 2361 agrees. An unpaced harness run had first suggested the front end: there the
+guest runs ahead with nothing to wait for, so its stalls read zero, and the profile's shares
+are only relative. Baton handoffs between the guest's host threads: none in this stretch
+(`GCN_SWITCHLOG`).
+
+The guest's profile over the shot (`GCN_PROFILE_DELAY` at its start, outermost function):
+the game's own code 65%, spread over hundreds of functions none above 3.2%; the rest the
+runtime, most of it the path every 32-byte gather-pipe line takes (`gp_store32`,
+`cp_drain`, `skim`, `cp_watermarks`, `dma_fit`, `pi_set_interrupt`), about a fifth of the
+thread. Trimmed in gcn-recomp (an unchanged interrupt cause no longer pays for atomic
+updates, the line's common case kept short) together with the transform's work shared by
+chunk, the shot went from 69-72 to 73-76 fps unpaced in the harness, 14.0-14.5 to 13.1-13.7
+ms a frame on the guest, frames byte-identical. At the app's clock that is about 14.3 ms
+against the 16.7 of a frame at 60: not yet measured in the app. Still to try: the line path
+batched (the drain deferred to reads of the CP and PE registers and the syncs, which the
+frame protocol makes delicate), and the recompiled code's memory accesses.
+
 ## Still to look at
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.
