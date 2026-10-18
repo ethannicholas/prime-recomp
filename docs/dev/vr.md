@@ -1513,12 +1513,15 @@ on the device as `u20261018-074206`, recorded with `GCN_SCANLOG=1`):
   round it: the game puts them together. But the reticle is drawn in the band at exactly
   1/8, inside the foreground layer that `foreground_scale` 0.5 brings halfway to the
   camera for the arm cannon, so the eyes saw it at about 3.5 m in front of its marker.
-  A late object (`gx::EyeLateObject`) is now drawn at its modelled distance whatever its
-  band, as `EyeTrueScale` is: both at the target. From a head 0.6 m to the side
-  (`--eye-pos=0.6,0,0`) the reticle's outline now frames the marker where before it stood
-  off to one side; from the camera's own place the frame is unchanged. The request was
-  the marker at the reticle's depth; it is the reticle that moved, to the marker's,
-  because that is where the game modelled both and where the object is.
+  The first fix drew every late object (`gx::EyeLateObject`) at its modelled distance,
+  so the reticle stood with its marker at the target, 7 m out. Worn, that was wrong: both
+  are seen inside the scan window, a panel about a metre or two away, and something
+  framed by the panel's outline but metres behind it is uncomfortable to look at. Now a
+  late object the game puts inside the window's box is drawn on the window's plane, scaled
+  about the viewer (same direction, same angular size); the markers outside the window
+  stay in the world. At frame 12300 the targeted marker and the reticle (states 366-369,
+  382-383) are `late(at-panel)` in the eye draw log, the other three markers
+  `true-scale`. Confirmed in the headset.
 
 ## Still to look at
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
