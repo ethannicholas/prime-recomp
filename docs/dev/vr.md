@@ -1523,6 +1523,62 @@ on the device as `u20261018-074206`, recorded with `GCN_SCANLOG=1`):
   382-383) are `late(at-panel)` in the eye draw log, the other three markers
   `true-scale`. Confirmed in the headset.
 
+## The play-through's frame rate (2026-10-18)
+
+The play-through ended in `inputs/20261018-090925` (70 minutes to the credits) with two
+reports: a lot of stutter, and serious slowdown in the final battle, bad enough that the
+sound broke up every time the Metroid Prime core used its blast ring.
+
+**The belief that the session ran at about 45 frames a second was wrong.** Its log has a
+catch-up jump nearly every frame, and counting each jump's milliseconds as lost time put
+most of the session at 40-47 and the battle at 32-40. But a jump follows any real-time wait
+of the guest's (gcn-recomp `docs/diagnostics.md`, "The clock"), not only lost frames: the
+session presented 246,350 frames in 4,181 s, 58.9 a second, and replayed in the headset
+app its first 60,000 frames ran at 59.4 frames per virtual second. The harness replay
+(unpaced, `--eye --eyes=2 --eye-size=2016x2112 --msaa=2`, exact to the console reset after
+the credits) ran most of the session at 75-160 fps and the battle at 80-125. Two frames of
+200 ms every nine in that first replay were the harness itself (`GCN_EYE_GPU` with PNG
+dumps): a second replay without them had none. Thread hints, tried in case the app's
+threads were being scheduled badly beside the compositor, made no difference either way.
+
+**The stutter** in the large is the 60-on-72 cadence: one game frame in five stays up for
+two display frames. 120 Hz made it no better (about half the frames held for exactly two)
+and cost frames where the render thread's stereo frame passed 8.3 ms, so `display_hz`
+stays at the runtime's default (gcn-recomp `docs/graphics.md`, "The display's refresh rate").
+
+**The battle**, recorded again from the last save with the timing logs on in the app
+(`20261018-125627`):
+
+- *The blast ring is a GPU burst.* At each blast the eyes' GPU time went from 3-8 ms a frame
+  to 29-79 (the compositor's `App=`), for a second or two; the harness reproduced it, 61 ms
+  at its 690 MHz at frames 35,022-35,037. The frame (draw log at 35,031) is the view
+  washed orange by a few dozen additive particle draws (blend `000439`/`0004B9`) whose
+  boxes surround the camera, each covering most of the eye. At half the eye's width and
+  height the same frames took about 21 ms: fill. Dynamic resolution (gcn-recomp
+  `docs/graphics.md`) now holds the eyes under 13 ms; at the blasts in the next session it
+  went to 0.5 and the GPU stayed at 10-12 ms.
+- *The sound broke up for two more reasons.* The ring's 60 ms cushion did not cover the
+  guest's 40-60 ms waits on a slow render stage (now 100 ms); and in the heaviest stretches
+  -- the thermal visor with the Hyper Beam, frames 40,111-40,809 of `20261018-143012`, and
+  the cutscene after the core tears the Phazon Suit off -- 60-87% of virtual time was
+  jumps, the AI DMA's catch-up could not repay the backlog, and the runtime threw it away.
+  The benchmark replaying that session delivered 18,700-29,000 sample frames a second of
+  32,000 there. Fixed in gcn-recomp ("The clock"); the same replay then delivered the full
+  rate through all 101 of its seconds with 600 ms or more of jumps, and the battle played
+  through clean (`20261018-151043`).
+
+**Still open: crackle in the final cutscene** (the burning temple grounds, frames
+51,317-52,085 of `20261018-151043`). The cutscene is on the theater panel and CPU-bound
+-- 17,000-18,000 GX draws and 120,000-128,000 vertices a frame, the guest at 24-26 ms, the
+transform 15-17 -- so it runs at 36-41 frames a second, with the sound delivered in full and
+the ring never dry. But `GCN_AIDWAV` on the benchmark's replay shows one block in ten
+played twice in a row: the DMA alternates two buffers 0x980 bytes apart there, not MusyX's
+four of 0x280, so the music is `CStaticAudioPlayer`'s (its `AICallback`, 0x8036D4AC), and
+it has not refilled the next buffer when catch-up blocks come close together. Holding the
+DMA until the game queued made it worse (each block waited, repeated anyway, and the
+sound came up short). The way out is either making that player's refill keep up (a hook
+on how it fills) or the cutscene running at speed.
+
 ## Still to look at
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
   top of the viewer's own head.

@@ -218,8 +218,12 @@ far_m 1000
 hud_distance_m 4         # where the game's 2D elements hang, and how much of the view
 hud_scale 0.5            #   they fill
 foreground_scale 0.5     # how much nearer and smaller the arm cannon and visor are drawn
-eye_scale 1.4            # eye resolution, times what the headset recommends
-msaa 4                   # antialiasing samples per pixel in stereo
+eye_scale 1.2            # eye resolution, times what the headset recommends
+msaa 2                   # antialiasing samples per pixel in stereo
+gpu_budget_ms 13         # the eyes draw fewer pixels when they take the GPU longer than
+                         #   this many milliseconds (0: always full size)
+min_eye_res 0.5          #   down to at most this fraction of each side
+display_hz 0             # the display's refresh rate (0: the headset's default)
 theater_scale 3          # supersampling of the flat screen
 stereo_scale 1           # resolution of what stereo copies out of the flat pass, such as
                          #   the scan visor's magnified window: 2 doubles it

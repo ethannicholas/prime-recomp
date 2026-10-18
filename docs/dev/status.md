@@ -27,13 +27,16 @@ fixed lives in the file for its area (`vr.md`, `graphics.md`, `audio.md`, gcn-re
 
 ## Known broken
 
-- **The frame rate in the headset** is not steady: the play-through's last session ran at
-  about 45 game frames a second through most rooms and about 32 in the final battle
-  (`vr.md`, "The play-through's frame rate").
+- **Crackle in the ending's burning-temple shot**: the streamed music's buffers are played
+  twice when that CPU-heavy cutscene runs at 36-41 frames a second (`vr.md`, "The
+  play-through's frame rate").
+- **Judder in the headset**: the game's 60 frames on the display's 72 Hz, one frame in five
+  held twice. A few CPU-heavy stretches dip to 45-50 frames a second, now without breaking
+  the sound.
 - **NES Metroid** (the Fusion-link bonus) cannot run: it is a REL module (`NESemuP.rel`)
   loaded at runtime, and the recompiler translates only `main.dol`.
 
 ## Next milestones
 
-1. VR: a steady frame rate in stereo on the Quest 3, the final battle first (`vr.md`,
-   "Performance", "The Chozo Ruins" and "The play-through's frame rate").
+1. VR: the guest paced on the display's frame timing, for an even cadence; the ending
+   cutscene's crackle (`vr.md`, "The play-through's frame rate").
