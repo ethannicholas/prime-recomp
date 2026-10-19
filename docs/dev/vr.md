@@ -1676,3 +1676,32 @@ rate. `eye_scale` 1.2 and `msaa` 2 are the Quest's numbers, and the eyes are siz
 compositor's drawable with foveation off. `log.txt` in the app's Documents folder, pulled
 with `xcrun devicectl device copy from --domain-type appDataContainer --domain-identifier
 com.ethannicholas.prime --source Documents/log.txt --destination .`, has the run's output.
+
+## The Vision Pro on a device (2026-10-19)
+
+Installed and played from the start through the Hive Mecha. What the device overturned in
+the frontend itself (the scene role, depth 0 as "no content", the eyes' image rect, frames
+with no drawables, the audio session) is in `gcn-recomp/docs/visionos.md`. For Prime:
+
+- **A gamepad plays the game straight.** The belief above was that with no hand pose the
+  cannon pointing with the camera, which follows the head, would do. In the headset it
+  aimed and moved the HUD with the gaze, which a gamepad player does not expect. With a
+  gamepad (`vr::gamepad_play()`, which the frontend sets while no tracked controller is
+  in hand) the camera does not turn with the head (`turn_camera`), the scan visor does not
+  follow it (`head_screen_point`) and the lock-on box does not orbit with it
+  (`orbit_box_transform`). Culling still follows the eyes: it decides only what is drawn.
+- **The cannon moves for a gamepad.** At the console's position it felt shoved into the
+  face. `gamepad_gun_x`, `gamepad_gun_y`, `gamepad_gun_z` in `vr.txt` (metres, x right, y
+  up, z back from the camera; defaults 0.2032 and -0.2032 and 0, eight inches right and
+  down) move the cannon from where the game put it, in `aim_gun`, after the game rebuilds
+  `mXf` each frame, so the shift does not accumulate. A tracked controller keeps the
+  cannon on the controller and ignores them.
+- **Stutter was shader builds, at about 90 ms each through ANGLE.** They are now built in
+  the background and the draw waits out of the frame (gcn-recomp's graphics.md, "Programs
+  built in the background"). What that left visible: the Hive Mecha's water vanished a
+  dozen times through the fight. That was not the game: one material's program came in
+  five variants differing only in konstant selectors its stages never read, and every
+  program in view was built again whenever the room's fog changed. Both are uniforms now;
+  the fight's 60 new programs were 21 after the first fix, and both sessions' 494 are 160
+  after the second. The water's rising cutscene still blinked after the first fix, and is
+  the one to watch.

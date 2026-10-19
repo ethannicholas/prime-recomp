@@ -224,6 +224,9 @@ struct GunConfig {
     float pitch_rad = 0.0f;        // gun_pitch_deg: the cannon's tilt against the controller
     bool on = true;                // gun_follows_hand
     int smoothing = 3;             // gun_smoothing: game frames the hand is averaged over
+    // gamepad_gun_x/y/z: with a gamepad in stereo, how far the game's own cannon is moved,
+    // in units in the camera's frame (right, forward, up) before foreground_scale.
+    float pad_offset[3] = {};
     bool loaded = false;
 };
 GunConfig g_gun;
@@ -267,6 +270,13 @@ void config_loaded(const VrConfig& c) {
     for (int i = 0; i < 3; i++) g_gun.offset[i] = u * nudge[i] - g_gun.scale * kCannonFromXf[i];
     g_gun.pitch_rad = c.get("gun_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
     g_gun.on = c.get("gun_follows_hand", 1.0f) != 0.0f;
+    // Metres as the viewer sees them, x right, y up, z back: 8 inches right and 8 down,
+    // out of the face, where the console's place for it put it in the headset.
+    const float pad[3] = {c.get("gamepad_gun_x", 0.2032f), c.get("gamepad_gun_y", -0.2032f),
+                          c.get("gamepad_gun_z", 0.0f)};
+    g_gun.pad_offset[0] = u * pad[0] / g_gun.scale;
+    g_gun.pad_offset[1] = -u * pad[2] / g_gun.scale;
+    g_gun.pad_offset[2] = u * pad[1] / g_gun.scale;
     const int n = (int)c.get("gun_smoothing", 3.0f);
     g_gun.smoothing = n < 1 ? 1 : n > kMaxSmoothing ? kMaxSmoothing : n;
     g_gun.loaded = true;
@@ -411,6 +421,17 @@ bool stand_in_hand(vr::HandPose* out) {
 }
 
 void config_defaults(VrConfig& c);
+bool stand_in_eyes(vr::EyeView ev[2]);
+
+// Moves the game's own cannon, where it put it this frame, by gamepad_gun_* in the camera's
+// frame. The game builds mXf afresh every frame before the hook, so this does not add up.
+void offset_rest(uint32_t gun, const float cam[12]) {
+    for (int i = 0; i < 3; i++) {
+        const uint32_t t = gun + kGunXf + 16 * i + 12;
+        wr_f(t, rd_f(t) + cam[4 * i] * g_gun.pad_offset[0] + cam[4 * i + 1] * g_gun.pad_offset[1] +
+                    cam[4 * i + 2] * g_gun.pad_offset[2]);
+    }
+}
 
 // The desktop reads no vr.txt; it gets the defaults the headset would start from.
 void ensure_config() {
@@ -438,14 +459,19 @@ void aim_gun(uint32_t gun) {
     static vr::HandPose last_hand;
     static bool have_last = false;
     vr::HandPose hand;
-    const bool tracked = g_gun.on && (vr::hand_pose(vr::kRightHand, &hand) || stand_in_hand(&hand));
+    // With a gamepad the cannon is the game's, moved out of the face (gamepad_gun_*) while
+    // the eyes are drawn; no controller's pose, current or last, places it.
+    const bool pad = vr::gamepad_play();
+    const bool tracked = g_gun.on && !pad && (vr::hand_pose(vr::kRightHand, &hand) || stand_in_hand(&hand));
     smooth_hand(&hand, tracked);
     if (tracked) {
         last_hand = hand;
         have_last = true;
-    } else if (g_gun.on && have_last) {
+    } else if (g_gun.on && !pad && have_last) {
         hand = last_hand;
     } else {
+        vr::EyeView ev[2];
+        if (pad && (vr::eye_views(ev) || stand_in_eyes(ev))) offset_rest(gun, cam);
         if (log) log_rest(gun, cam);
         return;
     }
@@ -802,7 +828,7 @@ void project(const float d[3], const float k[2], float n[2]) {
 //    frontend does.
 bool head_screen_point(float out[2], bool on_hud_frame = false) {
     ensure_config();
-    if (!g_scan_on) return false;
+    if (!g_scan_on || vr::gamepad_play()) return false;
     vr::EyeView ev[2];
     if (!camera_eyes(ev)) return false;
     const uint32_t pair = guest_camera_pair();
@@ -1203,7 +1229,8 @@ void turn_camera(uint32_t camera, float dt) {
                     h, g_turn.yaw * 57.2958f, g_turn.pitch * 57.2958f);
         }
     }
-    if (!g_follow_on || !eyes) {
+    // With a gamepad the camera is the game's: the head only looks around it.
+    if (!g_follow_on || !eyes || vr::gamepad_play()) {
         g_turn.yaw = g_turn.pitch = g_turn.yaw_rate = g_turn.pitch_rate = 0.0f;
     } else if (camera_tangents(camera, k) && window_reach(lim)) {
         float g[3];
@@ -1641,7 +1668,7 @@ extern "C" void prime_face_drawn(void) {
 // lock_on_follows_gaze 0 in vr.txt gives the game's box back.
 uint32_t orbit_box_transform(uint32_t xf, uint32_t sp) {
     ensure_config();
-    if (!g_lock_follows_gaze || !in_ram(xf) || gx_frames_submitted() - g_last_eyes_frame > 1) return xf;
+    if (!g_lock_follows_gaze || vr::gamepad_play() || !in_ram(xf) || gx_frames_submitted() - g_last_eyes_frame > 1) return xf;
     float g[3], local[3], m[12], fwd[3];
     gaze(g_last_eyes, g);
     eye_to_camera(g, local);
