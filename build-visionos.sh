@@ -7,8 +7,9 @@
 #
 # Signing uses the Apple development team in $GCN_APPLE_TEAM (default Y3GFBT2WQ2); Xcode
 # makes the provisioning profile. The Vision Pro must be paired with this Mac (Xcode >
-# Devices and Simulators) and in developer mode. $GCN_DEVICE names it when more than one
-# device is paired.
+# Devices and Simulators) and in developer mode; $GCN_DEVICE names it when more than one
+# device is paired. Xcode builds for it only once it has the visionOS platform matching its
+# SDK (xcodebuild -downloadPlatform visionOS).
 set -e
 cd "$(dirname "$0")"
 if [ ! -f gcn-recomp/CMakeLists.txt ]; then
@@ -21,10 +22,6 @@ if [ ! -d build-visionos/prime.xcodeproj ]; then
   cmake -S . -B build-visionos -G Xcode -DCMAKE_SYSTEM_NAME=visionOS \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 -DGCN_APPLE_TEAM="$TEAM"
 fi
-xcodebuild -project build-visionos/prime.xcodeproj -target prime -configuration RelWithDebInfo \
-  -sdk xros -allowProvisioningUpdates -quiet build
-APP=build-visionos/RelWithDebInfo-xros/prime.app
-echo "built $APP"
 
 device() {
   if [ -n "$GCN_DEVICE" ]; then echo "$GCN_DEVICE"; return; fi
@@ -32,15 +29,27 @@ device() {
     | awk '/RealityDevice|Vision/ {print $1; exit}'
 }
 
+# Built for the paired Vision Pro when there is one, so that Xcode registers it with the team
+# and puts it in the provisioning profile; a profile without it cannot be installed on it.
+DEST="generic/platform=visionOS"
+DEV=$(device)
+if [ -n "$DEV" ]; then
+  UDID=$(xcrun devicectl device info details --device "$DEV" 2>/dev/null | awk '$2 == "udid:" {print $3; exit}')
+  [ -n "$UDID" ] && DEST="id=$UDID"
+fi
+# A scheme, not -target: a target build ignores -destination.
+xcodebuild -project build-visionos/prime.xcodeproj -scheme prime -configuration RelWithDebInfo \
+  SYMROOT="$PWD/build-visionos" -destination "$DEST" -allowProvisioningUpdates -allowProvisioningDeviceRegistration -quiet build
+APP=build-visionos/RelWithDebInfo-xros/prime.app
+echo "built $APP"
+
 for arg in "$@"; do
   case "$arg" in
   --install)
-    DEV=$(device)
     [ -n "$DEV" ] || { echo "no Vision Pro paired" >&2; exit 1; }
     xcrun devicectl device install app --device "$DEV" "$APP"
     ;;
   --push-image)
-    DEV=$(device)
     [ -n "$DEV" ] || { echo "no Vision Pro paired" >&2; exit 1; }
     IMG=$(ls rom/*.iso rom/*.ciso 2>/dev/null | head -1)
     [ -n "$IMG" ] || { echo "no disc image in rom/" >&2; exit 1; }
