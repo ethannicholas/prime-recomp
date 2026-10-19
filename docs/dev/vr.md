@@ -1595,8 +1595,16 @@ runtime, most of it the path every 32-byte gather-pipe line takes (`gp_store32`,
 thread. Trimmed in gcn-recomp (an unchanged interrupt cause no longer pays for atomic
 updates, the line's common case kept short) together with the transform's work shared by
 chunk, the shot went from 69-72 to 73-76 fps unpaced in the harness, 14.0-14.5 to 13.1-13.7
-ms a frame on the guest, frames byte-identical. At the app's clock that is about 14.3 ms
-against the 16.7 of a frame at 60: not yet measured in the app. Still to try: the line path
+ms a frame on the guest, frames byte-identical. Measured in the app by replaying
+`20261018-151043` unpaced (`GCN_TIMESCALE=0`, so the app runs as fast as it can rather than
+at the recording's pace): the cutscene ran at 52-57 game frames a second where the
+recording had 38-41, and the session's other heavy stretch (frame 11,300, 41 in the
+recording) at 59-61. The app's threads only ever ran on cores 3-5, and there the five busy
+ones wanted more than three cores: the guest 830-900 ms of each second running and
+90-190 waiting for a core, the transform workers 300-390 ms each waiting. The transform at
+a lower priority (gcn-recomp `GCN_WORKER_NICE`) halved the guest's wait, 55.6 frames a
+second against 54.6. The guest needs about 15.8 ms of CPU a frame there, so 60 needs its
+work cut by a tenth or more. Still to try: the line path
 batched (the drain deferred to reads of the CP and PE registers and the syncs, which the
 frame protocol makes delicate), and the recompiled code's memory accesses.
 
