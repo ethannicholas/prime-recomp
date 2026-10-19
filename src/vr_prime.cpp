@@ -44,6 +44,7 @@
 #include "runtime.h"
 #include "vr_game.h"
 #include "hw/pad.h"
+#include "input_log.h"
 #include <atomic>
 #include <cmath>
 #include <cstdio>
@@ -240,6 +241,8 @@ CullConfig g_cull;
 bool g_scan_on = true;  // scan_follows_head
 bool g_follow_on = true;  // camera_follows_head
 bool g_lock_follows_gaze = true;  // lock_on_follows_gaze
+bool g_pad_classic = false;       // gamepad_classic: the GameCube's controls, not Remastered's
+float g_pad_pitch_rate = 2.6f;    // gamepad_look_deg_per_s, as radians a second at full tilt
 struct FollowConfig {
     float reach = 0.32f;     // camera_follow_reach
     float out_rate = 8.0f;   // camera_follow_rate
@@ -285,6 +288,8 @@ void config_loaded(const VrConfig& c) {
     g_scan_on = c.get("scan_follows_head", 1.0f) != 0.0f;
     g_follow_on = c.get("camera_follows_head", 1.0f) != 0.0f;
     g_lock_follows_gaze = c.get("lock_on_follows_gaze", 1.0f) != 0.0f;
+    g_pad_classic = c.get("gamepad_classic", 0.0f) != 0.0f;
+    g_pad_pitch_rate = c.get("gamepad_look_deg_per_s", 150.0f) * 3.14159265f / 180.0f;
     g_follow.reach = c.get("camera_follow_reach", 0.32f);
     g_follow.out_rate = c.get("camera_follow_rate", 8.0f);
     g_follow.back_rate = c.get("camera_return_rate", 4.0f);
@@ -738,6 +743,8 @@ constexpr uint32_t kScanZoneFields[4] = {0x1BC, 0x1C4, 0x1CC, 0x1D4};  // centre
 constexpr uint32_t kViewport = 0x803EE928;     // CGraphics::mViewport: left, top, width, height
 constexpr uint32_t kCameraFov = 0x16C, kCameraAspect = 0x178;
 constexpr uint32_t kPlayerOrbitState = 0x314, kPlayerOrbitZoneMode = 0x340;
+constexpr uint32_t kPlayerMorphState = 0x308;  // CPlayer::mMorphBallState, 0 unmorphed
+uint32_t g_player;  // the CPlayer the movement hooks last saw (turn_input), for turn_camera
 // The scan window at its idle size: 169 by 152 pixels (DrawScanEffect's 169.218 and
 // 152.218 at a window scale of 1).
 constexpr float kWindowHalfW = 85.0f, kWindowHalfH = 77.0f;
@@ -1197,6 +1204,8 @@ void spring(float& x, float& v, float to, float w, float dt) {
     }
 }
 
+bool dual_sticks(float v[3]);
+
 // The patch in CFirstPersonCamera::Think, `dt` its time step: the turn, onto the transform
 // just stored.
 void turn_camera(uint32_t camera, float dt) {
@@ -1229,8 +1238,17 @@ void turn_camera(uint32_t camera, float dt) {
                     h, g_turn.yaw * 57.2958f, g_turn.pitch * 57.2958f);
         }
     }
-    // With a gamepad the camera is the game's: the head only looks around it.
-    if (!g_follow_on || !eyes || vr::gamepad_play()) {
+    // With a gamepad the camera is the game's: the head only looks around it. With the
+    // dual-stick controls the right stick tilts it (see map_gamepad), level while locked on
+    // or in the ball.
+    float sticks[3];
+    if (dual_sticks(sticks)) {
+        g_turn.yaw = g_turn.yaw_rate = g_turn.pitch_rate = 0.0f;
+        const bool level = g_player && (mem_r32(g_player + kPlayerOrbitState) != 0 || mem_r32(g_player + kPlayerMorphState) != 0);
+        const float step = fmaxf(0.0f, fminf(0.1f, dt));
+        if (level) g_turn.pitch *= expf(-10.0f * step);
+        else g_turn.pitch = fmaxf(-1.2f, fminf(1.2f, g_turn.pitch + sticks[2] * g_pad_pitch_rate * step));
+    } else if (!g_follow_on || !eyes || vr::gamepad_play()) {
         g_turn.yaw = g_turn.pitch = g_turn.yaw_rate = g_turn.pitch_rate = 0.0f;
     } else if (camera_tangents(camera, k) && window_reach(lim)) {
         float g[3];
@@ -1344,6 +1362,166 @@ void map_pad(PadState& p) {
     if (trig && !(in_play && !world)) p.buttons |= PAD_A;
     if (a) p.buttons |= (in_play && world) ? PAD_B : PAD_A;
     if (b) p.buttons |= (in_play && world) ? PAD_Y : PAD_B;
+}
+
+// ---------------------------------------------------------------------------
+// A gamepad (vr::GameHooks::map_gamepad).
+//
+// By default Metroid Prime Remastered's dual-stick controls, which a modern pad's player
+// expects: the left stick moves and strafes, the right stick turns and looks up and down,
+// the right trigger fires, the left trigger locks on. gamepad_classic 1 in vr.txt gives the
+// GameCube's instead, each button in its place on the pad (default_gamepad_layout) but
+// with south jumping and west firing: by place the GameCube's A is south, and a modern
+// pad's player reaches for south to jump.
+//
+// The dual-stick controls, by place (a Nintendo pad's names in brackets):
+// - the right trigger (ZR) and east (A) fire, a bomb in the ball (the GameCube's A);
+// - south (B) jumps, and boosts the ball (B);
+// - west (Y) morphs and unmorphs (X);
+// - the right shoulder (R) fires missiles, a power bomb in the ball (Y);
+// - the left trigger (ZL) locks on, scans, grapples (L, analog);
+// - the left shoulder (L) holds the spider ball (R);
+// - the d-pad picks a beam, as the GameCube's C stick did, and a visor with north (X)
+//   held, as its d-pad did;
+// - start pauses (start), select opens the map (Z).
+// Off the world (the menus, the pause and map screens) the sticks are the main and C
+// sticks, east selects (A), south goes back (B), and the triggers and shoulders are L and R
+// for the pause screen's tabs and the map's zoom.
+//
+// Moving, turning and looking are not the GameCube's: its stick turns the body and only
+// strafes while locked on, and its free look springs back when let go. The pad's main
+// stick is the left stick, which moves and steers the ball as the GameCube's does; what
+// the game's movement does with it differs in three places, each a hook on the guest
+// thread that reads the right stick and the left stick's x through input_pose
+// (dual_sticks), so a replay has them:
+// - the turn (CPlayer::TurnInput) is the right stick's x, not the main stick's;
+// - outside a lock, the left stick's x pushes the body sideways (prime_strafe_force), with
+//   the force the game works out for going forward (CPlayer::ComputeMovement), and
+//   the turn no longer adds to the forward speed (CPlayer::ForwardInput);
+// - the right stick's y tilts the camera up and down and leaves it there (turn_camera's
+//   pitch, gamepad_look_deg_per_s at full tilt, 150), levelling again while locked on,
+//   where the game aims, and in the ball.
+// Only with a gamepad in hand: tracked controllers keep their own controls.
+
+std::atomic<float> g_pad_strafe{0.0f}, g_pad_turn{0.0f}, g_pad_look{0.0f};
+
+float dead_zone(float v, float dz) { return fabsf(v) < dz ? 0.0f : (v - copysignf(dz, v)) / (1.0f - dz); }
+
+void map_gamepad(const vr::Gamepad& g, PadState& p) {
+    using G = vr::Gamepad;
+    if (g_pad_classic) {
+        vr::Gamepad c = g;
+        c.buttons &= ~(G::South | G::West);
+        if (g.buttons & G::South) c.buttons |= G::West;
+        if (g.buttons & G::West) c.buttons |= G::South;
+        vr::default_gamepad_layout(c, p);
+        g_pad_strafe = g_pad_turn = g_pad_look = 0.0f;
+        return;
+    }
+    const bool in_play = g_camera_pair.load(std::memory_order_relaxed) != 0;
+    const bool world = in_play && g_world_drawn.load(std::memory_order_relaxed) != 0;
+    auto held = [&](uint32_t b) { return (g.buttons & b) != 0; };
+    auto to_u8 = [](float f) { return (uint8_t)std::max(0, std::min(255, 128 + (int)(f * 100.0f))); };
+    const float lx = dead_zone(g.lx, 0.12f), ly = dead_zone(g.ly, 0.12f);
+    const float rx = dead_zone(g.rx, 0.1f), ry = dead_zone(g.ry, 0.1f);
+    if (lx != 0.0f || ly != 0.0f) { p.stick_x = to_u8(lx); p.stick_y = to_u8(ly); }
+    if (held(G::Start)) p.buttons |= PAD_START;
+    if (held(G::Select)) p.buttons |= PAD_Z;
+    if (held(G::East)) p.buttons |= PAD_A;
+    if (held(G::South)) p.buttons |= PAD_B;
+    if (!world) {
+        if (held(G::West)) p.buttons |= PAD_X;
+        if (held(G::North)) p.buttons |= PAD_Y;
+        if (rx != 0.0f || ry != 0.0f) { p.cstick_x = to_u8(rx); p.cstick_y = to_u8(ry); }
+        if (held(G::Up)) p.buttons |= PAD_UP;
+        if (held(G::Down)) p.buttons |= PAD_DOWN;
+        if (held(G::Left)) p.buttons |= PAD_LEFT;
+        if (held(G::Right)) p.buttons |= PAD_RIGHT;
+        const float l = std::max(g.lt, held(G::LeftShoulder) ? 1.0f : 0.0f);
+        const float r = std::max(g.rt, held(G::RightShoulder) ? 1.0f : 0.0f);
+        if (l > 0.03f) { p.trig_l = std::max(p.trig_l, (uint8_t)(l * 255.0f)); if (l > 0.9f) p.buttons |= PAD_L; }
+        if (r > 0.03f) { p.trig_r = std::max(p.trig_r, (uint8_t)(r * 255.0f)); if (r > 0.9f) p.buttons |= PAD_R; }
+        g_pad_strafe = g_pad_turn = g_pad_look = 0.0f;
+        return;
+    }
+    if (g.rt > 0.4f) p.buttons |= PAD_A;
+    if (held(G::West)) p.buttons |= PAD_X;
+    if (held(G::RightShoulder)) p.buttons |= PAD_Y;
+    if (held(G::LeftShoulder)) { p.buttons |= PAD_R; p.trig_r = 255; }
+    if (g.lt > 0.03f) { p.trig_l = std::max(p.trig_l, (uint8_t)(g.lt * 255.0f)); if (g.lt > 0.5f) p.buttons |= PAD_L; }
+    // The d-pad: a visor with north held, otherwise a beam, the C stick pushed its way.
+    if (held(G::North)) {
+        if (held(G::Up)) p.buttons |= PAD_UP;
+        if (held(G::Down)) p.buttons |= PAD_DOWN;
+        if (held(G::Left)) p.buttons |= PAD_LEFT;
+        if (held(G::Right)) p.buttons |= PAD_RIGHT;
+    } else {
+        const float bx = held(G::Right) ? 1.0f : held(G::Left) ? -1.0f : 0.0f;
+        const float by = held(G::Up) ? 1.0f : held(G::Down) ? -1.0f : 0.0f;
+        if (bx != 0.0f || by != 0.0f) { p.cstick_x = to_u8(bx); p.cstick_y = to_u8(by); }
+    }
+    g_pad_strafe = lx;
+    g_pad_turn = rx;
+    g_pad_look = ry;
+}
+
+// The dual-stick controls' sticks as the guest reads them: the left stick's x (right
+// positive), the right stick's x and y (right and up positive). False, with nothing in
+// `v`, unless a gamepad is in hand with the dual-stick controls.
+bool dual_sticks(float v[3]) {
+    bool on = !g_pad_classic && vr::gamepad_play();
+    v[0] = g_pad_strafe.load(std::memory_order_relaxed);
+    v[1] = g_pad_turn.load(std::memory_order_relaxed);
+    v[2] = g_pad_look.load(std::memory_order_relaxed);
+    input_pose("dual_sticks", &on, v, 3);
+    return on;
+}
+
+constexpr uint32_t kPlayerLookButtonHeld = 0x3ED;
+constexpr uint32_t kPlayerXf = 0x34, kPlayerVelocity = 0x148, kPlayerMass = 0xF8;
+constexpr uint32_t kPlayerMoveState = 0x2C0, kPlayerSurface = 0x2BC;  // on the ground (2): its surface
+// CTweakPlayer's per-surface arrays: translational acceleration, friction, top speed.
+constexpr uint32_t kTweakAccel = 0x4, kTweakFriction = 0x44, kTweakMaxSpeed = 0xA4;
+
+// CPlayer::TurnInput's turn (left positive), the right stick's under the dual-stick
+// controls.
+float turn_input(uint32_t player, float turn) {
+    g_player = player;
+    float v[3];
+    if (mem_r32(player + kPlayerMorphState) != 0 || !dual_sticks(v)) return turn;
+    return -v[1];
+}
+
+// CPlayer::ForwardInput's turn, which lengthens the forward of a stick pushed diagonally:
+// none under the dual-stick controls, where the turn is on the other stick.
+double forward_turn(double turn) {
+    float v[3];
+    return dual_sticks(v) ? 0.0 : turn;
+}
+
+// CPlayer::ComputeMovement, outside a lock, with `force` the body-relative force it is about
+// to apply: the left stick's x pushes it sideways, worked out as the game works out the
+// forward push from `forward` (ForwardInput's), and together no faster than the stick's
+// whole throw. `dt` the step.
+void strafe_force(uint32_t player, uint32_t force, float forward, float dt) {
+    float v[3];
+    if (!dual_sticks(v) || v[0] == 0.0f || mem_r8(player + kPlayerLookButtonHeld) || dt <= 0.0f) return;
+    float s = fmaxf(-1.0f, fminf(1.0f, v[0] / 0.8f));
+    if (s * s + forward * forward > 1.0f) s = copysignf(sqrtf(fmaxf(0.0f, 1.0f - forward * forward)), s);
+    int surface = mem_r32(player + kPlayerMoveState) == 2 ? (int)mem_r32(player + kPlayerSurface) : 4;
+    if (surface < 0 || surface > 7) surface = 0;
+    const uint32_t tweak = mem_r32(kTweakPlayer);
+    const float accel = rd_f(tweak + kTweakAccel + 4 * surface);
+    const float friction = rd_f(tweak + kTweakFriction + 4 * surface);
+    const float top = rd_f(tweak + kTweakMaxSpeed + 4 * surface);
+    if (accel <= 0.0f || top <= 0.0f) return;
+    const float friction_speed = friction * rd_f(player + kPlayerMass) / (dt * accel) * top;
+    const float want = s * (top - friction_speed) + copysignf(friction_speed, s);
+    // The body's own sideways speed: the velocity against the transform's first column.
+    float side = 0.0f;
+    for (int i = 0; i < 3; i++) side += rd_f(player + kPlayerXf + 16 * i) * rd_f(player + kPlayerVelocity + 4 * i);
+    const float push = fmaxf(-1.0f, fminf(1.0f, (want - side) / top)) * accel;
+    wr_f(force, rd_f(force) + push);
 }
 
 // ---------------------------------------------------------------------------
@@ -1617,12 +1795,18 @@ const bool installed = [] {
     h.wants_stereo = wants_stereo;
     h.wants_panel_pair = wants_panel_pair;
     h.map_pad = map_pad;
+    h.map_gamepad = map_gamepad;
     h.eye_filter = eye_filter;
     vr::set_game_hooks(h);
     return true;
 }();
 
 }  // namespace
+
+// The dual-stick controls' patches in CPlayer's movement (recomp/patches.txt, map_gamepad).
+extern "C" float prime_turn_input(uint32_t player, float turn) { return turn_input(player, turn); }
+extern "C" double prime_forward_turn(double turn) { return forward_turn(turn); }
+extern "C" void prime_strafe_force(CPU* c) { strafe_force(c->r[29], c->r[1] + 220, (float)c->f[31].d, (float)c->f[27].d); }
 
 // The patch in CPlayerGun::Update (recomp/patches.txt); r28 is the gun.
 extern "C" void prime_aim_gun(CPU* c) { aim_gun(c->r[28]); }

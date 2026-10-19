@@ -1705,3 +1705,36 @@ with no drawables, the audio session) is in `gcn-recomp/docs/visionos.md`. For P
   the fight's 60 new programs were 21 after the first fix, and both sessions' 494 are 160
   after the second. The water's rising cutscene still blinked after the first fix, and is
   the one to watch.
+
+## A gamepad's controls (2026-10-19)
+
+Two layouts for a gamepad in the headset (`map_gamepad` in `src/vr_prime.cpp` has the
+whole of each), `gamepad_classic` in `vr.txt` choosing:
+
+- **Dual-stick (0, the default)**, Metroid Prime Remastered's: the left stick moves and
+  strafes, the right turns and looks, the right trigger fires, the left trigger locks on,
+  the d-pad picks beams and, with north held, visors. Read from published lists of
+  Remastered's controls, which disagree in places (what the left shoulder does, whether
+  the d-pad alone is beams or visors); to be checked against the game itself.
+- **Classic (1)**: the GameCube's buttons in their places, but with south and west
+  swapped. Played, jump and fire were the wrong way round: the GameCube's A, which fires,
+  sits where south does, and on a modern pad south is the jump.
+
+The GameCube has no strafe outside a lock, no turn on a second stick and no look that
+stays where it is left, so the dual-stick layout is three hooks in the movement as well as
+a mapping (recomp/patches.txt): `CPlayer::TurnInput` takes its turn from the right stick;
+`CPlayer::ComputeMovement`, outside a lock, gets a sideways push from the left stick worked
+out as the game works out the forward one (the tweak's acceleration, friction and top speed
+for the surface, at 0x4, 0x44 and 0xA4), with `CPlayer::ForwardInput` no longer lengthening
+the forward by the turn; and the right stick's y is the first-person camera's pitch,
+through the follow turn (`turn_camera`), held where it is left, level again while locked on
+or in the ball. In stereo the eyes undo that turn as they undo the head's, so the stick
+raises the aim, the cannon and the HUD, not the world. `gamepad_look_deg_per_s` (150) is
+the look's speed at full tilt. The sticks reach the guest through `input_pose`
+(`dual_sticks`), so a replay has them.
+
+Checked on the desktop with the hooks forced on (a local switch, not kept), from frame 9000
+of `routes/new-game`: a full strafe slid the view to the platform's edge with the heading
+unchanged, the right stick turned the body, and holding it up tilted the view to the 69
+degree limit with the cannon. Without a gamepad, the route's frames are byte-identical to
+before. Not yet played in the headset.

@@ -63,3 +63,11 @@
 # CPlayer::UpdateOrbitableObjects, the transform GetFirstPersonCameraTransform returned for
 # the box the candidates are gathered from.
 8017D574 { void prime_orbit_box(CPU*); prime_orbit_box(c); } c->r[0] = c->r[3];
+# The dual-stick controls on a gamepad (src/vr_prime.cpp, map_gamepad). CPlayer::TurnInput,
+# r30 the player: its turn, left less right, once taken from the sticks.
+80287540 { float prime_turn_input(uint32_t, float); double v = (double)prime_turn_input(c->r[30], (float)(c->f[30].d - c->f[29].d)); c->f[29].d = v; c->ps1[29] = v; c->fprf_v = v; c->fprf_pending = 2; }
+# CPlayer::ForwardInput, on entry: its second argument, the turn (f1).
+80287660 { double prime_forward_turn(double); c->f[1].d = prime_forward_turn(c->f[1].d); c->ps1[1] = c->f[1].d; } { uint32_t ea = (c->r[1] + (uint32_t)-112); ST32(ea, c->r[1]); c->r[1] = ea; }
+# CPlayer::ComputeMovement, outside a lock (r29 the player): the force at r1+220, body-relative,
+# just before ApplyForceOR takes it; f31 is ForwardInput's answer and f27 the step.
+80287F40 { void prime_strafe_force(CPU*); prime_strafe_force(c); } c->r[4] = c->r[1] + (uint32_t)220;
