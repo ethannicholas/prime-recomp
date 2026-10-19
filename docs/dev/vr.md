@@ -1604,9 +1604,33 @@ ones wanted more than three cores: the guest 830-900 ms of each second running a
 90-190 waiting for a core, the transform workers 300-390 ms each waiting. The transform at
 a lower priority (gcn-recomp `GCN_WORKER_NICE`) halved the guest's wait, 55.6 frames a
 second against 54.6. The guest needs about 15.8 ms of CPU a frame there, so 60 needs its
-work cut by a tenth or more. Still to try: the line path
-batched (the drain deferred to reads of the CP and PE registers and the syncs, which the
-frame protocol makes delicate), and the recompiled code's memory accesses.
+work cut by a tenth or more.
+
+**The next round (gcn-recomp `3fad2f2`).** Measured in the harness pinned to the app's three
+cores (`taskset 38`), with each thread's CPU per frame taken from `/proc`; the same binary
+run twice differs by about 2% there. The cutscene went from 74 to 80 fps, the guest from
+about 13.1 to 12.4 ms a frame, the other threads' total unchanged. Frames were byte-identical
+and the replay never parted.
+- The shot writes about 30,000 gather-pipe lines a frame. Nearly half go into the game's
+  own buffers with the pipe redirected (CPU skinning), and those now skip the CP drain.
+  About two thirds of the lines that land on a draw still arriving now skip the parser.
+  Byte and halfword stores to the pipe are inline.
+- The front end's per-vertex copy of the last normal stalled on a store-forwarding miss, a
+  tenth of that thread. It is now made once per draw.
+- Guest memory at a fixed address, so generated code stops reloading `g_mem` after every
+  store, gave 6% on the guest in the frame-11,300 stretch and under 1% in the cutscene.
+
+What was not done, and why:
+- Batching the drain over several lines is not exact. A sync in the stream raises its
+  interrupt at the line that carries it, and a later drain delivers it later.
+- Waking the front end less often would not help. It was asleep at only 20-35 of about
+  230 hand-overs a frame.
+
+The guest's profile there is now flat game code. The largest pieces are the CPU skinning
+(`PSMTXROMultS16VecArrayGathered` and its `Single` variant, 5.6% between them),
+`CEnvFxManagerGrid::RenderRainParticles` (2.3%) and `CElementGen`'s particle update and
+render. At the app's clock the guest's 12.4 ms is about 13.3, so 60 in the app is near but
+not certain. Not yet measured in the app.
 
 ## Still to look at
 - **Comfort.** The game turns the camera with the stick and pitches it with free aim, on
