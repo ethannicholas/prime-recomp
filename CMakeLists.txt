@@ -18,6 +18,9 @@ gcn_add_game(
   SYMBOLS ${CMAKE_SOURCE_DIR}/analysis/symbols.txt
   TABLES ${CMAKE_SOURCE_DIR}/recomp
   FPS 60
+  # The shader keys a play-through uses, compiled on a fresh install before the game starts:
+  # made by gcn-recomp/tools/shader_keys from headset caches (docs/dev/graphics.md).
+  SHADER_KEYS ${CMAKE_SOURCE_DIR}/src/shader_keys.bin
   SOURCES ${CMAKE_SOURCE_DIR}/src/heap_check.cpp ${CMAKE_SOURCE_DIR}/src/gx_prime.cpp ${CMAKE_SOURCE_DIR}/src/vr_prime.cpp
   # The headset app and its harness, on an Android build: see build-android.ps1 and
   # package-apk.ps1.

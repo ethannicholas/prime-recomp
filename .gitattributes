@@ -6,3 +6,4 @@
 *.dol binary
 *.iso binary
 *.raw binary
+*.bin binary
