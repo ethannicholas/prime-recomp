@@ -207,31 +207,111 @@ and R triggers become the GameCube's L and R triggers on the map screen).
 
 ### Tuning the VR view
 
-Settings are read at startup from `/sdcard/Android/data/com.ethannicholas.prime/files/vr.txt`, so
-they can be changed with `adb push` between runs. The file is optional; every key has a
-default. One `key value` per line, `#` starts a comment:
+Settings are read when the app starts, from `/sdcard/Android/data/com.ethannicholas.prime/files/vr.txt`,
+so change them with `adb push` and restart the app. The file is optional: any setting it
+leaves out keeps its default, and a misspelt name is silently ignored. One `key value` per
+line; `#` starts a comment. The values below are the defaults.
+
+**Size and distance.** "Nearer" settings keep things the same size in view: they change how
+far away something feels, not how big it looks.
 
 ```
-units_per_metre 1        # game units per real metre: sets the apparent size of the world
-near_m 0.05              # near and far planes in metres
+units_per_metre 1        # game units per real metre: higher makes the world smaller
+hud_band_scale 0.1       # how near the HUD is -- energy, radar, visor and beam selectors:
+                         #   a fraction of the distance the game models it at, so 0.1 is
+                         #   about 1.6-2.1 m; smaller is nearer
+hud_distance_m 4         # where the game's flat 2D elements hang, such as the scan
+                         #   window's outline, in metres
+hud_scale 0.5            #   and how much of the view's height they fill
+hud_height_m 0           #   raised by this many metres
+hud_pitch_deg 0          #   tilted by this many degrees (negative leans the top towards you)
+foreground_scale 0.5     # how near the arm cannon is drawn, as a fraction of its distance
+theater_depth 1          # depth of the flat screen's 3D picture (0 flattens it, 1 is true depth)
+near_m 0.05              # nearest and farthest distances drawn, in metres
 far_m 1000
-hud_distance_m 4         # where the game's 2D elements hang, and how much of the view
-hud_scale 0.5            #   they fill
-foreground_scale 0.5     # how much nearer and smaller the arm cannon and visor are drawn
-eye_scale 1.2            # eye resolution, times what the headset recommends
-msaa 2                   # antialiasing samples per pixel in stereo
-gpu_budget_ms 13         # the eyes draw fewer pixels when they take the GPU longer than
-                         #   this many milliseconds (0: always full size)
-min_eye_res 0.5          #   down to at most this fraction of each side
-display_hz 0             # the display's refresh rate (0: the headset's default)
-theater_scale 3          # supersampling of the flat screen
-stereo_scale 1           # resolution of what stereo copies out of the flat pass, such as
-                         #   the scan visor's magnified window: 2 doubles it
-transition_s 1           # seconds the switch between flat and stereo takes
-start_in_stereo 0        # 1 to start in stereo
-gun_follows_hand 1       # the arm cannon in the right hand (0: the game's own aim)
-scan_follows_head 1      # the scan visor's window and target follow the head
 ```
+
+**The arm cannon.**
+
+```
+gun_follows_hand 1       # the cannon follows the right controller (0: the game's own aim)
+gun_x 0                  # move the cannon from the controller, in metres
+gun_y 0                  #   (x right, y up, z back, along the controller)
+gun_z 0
+gun_pitch_deg 0          # tilt the cannon against the controller, in degrees
+gun_smoothing 3          # frames the hand's movement is averaged over (1-16; 1 is none)
+gamepad_gun_x 0.2032     # with a gamepad, how far the cannon is moved from where the game
+gamepad_gun_y -0.2032    #   holds it, in metres as you see it (x right, y up, z back)
+gamepad_gun_z 0
+```
+
+**Looking and aiming.**
+
+```
+camera_follows_head 1    # the game's camera turns after your head once you look far enough
+                         #   off to the side, so the HUD, lock-on and scanning follow you
+camera_follow_reach 0.32 #   how far you can look before it does (smaller: sooner)
+camera_follow_rate 8     #   how quickly it follows, and how quickly it comes back to
+camera_return_rate 4     #   straight ahead
+lock_on_follows_gaze 1   # lock on to what you look at, even far above or below
+scan_follows_head 1      # the scan visor's window and target follow your gaze
+scan_window_faces 1      #   the window turns to face you wherever it is
+scan_gaze_field 1        #   the gaze is the middle of what you can see rather than straight
+                         #   ahead of your eyes
+scan_gaze_pitch_deg 0    #   and this many degrees above it
+gamepad_classic 0        # with a gamepad: 0 for Metroid Prime Remastered's dual-stick
+                         #   controls, 1 for the GameCube's
+gamepad_look_deg_per_s 150  # with a gamepad, how fast the right stick looks up and down
+```
+
+**What is drawn, and where.** Each of these is 1 (on) by default; 0 turns it off and shows
+the game's original behaviour.
+
+```
+hide_helmet 1            # leave out the inside of Samus's helmet around the view
+hide_scan_tint 1         # leave out the scan visor's grey tint
+hide_scan_magnifier 1    # leave out the scan window's magnified picture
+hide_flat_warps 1        # leave out the flat ripple a charged shot leaves
+visor_film_on_head 1     # steam and other films on the visor cover your whole view
+visor_drops_on_head 1    # goo and rain on the visor stay on your face
+screen_filter_on_head 1  # the thermal visor's colours cover your whole view
+cannon_cutaway 1         # the beam change's wipe is drawn in each eye
+scan_icons_true_distance 1  # scan markers and the reticle round a target stand at the target
+reticle_true_distance 1  # the lock-on reticle stands where you are aiming
+cull_to_eyes 1           # the game draws what you can see, not only what its camera sees
+cull_margin_deg 10       #   with this many degrees of margin beyond the edge of your view
+```
+
+**Performance and image quality.**
+
+```
+eye_scale 1.2            # resolution of each eye, times what the headset recommends
+msaa 2                   # antialiasing samples per pixel in 3D
+gpu_budget_ms 13         # the eyes draw fewer pixels when the GPU takes longer than this
+                         #   many milliseconds a frame (0: always full size)
+min_eye_res 0.5          #   but never fewer than this fraction of each side
+display_hz 0             # the display's refresh rate (0: the headset's default)
+perf_boost 1             # ask the headset for its highest CPU and GPU clocks
+thread_hints 1           # tell the headset which of the app's threads matter most
+theater_scale 3          # supersampling of the flat screen
+stereo_scale 2           # resolution of the copies 3D takes from the flat picture, such as
+                         #   the acid's fog
+```
+
+**Switching between the flat screen and 3D.** The game decides when to switch: 3D in first
+person, the flat screen for the menus, the map, the Morph Ball and cutscenes.
+
+```
+transition_s 1           # seconds the change into 3D takes
+transition_out_s 0       # seconds the change back takes (0: a cut)
+theater_stereo 1         # the flat screen is shown as a 3D picture (0: flat)
+```
+
+The remaining settings decide how the game's layers are told apart in 3D (`background_band`
+0.99, `foreground_band` 0.5, `hud_band` 0.02, `panel_band` 0.02, `hud_push_below` 10,
+`hud_push_to` 22, `view_space_world` 0, `offset_x`/`offset_y`/`offset_z` 0); changing them
+breaks the picture rather than tuning it. [docs/dev/vr.md](docs/dev/vr.md) and
+[gcn-recomp/docs/graphics.md](gcn-recomp/docs/graphics.md) describe them.
 
 ## Running on an Apple Vision Pro
 
