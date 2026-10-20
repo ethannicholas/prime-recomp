@@ -1774,6 +1774,13 @@ site in the rain):
   sampling a copy of part of the frame, no indirect stage) is now left out; the window's
   outline, its corners, the markers and the crosshair stay, round the eye's own view.
   Frame 12500 of `174534` with `hide_scan_magnifier 0` and without. The copy is still made.
+- **The scan markers are back at their own depth.** With nothing covering them, the late
+  draw that put them over the window (`EyeLateObject`), and those inside it on the window's
+  plane (2026-10-18, above), is gone: the tagged scan draws are drawn in order, at their
+  modelled distance (`EyeTrueScale`), which is what keeps the reticle round the target
+  (in the band at 1/8, inside the foreground layer) with its marker rather than halfway to
+  the camera. `scan_icons_over_window` is gone; `scan_icons_true_distance 0` lets the
+  reticle be scaled with the cannon again.
 - The app is now called "Metroid Prime Recomp".
 
 The replays here are `GCN_REPLAY=<dir>` in the harness. `--replay` is the desktop's flag,

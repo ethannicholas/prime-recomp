@@ -263,7 +263,7 @@ bool g_cannon_cutaway = true;      // cannon_cutaway
 bool g_screen_filter_on_head = true;  // screen_filter_on_head
 bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
 float g_gaze_pitch_rad = 0.0f;    // scan_gaze_pitch_deg: and this much further up
-bool g_scan_icons_late = true;    // scan_icons_over_window
+bool g_scan_icons_true = true;    // scan_icons_true_distance
 bool g_scan_window_faces = true;  // scan_window_faces
 bool g_reticle_true_scale = true; // reticle_true_distance
 
@@ -306,7 +306,7 @@ void config_loaded(const VrConfig& c) {
     g_screen_filter_on_head = c.get("screen_filter_on_head", 1.0f) != 0.0f;
     g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
     g_gaze_pitch_rad = c.get("scan_gaze_pitch_deg", 0.0f) * 3.14159265f / 180.0f;
-    g_scan_icons_late = c.get("scan_icons_over_window", 1.0f) != 0.0f;
+    g_scan_icons_true = c.get("scan_icons_true_distance", 1.0f) != 0.0f;
     g_scan_window_faces = c.get("scan_window_faces", 1.0f) != 0.0f;
     g_reticle_true_scale = c.get("reticle_true_distance", 1.0f) != 0.0f;
 }
@@ -1685,19 +1685,23 @@ bool is_face_reflection(const gx::EyeDrawFacts& f) {
 // eye's own markers, and the copy -- taken from the flat view around where the gaze
 // lands on the game's screen, magnified, in a window the HUD frame makes larger than the
 // game's -- held the flat view's, pushed out towards the window's edge or past it: the
-// markers inside the window, the region the scan targets, were missing or cut off. They
-// are drawn last instead (gx::EyeLateObject), over the window where they stand, and left
-// out of the copy. The targeting reticle round what is being scanned, which DrawScanEffect
-// draws next (CTargetingManager::Draw: draws 468-470 of frame 12300 of the session
-// 20261017-162603, a red square in the band at 1/8), was under the window the same way, all
-// but its lower edge. Both are told by where they are drawn: the patches at 0x80112798 (in
-// DrawScanObjectIndicators, once it has set its projection and view) and 0x80113834 (in
-// DrawScanEffect, past the targeting draw) tag the draws between (gx::set_draw_tag), and the
-// perspective ones from the world's band on among them are drawn last. The first versions told them by the marker's
-// texture, but its content hash is not the same from one session to the next
-// (1b50237ceda41ddf, 7267e5ccc5008f17, e450cde4903e4cc6 in the three sessions of
-// 2026-10-17), so in every session but the one it was taken from no marker was found and the
-// window covered them all. scan_icons_over_window 0 in vr.txt puts them back.
+// markers inside the window, the region the scan targets, were missing or cut off. Until
+// 2026-10-19 they were drawn last (gx::EyeLateObject), over the window, and those inside
+// it on the window's plane; now the eyes leave the magnified copy out (is_scan_magnifier,
+// below) and nothing covers them, so they are drawn in order, where the game models them.
+// The targeting reticle round what is being scanned, which DrawScanEffect draws next
+// (CTargetingManager::Draw: draws 468-470 of frame 12300 of the session 20261017-162603,
+// a red square at 6.97 m round a marker 6.8-7.2 m out) is in the band at exactly 1/8,
+// inside the foreground layer the eyes bring halfway to the camera for the cannon: it
+// would stand 3.5 m in front of its marker. So these draws are drawn at their modelled
+// distance (gx::EyeTrueScale), the reticle with its marker. They are told by where they are
+// drawn: the patches at 0x80112798 (in DrawScanObjectIndicators, once it has set its
+// projection and view) and 0x80113834 (in DrawScanEffect, past the targeting draw) tag the
+// draws between (gx::set_draw_tag); the perspective ones from the world's band on are
+// these. The marker's texture does not tell them: its content hash is not the same from
+// one session to the next (1b50237ceda41ddf, 7267e5ccc5008f17, e450cde4903e4cc6 in the three
+// sessions of 2026-10-17). scan_icons_true_distance 0 in vr.txt brings the reticle forward
+// with the cannon again.
 constexpr uint8_t kScanMarkerTag = 1;
 
 void scan_markers_drawn(bool begin) { gx::set_draw_tag(begin ? kScanMarkerTag : 0); }
@@ -1724,10 +1728,11 @@ bool is_moved_scan_window(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
 // part of the frame, no indirect stage). In an eye that copy is of the flat view, taken
 // where the gaze lands on the game's screen and stretched over a window the HUD frame
 // makes larger than the game's: blocky, and never quite what the eye sees behind it. The
-// markers had to be drawn over it (EyeLateObject, above) and the window turned to face the
-// gaze (EyeFacing, below) to keep it usable, and it was still more trouble than help. It is
-// left out of the eyes; the outline, the corners and the markers stay, framing the eye's
-// own view of what is being scanned. hide_scan_magnifier 0 in vr.txt keeps it.
+// markers had to be drawn over it and the window turned to face the gaze (EyeFacing, below)
+// to keep it usable, and it was still more trouble than help. It is left out of the eyes;
+// the outline, the corners and the markers stay, framing the eye's own view of what is
+// being scanned. hide_scan_magnifier 0 in vr.txt keeps it, and then it covers the markers
+// inside it, which are no longer drawn over it (is_scan_marker, above).
 bool is_scan_magnifier(const gx::EyeDrawFacts& f) {
     return f.ortho && f.samples_copy && !f.samples_fullscreen_copy && !f.indirect && f.band_lo >= 0.01f &&
            f.band_lo < 0.025f && f.band_hi <= 0.04f;
@@ -1757,7 +1762,7 @@ bool is_world_marker_in_hud_band(const gx::PixelState& st, const gx::EyeDrawFact
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
     if (g_visor_drops_on_head && is_visor_drop(st, f)) return gx::EyeScreen;
-    if (g_scan_icons_late && is_scan_marker(st, f)) return gx::EyeLateObject;
+    if (g_scan_icons_true && is_scan_marker(st, f)) return gx::EyeTrueScale;
     if (g_reticle_true_scale && is_world_marker_in_hud_band(st, f)) return gx::EyeTrueScale;
     if (g_screen_filter_on_head && is_screen_filter(f)) return gx::EyeScreen;
     if (g_cannon_cutaway && is_cannon_cutaway(st, f)) return gx::EyeRestore;
