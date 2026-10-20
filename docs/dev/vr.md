@@ -1738,3 +1738,45 @@ of `routes/new-game`: a full strafe slid the view to the platform's edge with th
 unchanged, the right stick turned the body, and holding it up tilted the view to the 69
 degree limit with the cannon. Without a gamepad, the route's frames are byte-identical to
 before. Not yet played in the headset.
+
+## Drops on the visor, and the scan window's picture (2026-10-19)
+
+Two reports from the first sessions on the new install (`20261019-174534`, a new game
+through the frigate to the landing on Tallon; `20261019-180918`, a minute at the landing
+site in the rain):
+
+- **The parasites' goo and the rain on the visor did not stay on the face**, though the
+  steam does. The steam is an orthographic film over the whole picture, drawn across the
+  eye fixed to the head (`EyeScreen`, "Steam on the visor"). The goo and the rain are
+  something else: `CHUDBillboardEffect`, a particle effect the game hangs about 0.2 units
+  in front of its camera every frame and draws in perspective with the world, in the band
+  1/64-1/32. In the eyes the camera turns only once the gaze is well off to the side ("The
+  camera follows the head"), so the effect stayed where the body faced: the goo hung in the
+  air, and the rain slid the opposite way across the view as the head turned. Its draws are
+  now tagged (patches at 0x8013048C and 0x801304A0 around `CHUDBillboardEffect::Render`'s call
+  of its generator) and drawn as `EyeScreen`, which gcn-recomp now takes for a perspective
+  draw too: the game's projection puts the effect on its picture, and the picture goes
+  across the eye. `visor_drops_on_head 0` in vr.txt leaves them in the world.
+  Checked by rendering each with the head straight and 25 degrees right (`--eye-yaw`), and
+  again with the effect's draws skipped (`GCN_DRAW_SKIP`) to isolate them: the rain at frame
+  2200 of `180918` (draws 501-517, 21 live drops) and the goo and its electric arcs at frame
+  20620 of `174534` (draws 221-235, three effects). With the rule, the drops land on the same
+  pixels of the eye at both yaws; without it, they move. `GCN_VISORDROPLOG=1` lists the
+  frames with such an effect; its "live" count reads only the top generator, and the goo's
+  particles are in child generators (`CElementGen::Render` draws those first), so it reads
+  0 for the goo while drawing plenty. The effects with the generator in the renderer's
+  sorted list instead (`AddToRenderer`, when bit 6 of +0x114 is set) are not tagged: none
+  was seen in these two sessions.
+- **The scan window's magnified picture is gone from the eyes.** It was a copy of the flat
+  view around the scan zone, stretched over a window larger than the game's, which needed
+  the markers drawn over it and the window turned to face the gaze, and still read as a
+  blocky rectangle. The draw that paints it (orthographic, in the window's band 1/64-1/32,
+  sampling a copy of part of the frame, no indirect stage) is now left out; the window's
+  outline, its corners, the markers and the crosshair stay, round the eye's own view.
+  Frame 12500 of `174534` with `hide_scan_magnifier 0` and without. The copy is still made.
+- The app is now called "Metroid Prime Recomp".
+
+The replays here are `GCN_REPLAY=<dir>` in the harness. `--replay` is the desktop's flag,
+and the harness ignores it without a word: the first attempt played the title screen's
+demos for ten minutes.
+

@@ -256,7 +256,9 @@ HudFrame g_hud_frame = {4.0f, 0.5f, 0.0f, 0.0f};
 bool g_hide_helmet = true;      // hide_helmet
 bool g_hide_flat_warps = true;  // hide_flat_warps
 bool g_hide_scan_tint = true;   // hide_scan_tint
+bool g_hide_scan_magnifier = true;  // hide_scan_magnifier
 bool g_visor_film_on_head = true;  // visor_film_on_head
+bool g_visor_drops_on_head = true;  // visor_drops_on_head
 bool g_cannon_cutaway = true;      // cannon_cutaway
 bool g_screen_filter_on_head = true;  // screen_filter_on_head
 bool g_gaze_field_centre = true;  // scan_gaze_field: the gaze is the centre of the visible field, not the eye's axis
@@ -297,7 +299,9 @@ void config_loaded(const VrConfig& c) {
     g_hide_helmet = c.get("hide_helmet", 1.0f) != 0.0f;
     g_hide_flat_warps = c.get("hide_flat_warps", 1.0f) != 0.0f;
     g_hide_scan_tint = c.get("hide_scan_tint", 1.0f) != 0.0f;
+    g_hide_scan_magnifier = c.get("hide_scan_magnifier", 1.0f) != 0.0f;
     g_visor_film_on_head = c.get("visor_film_on_head", 1.0f) != 0.0f;
+    g_visor_drops_on_head = c.get("visor_drops_on_head", 1.0f) != 0.0f;
     g_cannon_cutaway = c.get("cannon_cutaway", 1.0f) != 0.0f;
     g_screen_filter_on_head = c.get("screen_filter_on_head", 1.0f) != 0.0f;
     g_gaze_field_centre = c.get("scan_gaze_field", 1.0f) != 0.0f;
@@ -1585,6 +1589,38 @@ bool is_visor_film(const gx::EyeDrawFacts& f) {
            f.clip_y0 <= -edge && f.clip_y1 >= edge && f.clip_area >= 3.6f;
 }
 
+// Drops and splashes on the visor. What lands on the glass -- a parasite's goo, the rain
+// on the Tallon surface -- is a CHUDBillboardEffect: a particle effect the game puts just
+// in front of its camera every frame (PreRender) and draws in perspective with the world,
+// so on the screen it stays on the same place of the picture. In the eyes the camera turns
+// only once the gaze is well off to the side ("The camera follows the head"), so the
+// effect stayed where the body faced as the head turned: the goo hung in the air rather
+// than on the face, and the rain slid the other way across the view whenever the head
+// moved. Its draws are drawn across the eye as the steam's films are (gx::EyeScreen),
+// where the game's picture has them, fixed to the head. They are told by where they are
+// drawn: the patches at 0x8013048C and 0x801304A0 tag CHUDBillboardEffect::Render's call of
+// its generator's Render. visor_drops_on_head 0 in vr.txt leaves them in the world.
+constexpr uint8_t kVisorDropTag = 2;
+
+constexpr uint32_t kBillboardGen = 0xF8;     // CHUDBillboardEffect's generator
+constexpr uint32_t kElementGenLive = 0x34;   // CElementGen's live particles; Render draws none at 0
+
+// GCN_VISORDROPLOG=1: the frames in which the game draws something on the visor, each
+// effect with its generator's live particles (a CElementGen's; an electric effect's reads
+// as whatever is there), to find a frame to draw-log. `effect` the CHUDBillboardEffect,
+// 0 at the end of its draw.
+void visor_drops_drawn(uint32_t effect) {
+    static const bool log = getenv("GCN_VISORDROPLOG") != nullptr;
+    if (log && in_ram(effect)) {
+        const uint32_t gen = mem_r32(effect + kBillboardGen);
+        fprintf(stderr, "[prime] frame %u: visor effect %08X, %d live\n", gx_frames_submitted(), effect,
+                in_ram(gen) ? (int)mem_r32(gen + kElementGenLive) : -1);
+    }
+    gx::set_draw_tag(effect ? kVisorDropTag : 0);
+}
+
+bool is_visor_drop(const gx::PixelState& st, const gx::EyeDrawFacts& f) { return st.tag == kVisorDropTag && !f.ortho; }
+
 // The beam change. Switching beams, the cannon is wiped away and the new one wiped in
 // behind a plane that moves along it (CPlayerGun::Render): the game copies the quarter of
 // the frame the cannon is in once the world is drawn (CopyScreenTex, a 320x224 copy of the
@@ -1682,6 +1718,21 @@ bool is_moved_scan_window(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     return (tx > 1e-4f || ty > 1e-4f) && tx < 0.99f && ty < 0.99f;
 }
 
+// The scan window's magnified picture. DrawScanEffect paints a copy of the screen around
+// the scan zone, magnified, inside the window's outline (draw 337 of frame 12300 of the
+// session 20261017-092738: orthographic, in the window's band 1/64-1/32, sampling a copy of
+// part of the frame, no indirect stage). In an eye that copy is of the flat view, taken
+// where the gaze lands on the game's screen and stretched over a window the HUD frame
+// makes larger than the game's: blocky, and never quite what the eye sees behind it. The
+// markers had to be drawn over it (EyeLateObject, above) and the window turned to face the
+// gaze (EyeFacing, below) to keep it usable, and it was still more trouble than help. It is
+// left out of the eyes; the outline, the corners and the markers stay, framing the eye's
+// own view of what is being scanned. hide_scan_magnifier 0 in vr.txt keeps it.
+bool is_scan_magnifier(const gx::EyeDrawFacts& f) {
+    return f.ortho && f.samples_copy && !f.samples_fullscreen_copy && !f.indirect && f.band_lo >= 0.01f &&
+           f.band_lo < 0.025f && f.band_hi <= 0.04f;
+}
+
 // The targeting reticles (CTargetingManager::Draw, the CCompoundTargetReticle). Holding L
 // with nothing to lock on to draws one far out ahead, where the aim is: draw 273 of frame
 // 17220 of that session, 792 vertices, 74-77 units out, through the first-person camera's
@@ -1705,12 +1756,14 @@ bool is_world_marker_in_hud_band(const gx::PixelState& st, const gx::EyeDrawFact
 
 int eye_filter(const gx::PixelState& st, const gx::EyeDrawFacts& f) {
     ensure_config();
+    if (g_visor_drops_on_head && is_visor_drop(st, f)) return gx::EyeScreen;
     if (g_scan_icons_late && is_scan_marker(st, f)) return gx::EyeLateObject;
     if (g_reticle_true_scale && is_world_marker_in_hud_band(st, f)) return gx::EyeTrueScale;
     if (g_screen_filter_on_head && is_screen_filter(f)) return gx::EyeScreen;
     if (g_cannon_cutaway && is_cannon_cutaway(st, f)) return gx::EyeRestore;
     if (g_hide_flat_warps && f.ortho && f.indirect && f.samples_copy && !f.samples_fullscreen_copy) return gx::EyeHideDraw;
     if (g_hide_scan_tint && is_scan_tint(st, f)) return gx::EyeHideDraw;
+    if (g_hide_scan_magnifier && is_scan_magnifier(f)) return gx::EyeHideDraw;
     if (g_visor_film_on_head && is_visor_film(f)) return gx::EyeScreen;
     if (is_face_reflection(f)) return gx::EyeFlat;
     if (g_scan_window_faces && is_moved_scan_window(st, f)) return gx::EyeFacing;
@@ -1888,6 +1941,8 @@ extern "C" void prime_scan_copy_src(CPU* c) { scan_copy_src(c); }
 extern "C" void prime_orbit_box(CPU* c) { c->r[3] = orbit_box_transform(c->r[3], c->r[1]); }
 extern "C" void prime_scan_ortho(CPU* c) { scan_ortho(c); }
 extern "C" void prime_scan_markers(uint32_t begin) { scan_markers_drawn(begin != 0); }
+// The patches in CHUDBillboardEffect::Render (recomp/patches.txt).
+extern "C" void prime_visor_drops(uint32_t effect) { visor_drops_drawn(effect); }
 extern "C" uint32_t prime_orbit_state(uint32_t player) { return orbit_state_for_turning(player); }
 
 // The patch in CFirstPersonCamera::Think (recomp/patches.txt): the camera follows the head.

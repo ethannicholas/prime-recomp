@@ -69,6 +69,9 @@ Prime's hooks (`src/vr_prime.cpp`) log to stderr when asked:
   60 metres with its materials and flags.
 - `GCN_FACELOG=1`: the frames in which Samus's face is drawn reflected in the visor, to
   find one to draw-log.
+- `GCN_VISORDROPLOG=1`: the frames in which something is drawn on the visor -- a
+  parasite's goo, a splash of rain (`CHUDBillboardEffect`, which the eyes draw head-locked) --
+  to find one to draw-log.
 
 To find something in a long session, replay it with the log on and dumps sparse
 (`--dump-every=120`), then replay once more with `GCN_DRAWLOG=<frame>`,

@@ -34,6 +34,11 @@
 # where its two paths past that call meet.
 80112798 { void prime_scan_markers(uint32_t); prime_scan_markers(1); } { uint32_t ea = (c->r[2] + (uint32_t)-27172); double v = LDF32(ea); c->f[1].d = v; c->ps1[1] = v; }
 80113834 { void prime_scan_markers(uint32_t); prime_scan_markers(0); } c->r[4] = 0x803F0000u;
+# Drops and splashes on the visor, tagged for the eyes (src/vr_prime.cpp, is_visor_drop):
+# CHUDBillboardEffect::Render (r3 the effect), from loading the generator it calls Render on, to the exit
+# both of its paths reach.
+8013048C { void prime_visor_drops(uint32_t); prime_visor_drops(c->r[3]); } c->r[3] = LD32((c->r[3] + (uint32_t)248));
+801304A0 { void prime_visor_drops(uint32_t); prime_visor_drops(0); } c->r[0] = LD32((c->r[1] + (uint32_t)20));
 # Locking on in the scan visor would turn the body and the camera to the target: the reads
 # of CPlayer::mOrbitState in CPlayer::UpdateOrbitOrientation and
 # CFirstPersonCamera::UpdateTransform.

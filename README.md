@@ -185,7 +185,7 @@ time. The memory card and the shader cache live there too, and survive reinstall
 
 ### Playing
 
-The app appears under **Library → Unknown Sources → Prime Recomp**. The game will seamlessly switch
+The app appears under **Library → Unknown Sources → Metroid Prime Recomp**. The game will seamlessly switch
 between full 3D and a (still stereoscopic) 2D "theater mode" as needed.
 
 | GameCube | Touch controller |
@@ -261,7 +261,7 @@ same folder, which the Files app shows under *On My Apple Vision Pro*.
 
 ### Playing
 
-Open **Prime Recomp** and press *Play*. The game runs in a full immersive space. Leaving
+Open **Metroid Prime Recomp** and press *Play*. The game runs in a full immersive space. Leaving
 it, or the game resetting the console (after a game over), closes the app; open it again
 to carry on.
 
