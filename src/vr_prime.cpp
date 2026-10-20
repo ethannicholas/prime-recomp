@@ -1816,14 +1816,15 @@ void config_defaults(VrConfig& c) {
     c.foreground_scale = 0.5f;
     // The HUD -- the band below 1/512 -- is modelled 16-21 units out in view space, which
     // at the foreground's half scale stood eight to ten metres away, a billboard rather
-    // than a visor. Drawn at a tenth of its distance it reads at arm's length, the same
-    // angular size; hud_band_scale in vr.txt moves it (smaller is nearer).
+    // than a visor. Drawn at a twentieth of its distance, 0.8-1.05 m, it reads at arm's
+    // length, the same angular size (a tenth until 2026-10-19, chosen in the headset);
+    // hud_band_scale in vr.txt moves it (smaller is nearer).
     // Two bands hold it: 0-1/512 (the map, a few scraps) and 1/512-1/64 (the energy bar,
     // the radar, the selectors, the visor's outline), found with the eye's draw log
     // (GCN_DRAWLOG in an eye names each draw's layer). 1/64 as the float GX holds it comes
     // out a hair above 1/64, so the bound has slack; the cannon's band starts at 1/32.
     c.hud_band = 0.02f;
-    c.hud_band_scale = 0.1f;
+    c.hud_band_scale = 0.05f;
     // The thermal visor's innermost triangle (draw 115 of frame 2600 of the session
     // 20261014-220552: 243 vertices, flat, 2.95 units out, in the 1/512-1/64 band) is
     // modelled seven times nearer than the rest of its HUD, 14-27 units out, so at that

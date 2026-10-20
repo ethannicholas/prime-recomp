@@ -217,9 +217,9 @@ far away something feels, not how big it looks.
 
 ```
 units_per_metre 1        # game units per real metre: higher makes the world smaller
-hud_band_scale 0.1       # how near the HUD is -- energy, radar, visor and beam selectors:
-                         #   a fraction of the distance the game models it at, so 0.1 is
-                         #   about 1.6-2.1 m; smaller is nearer
+hud_band_scale 0.05      # how near the HUD is -- energy, radar, visor and beam selectors:
+                         #   a fraction of the distance the game models it at, so 0.05 is
+                         #   about 0.8-1.05 m; smaller is nearer
 hud_distance_m 4         # where the game's flat 2D elements hang, such as the scan
                          #   window's outline, in metres
 hud_scale 0.5            #   and how much of the view's height they fill
